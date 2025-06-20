@@ -54,6 +54,9 @@
 #include <dl-audit-check.h>
 #include <dl-call_tls_init_tp.h>
 
+#include <stdlib.h>  // für malloc/free
+#include <string.h>  // für strcmp/strcpy
+
 #include <assert.h>
 
 /* This #define produces dynamic linking inline functions for
@@ -1298,6 +1301,177 @@ _dl_start_args_adjust (int skip_args, int skip_env)
 #endif
 }
 
+/* Forward declarations für libsystemcore Integration */
+static void _dl_load_libsystemcore (void) __attribute__ ((cold));
+static void _dl_read_fybos_sections (const void **frameworks_data, size_t *frameworks_size,
+                                    const void **libbds_data, size_t *libbds_size) __attribute__ ((cold));
+
+/* libsystemcore Init-Funktion Name */
+#ifndef LIBSYSTEMCORE_INIT_FUNC  
+# define LIBSYSTEMCORE_INIT_FUNC "_libsc_ld_main"
+#endif
+
+/* FybOS ELF-Sektionen auslesen */
+static void
+_dl_read_fybos_sections (const void **frameworks_data, size_t *frameworks_size,
+                        const void **libbds_data, size_t *libbds_size)
+{
+  /* Default: NULL falls Sektionen nicht vorhanden */
+  *frameworks_data = NULL;
+  *frameworks_size = 0;
+  *libbds_data = NULL;
+  *libbds_size = 0;
+  
+  /* GL(dl_ns)[LM_ID_BASE]._ns_loaded ist main_map in glibc */
+  struct link_map *main_map = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
+  if (main_map == NULL || main_map->l_addr == 0)
+    return;
+    
+  const ElfW(Ehdr) *ehdr = (const ElfW(Ehdr) *) main_map->l_addr;
+  
+  /* Section Header Table validieren */
+  if (ehdr->e_shoff == 0 || ehdr->e_shnum == 0 || ehdr->e_shstrndx >= ehdr->e_shnum)
+    return;
+    
+  const ElfW(Shdr) *shdrs = (const ElfW(Shdr) *) (main_map->l_addr + ehdr->e_shoff);
+  const ElfW(Shdr) *shstrtab_hdr = &shdrs[ehdr->e_shstrndx];
+  
+  /* String Table validieren */
+  if (shstrtab_hdr->sh_offset == 0 || shstrtab_hdr->sh_size == 0)
+    return;
+    
+  const char *shstrtab = (const char *) (main_map->l_addr + shstrtab_hdr->sh_offset);
+  
+  /* Durch alle Sektionen iterieren */
+  for (ElfW(Half) i = 0; i < ehdr->e_shnum; i++)
+    {
+      const ElfW(Shdr) *shdr = &shdrs[i];
+      
+      /* Section Name validieren */
+      if (shdr->sh_name >= shstrtab_hdr->sh_size)
+        continue;
+        
+      const char *section_name = shstrtab + shdr->sh_name;
+      
+      /* .fybos_frameworks Sektion */
+      if (strcmp(section_name, ".fybos_frameworks") == 0)
+        {
+          if (shdr->sh_size > 0 && shdr->sh_offset != 0)
+            {
+              *frameworks_data = (const void *) (main_map->l_addr + shdr->sh_offset);
+              *frameworks_size = shdr->sh_size;
+            }
+        }
+      /* .fybos_libbds Sektion */
+      else if (strcmp(section_name, ".fybos_libbds") == 0)
+        {
+          if (shdr->sh_size > 0 && shdr->sh_offset != 0)
+            {
+              *libbds_data = (const void *) (main_map->l_addr + shdr->sh_offset);
+              *libbds_size = shdr->sh_size;
+            }
+        }
+    }
+}
+
+/* libsystemcore.so path - hardcoded im selben Ordner wie ld.so */
+static char *
+_dl_get_systemcore_path (void)
+{
+  /* ld.so path ermitteln */
+  const char *ldso_path = _dl_rtld_map.l_name;
+  if (ldso_path == NULL)
+    return NULL;
+    
+  /* Directory von ld.so extrahieren */
+  const char *last_slash = strrchr(ldso_path, '/');
+  if (last_slash == NULL)
+    return NULL;
+    
+  size_t dir_len = last_slash - ldso_path;
+  size_t systemcore_path_len = dir_len + sizeof("/libsystemcore.so");
+  
+  char *systemcore_path = malloc(systemcore_path_len);
+  if (systemcore_path == NULL)
+    return NULL;
+    
+  /* Path konstruieren: /lib/x86_64-linux-gnu/libsystemcore.so */
+  memcpy(systemcore_path, ldso_path, dir_len);
+  strcpy(systemcore_path + dir_len, "/libsystemcore.so");
+  
+  return systemcore_path;
+}
+
+/* libsystemcore.so laden und initialisieren */
+static void
+_dl_load_libsystemcore (void)
+{
+  struct link_map *systemcore_map = NULL;
+  void (*init_func)(const void *, size_t, const void *, size_t) = NULL;
+  char *systemcore_path = NULL;
+  const void *frameworks_data = NULL, *libbds_data = NULL;
+  size_t frameworks_size = 0, libbds_size = 0;
+  
+  /* FybOS Sektionen aus main_map auslesen */
+  _dl_read_fybos_sections (&frameworks_data, &frameworks_size,
+                          &libbds_data, &libbds_size);
+  
+  /* Systemcore path ermitteln */
+  systemcore_path = _dl_get_systemcore_path();
+  if (systemcore_path == NULL)
+    return;
+  
+  /* main_map korrekt referenzieren */
+  struct link_map *main_map = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
+  
+  /* libsystemcore.so laden */
+  systemcore_map = _dl_map_object (NULL, systemcore_path, lt_library,
+                                   0, LM_ID_BASE, &main_map->l_scope[0]);
+  
+  /* Path freigeben */
+  free(systemcore_path);
+  
+  if (systemcore_map == NULL)
+    return;
+    
+  /* Dependencies auflösen - void function */
+  _dl_map_object_deps (systemcore_map, NULL, 0, 0, 0);
+    
+  /* Relocations durchführen - void function */
+  _dl_relocate_object (systemcore_map, systemcore_map->l_scope,
+                      RTLD_LAZY | RTLD_GLOBAL, 0);
+    
+  /* Init-Funktion suchen */
+  const ElfW(Sym) *ref = NULL;
+  lookup_t result = _dl_lookup_symbol_x (LIBSYSTEMCORE_INIT_FUNC,
+                                        systemcore_map,
+                                        &ref,
+                                        systemcore_map->l_scope,
+                                        NULL,
+                                        ELF_RTYPE_CLASS_PLT,
+                                        DL_LOOKUP_ADD_DEPENDENCY,
+                                        NULL);
+  
+  if (result == NULL || ref == NULL)
+    return;
+    
+  /* Funktion-Pointer berechnen */
+  init_func = (void (*)(const void *, size_t, const void *, size_t)) 
+              DL_SYMBOL_ADDRESS (result, ref);
+  
+  if (init_func == NULL)
+    return;
+    
+  /* Init-Funktion mit FybOS-Daten ausführen */
+  init_func(frameworks_data, frameworks_size, libbds_data, libbds_size);
+  
+  /* systemcore_map in globale Namespace einfügen */
+  systemcore_map->l_global = 1;
+  _dl_add_to_namespace_list (systemcore_map, LM_ID_BASE);
+  ++GL(dl_ns)[LM_ID_BASE]._ns_nloaded;
+  ++GL(dl_load_adds);
+}
+
 static void
 dl_main (const ElfW(Phdr) *phdr,
 	 ElfW(Word) phnum,
@@ -1692,66 +1866,7 @@ dl_main (const ElfW(Phdr) *phdr,
      objects.  */
   call_init_paths (&state);
 
-    /* PATCH: GLOBAL PRIORITY LIBRARIES - EINFÜGEN HIER */
-  {
-    struct link_map *mylib, *ttlib;
-    
-    if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
-      _dl_debug_printf ("Loading priority libraries with global symbol access\n");
-
-    /* Load mylib.so FIRST with GLOBAL flag */
-    mylib = _dl_map_object (NULL, "/usr/lib/libsystemcore.so", 
-                            lt_library, 0, RTLD_NOW | RTLD_GLOBAL, LM_ID_BASE);
-    if (__glibc_unlikely (mylib == NULL))
-      _dl_fatal_printf ("CRITICAL: Cannot load mylib.so\n");
-    
-    /* Mark mylib as globally accessible */
-    mylib->l_flags_1 |= DF_1_GLOBAL;
-    mylib->l_global = 1;
-    
-    /* Immediate relocation for mylib */
-    _dl_relocate_object (mylib, mylib->l_scope, RTLD_NOW, 0);
-    
-    /* Load ttlib.so SECOND with GLOBAL flag */
-    ttlib = _dl_map_object (NULL, "/usr/lib/linux_libc.so",
-                            lt_library, 0, RTLD_NOW | RTLD_GLOBAL, LM_ID_BASE);
-    if (__glibc_unlikely (ttlib == NULL))
-      _dl_fatal_printf ("CRITICAL: Cannot load ttlib.so\n");
-      
-    /* Mark ttlib as globally accessible */
-    ttlib->l_flags_1 |= DF_1_GLOBAL;
-    ttlib->l_global = 1;
-    
-    /* Immediate relocation for ttlib */
-    _dl_relocate_object (ttlib, ttlib->l_scope, RTLD_NOW, 0);
-    
-    /* Mark libraries as permanent */
-    mylib->l_flags_1 |= DF_1_NODELETE;
-    ttlib->l_flags_1 |= DF_1_NODELETE;
-
-        
-    /* Execute bundle validation (can use ttlib symbols) */
-    {
-      void *bundle_func = _dl_symbol_value (mylib, "bundle_validate_and_init");
-      if (bundle_func != NULL)
-        {
-          int (*bundle_validator)(void) = (int (*)(void)) bundle_func;
-          int result = bundle_validator();
-          
-          if (__glibc_unlikely (result != 0))
-            _dl_fatal_printf ("CRITICAL: Bundle validation failed: %d\n", result);
-
-          if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
-            _dl_debug_printf ("Bundle validation completed, symbols globally available\n");
-        }
-      else
-        _dl_fatal_printf ("CRITICAL: bundle_validate_and_init not found\n");
-    }
-    
-    if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
-      _dl_debug_printf ("Priority libraries loaded with global symbol access\n");
-  }
-  /* END PATCH */
+  _dl_load_libsystemcore ();
 
   /* Initialize _r_debug_extended.  */
   struct r_debug *r = _dl_debug_initialize (_dl_rtld_map.l_addr,
