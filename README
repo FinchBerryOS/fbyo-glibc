@@ -1,0 +1,75 @@
+This directory contains the sources of the FBYO C Library, a heavily modified 
+fork of the GNU C Library (glibc) designed specifically for FBYO.
+See the file "version.h" for what release version you have.
+
+The FBYO C Library is the standard system C library for FBYO. It works with 
+the Linux kernel to implement the operating system behavior, but fundamentally 
+changes how dynamic linking and application packaging are handled.
+
+=============================================================================
+FBYO EXCLUSIVE MODIFICATIONS: MACOS-STYLE APP BUNDLES & FRAMEWORKS
+=============================================================================
+
+While standard Linux relies on a flat filesystem hierarchy (e.g., /usr/lib), 
+this modified linker (ld.so) introduces a macOS-style bundle architecture. 
+Applications can now be fully encapsulated, drag-and-drop movable, and manage 
+their own dependencies without polluting the global system state.
+
+Key modifications to the Dynamic Linker include:
+
+1. Bundle Awareness (struct link_map extensions)
+   The linker automatically detects if a binary is executing from within an 
+   application bundle (e.g., AppName.app/Contents/Linux/). It stores the 
+   bundle root and execution path directly in the linker map (l_is_bundle, 
+   l_bundle_root, l_executable_path) for all loaded shared objects.
+
+2. New Dynamic String Tokens (DSTs)
+   - $executable_path : Resolves to the directory of the main executable, 
+     regardless of which library is currently searching. This allows apps 
+     to reliably link against their own internal Frameworks.
+   - $loader_path : Resolves to the directory of the currently loading 
+     library (analogous to $ORIGIN, but mirroring macOS dyld nomenclature).
+
+3. Framework Indirection ($rpath/ Prefix)
+   A new routing logic in `_dl_map_new_object`. If a library requests a 
+   dependency prefixed with "$rpath/" (e.g., $rpath/libCore.so), the linker 
+   ignores the local library's runpaths and instead inherits the search 
+   paths of the main application. This eliminates "dependency hell" within 
+   complex Framework ecosystems.
+
+=============================================================================
+SYSTEM REQUIREMENTS & ARCHITECTURES
+=============================================================================
+
+When working with Linux kernels, this version of the FBYO C Library
+requires Linux kernel version 5.4 or later (optimized for Raspberry Pi / ARM).
+
+Also note that the shared version of the libgcc_s library must be
+installed for the pthread library to work correctly.
+
+The FBYO C Library is primarily maintained for the following architecture:
+    * aarch64*-*-linux-gnu (Primary target for FBYO hardware)
+
+Upstream GNU configurations remain technically supported but are not the 
+primary focus of FBYO development:
+    i[4567]86-*-linux-gnu, x86_64-*-linux-gnu, etc.
+
+=============================================================================
+BUILDING & INSTALLATION
+=============================================================================
+
+See the file INSTALL to find out how to configure, build, and install
+the FBYO C Library. Due to the custom modifications, it is highly recommended 
+to build this library using a DESTDIR staging environment to extract the 
+compiled .so files and the modified ld-linux-aarch64.so.1 linker cleanly.
+
+=============================================================================
+UPSTREAM DOCUMENTATION & LICENSES
+=============================================================================
+
+The base GNU C Library is (almost) completely documented by the Texinfo manual
+found in the `manual/' subdirectory. 
+
+The FBYO C Library remains free software. See the file COPYING.LIB for copying
+conditions, and LICENSES for notices about a few contributions that require
+these additional notices to be distributed.
