@@ -1,5 +1,5 @@
 /* Wait for process state.
-   Copyright (C) 2020-2025 Free Software Foundation, Inc.
+   Copyright (C) 2020-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -42,5 +42,14 @@ enum support_process_state
    Return the found process state.  */
 enum support_process_state
 support_process_state_wait (pid_t pid, enum support_process_state state);
+
+/* Same as support_process_state_wait, but wait for the task TID (obtained
+   with gettid) from the current process.
+   NB: this function does not guard against TID reuse (the kernel might
+   assign the TID to a different thread between the gettid and the function
+   call if the thread exits and another is created).  It is the caller's
+   responsibility to ensure the call is safe to use.  */
+enum support_process_state
+support_thread_state_wait (pid_t pid, enum support_process_state state);
 
 #endif

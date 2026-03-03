@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  nptl/i386 version.
-   Copyright (C) 2002-2025 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -221,22 +221,9 @@ tls_fill_user_desc (union user_desc_init *desc,
      THREAD_GETMEM (__pd, header.dtv); })
 
 
-/* Return the thread descriptor for the current thread.
-
-   The contained asm must *not* be marked volatile since otherwise
-   assignments like
-	pthread_descr self = thread_self();
-   do not get optimized away.  */
-# if __GNUC_PREREQ (6, 0)
-#  define THREAD_SELF \
-  (*(struct pthread *__seg_gs *) offsetof (struct pthread, header.self))
-# else
-#  define THREAD_SELF \
-  ({ struct pthread *__self;						      \
-     asm ("movl %%gs:%c1,%0" : "=r" (__self)				      \
-	  : "i" (offsetof (struct pthread, header.self)));		      \
-     __self;})
-# endif
+/* Return the thread descriptor for the current thread.  */
+# define THREAD_SELF \
+  (*(struct pthread *__seg_gs *)&((struct pthread __seg_gs *)0)->header.self)
 
 /* Magic for libthread_db to know how to do THREAD_SELF.  */
 # define DB_THREAD_SELF \
@@ -268,9 +255,9 @@ tls_fill_user_desc (union user_desc_init *desc,
 #define THREAD_GSCOPE_RESET_FLAG() \
   do									      \
     { int __res;							      \
-      asm volatile ("xchgl %0, %%gs:%P1"				      \
+      asm volatile ("xchgl %1, %0"					      \
 		    : "=r" (__res)					      \
-		    : "i" (offsetof (struct pthread, header.gscope_flag)),    \
+		    : "m" (((struct pthread __seg_gs *)0)->header.gscope_flag), \
 		      "0" (THREAD_GSCOPE_FLAG_UNUSED));			      \
       if (__res == THREAD_GSCOPE_FLAG_WAIT)				      \
 	lll_futex_wake (&THREAD_SELF->header.gscope_flag, 1, LLL_PRIVATE);    \

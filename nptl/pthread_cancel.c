@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -41,15 +41,17 @@ sigcancel_handler (int sig, siginfo_t *si, void *ctx)
       || si->si_code != SI_TKILL)
     return;
 
-  /* Check if asynchronous cancellation mode is set or if interrupted
-     instruction pointer falls within the cancellable syscall bridge.  For
-     interruptable syscalls with external side-effects (i.e. partial reads),
-     the kernel  will set the IP to after __syscall_cancel_arch_end, thus
-     disabling the cancellation and allowing the process to handle such
+  /* Check if asynchronous cancellation mode is set and cancellation is not
+     already in progress, or if interrupted instruction pointer falls within
+     the cancellable syscall bridge.
+     For interruptable syscalls with external side-effects (i.e. partial
+     reads), the kernel will set the IP to after __syscall_cancel_arch_end,
+     thus disabling the cancellation and allowing the process to handle such
      conditions.  */
   struct pthread *self = THREAD_SELF;
   int oldval = atomic_load_relaxed (&self->cancelhandling);
-  if (cancel_async_enabled (oldval) || cancellation_pc_check (ctx))
+  if (cancel_enabled_and_canceled_and_async (oldval)
+      || cancellation_pc_check (ctx))
     __syscall_do_cancel ();
 }
 
@@ -58,7 +60,8 @@ __pthread_cancel (pthread_t th)
 {
   volatile struct pthread *pd = (volatile struct pthread *) th;
 
-  if (pd->tid == 0)
+  unsigned int state = atomic_load_relaxed (&pd->joinstate);
+  if (state == THREAD_STATE_EXITED)
     /* The thread has already exited on the kernel side.  Its outcome
        (regular exit, other cancelation) has already been
        determined.  */

@@ -1,5 +1,5 @@
 /* Multiple versions of memset. AARCH64 version.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    Copyright The GNU Toolchain Authors.
    This file is part of the GNU C Library.
 
@@ -36,6 +36,7 @@ extern __typeof (__redirect_memset) __memset_a64fx attribute_hidden;
 extern __typeof (__redirect_memset) __memset_generic attribute_hidden;
 extern __typeof (__redirect_memset) __memset_mops attribute_hidden;
 extern __typeof (__redirect_memset) __memset_oryon1 attribute_hidden;
+extern __typeof (__redirect_memset) __memset_sve_zva64 attribute_hidden;
 
 static inline __typeof (__redirect_memset) *
 select_memset_ifunc (void)
@@ -45,10 +46,13 @@ select_memset_ifunc (void)
   if (mops)
     return __memset_mops;
 
-  if (sve && HAVE_AARCH64_SVE_ASM)
+  if (sve)
     {
       if (IS_A64FX (midr) && zva_size == 256)
 	return __memset_a64fx;
+
+      if (prefer_sve_ifuncs && zva_size == 64)
+	return __memset_sve_zva64;
     }
 
   if (IS_ORYON1 (midr) && zva_size == 64)

@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2025 Free Software Foundation, Inc.
+# Copyright (C) 1996-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -110,6 +110,7 @@ gen-libm-calls = \
   s_cexpF \
   s_clog10F \
   s_clogF \
+  s_compoundnF \
   s_cospiF \
   s_cpowF \
   s_cprojF \
@@ -139,6 +140,10 @@ gen-libm-calls = \
   s_log2p1F \
   s_nanF \
   s_nextdownF \
+  s_pownF \
+  s_powrF \
+  s_rootnF \
+  s_rsqrtF \
   s_significandF \
   s_sinpiF \
   s_tanpiF \
@@ -199,14 +204,15 @@ libm-calls = \
   e_remainderF \
   e_sinhF \
   e_sqrtF \
-  gamma_productF \
   k_tanF \
-  lgamma_negF \
-  lgamma_productF \
   s_asinhF \
   s_atanF \
   s_cbrtF \
   s_ceilF \
+  s_compat_fromfpF \
+  s_compat_fromfpxF \
+  s_compat_ufromfpF \
+  s_compat_ufromfpxF \
   s_cosF \
   s_erfF \
   s_erfcF \
@@ -338,9 +344,12 @@ test-types-basic = \
 type-ldouble-suffix := l
 type-ldouble-routines := \
   e_rem_pio2l \
+  gamma_productl \
   k_cosl \
   k_sincosl \
   k_sinl \
+  lgamma_negl \
+  lgamma_productl \
   s_iscanonicall \
   t_sincosl \
   # type-ldouble-routines
@@ -356,6 +365,11 @@ type-double-routines := \
   e_pow_log_data \
   k_rem_pio2 \
   math_err \
+  s_asincosh_data \
+  s_atanh_data \
+  s_erf_common \
+  s_erf_data \
+  s_erfc_data \
   sincostab \
   # type-double-routines
 
@@ -366,17 +380,25 @@ type-float-routines := \
   e_log2f_data \
   e_logf_data \
   e_powf_log2_data \
+  e_sincoshf_data \
   math_errf \
+  s_asincosf_data \
+  s_asincoshf_data \
+  s_asincospif_data \
   s_sincosf_data \
+  s_sincospif_data \
   # type-float-routines
 
 # _Float128 support
 type-float128-suffix := f128
 type-float128-routines := \
   e_rem_pio2f128 \
+  gamma_productf128 \
   k_cosf128 \
   k_sincosf128 \
   k_sinf128 \
+  lgamma_negf128 \
+  lgamma_productf128 \
   t_sincosf128 \
   # type-float128-routines
 type-float128-yes := float128
@@ -615,11 +637,13 @@ libm-vec-test-wrappers = $(addsuffix -wrappers, $(libm-vec-tests))
 test-extras += $(libm-vec-test-wrappers)
 extra-test-objs += $(addsuffix .o, $(libm-vec-test-wrappers))
 
-ulps-file = $(firstword $(wildcard $(sysdirs:%=%/libm-test-ulps)))
+ulps-file = $(wildcard $(sysdirs:%=%/libm-test-ulps))
+
+space := $(subst ,, )
 
 $(objpfx)libm-test-ulps.h: $(ulps-file) gen-libm-test.py
 	$(make-target-directory)
-	$(PYTHON) gen-libm-test.py -u $< -H $@
+	$(PYTHON) gen-libm-test.py -u $(subst $(space),:,$(ulps-file)) -H $@
 
 libm-test-funcs-auto = \
   acos \
@@ -647,6 +671,7 @@ libm-test-funcs-auto = \
   cexp \
   clog \
   clog10 \
+  compoundn \
   cos \
   cosh \
   cospi \
@@ -677,6 +702,10 @@ libm-test-funcs-auto = \
   log1p \
   log2p1 \
   pow \
+  pown \
+  powr \
+  rootn \
+  rsqrt \
   sin \
   sincos \
   sinh \
@@ -767,12 +796,20 @@ libm-test-funcs-noauto-base = \
   # libm-test-funcs-noauto-base
 libm-test-funcs-noauto = \
   $(libm-test-funcs-noauto-base) \
+  compat_fromfp \
+  compat_fromfpx \
   compat_totalorder \
   compat_totalordermag \
+  compat_ufromfp \
+  compat_ufromfpx \
   # libm-test-funcs-noauto
 libm-test-funcs-compat = \
+  compat_fromfp \
+  compat_fromfpx \
   compat_totalorder \
   compat_totalordermag \
+  compat_ufromfp \
+  compat_ufromfpx \
   # libm-test-funcs-compat
 libm-test-funcs-narrow = \
   add \
@@ -949,6 +986,7 @@ tgmath3-macros = \
   cbrt \
   ceil \
   cimag \
+  compoundn \
   conj \
   copysign \
   cos \
@@ -1007,11 +1045,15 @@ tgmath3-macros = \
   nexttoward \
   nextup \
   pow \
+  pown \
+  powr \
   remainder \
   remquo \
   rint \
+  rootn \
   round \
   roundeven \
+  rsqrt \
   scalb \
   scalbln \
   scalbn \
@@ -1293,29 +1335,6 @@ endef
 object-suffixes-left := $(test-types)
 include $(o-iterator)
 
-# Run the math programs to automatically generate ULPs files.
-.PHONY: regen-ulps
-
-run-regen-ulps = $(test-wrapper-env) \
-	    $(run-program-env) \
-	    $($*-ENV) $(rtld-prefix) $(objpfx)$${run}
-
-regen-ulps: $(addprefix $(objpfx),$(libm-tests))
-	rm -f $(objpfx)ULPs; rm -f $(objpfx)NewUlps; \
-	cp $(ulps-file) $(objpfx)libm-test-ulps; \
-	for run in $(libm-tests); do \
-	  echo "Regenerating ULPs for $${run}"; \
-	  $(run-regen-ulps) -u -o $(objpfx); \
-	  cat $(objpfx)ULPs >> $(objpfx)libm-test-ulps; \
-	  rm $(objpfx)ULPs; \
-	done; \
-	$(PYTHON) gen-libm-test.py -n $(objpfx)NewUlps \
-				   -u $(objpfx)libm-test-ulps; \
-	echo "Automatic regeneration of ULPs complete."; \
-	echo "Difference between the current baseline and the new baseline is:";\
-	diff -urN $(ulps-file) $(objpfx)NewUlps; \
-	echo "Copy $(objpfx)NewUlps to $(ulps-file) (relative to source)."
-
 # The generated sysd-rules file defines rules like this for sources
 # coming from sysdeps/ directories.  These rules find the generic sources.
 define o-iterator-doit
@@ -1338,6 +1357,31 @@ ifneq ($(long-double-fcts),yes)
 math-CPPFLAGS += -DNO_LONG_DOUBLE
 # GCC 10 diagnoses aliases with types conflicting with built-in
 # functions.
+CFLAGS-carg.c += -fno-builtin-cargl
+CFLAGS-conj.c += -fno-builtin-conjl
+CFLAGS-cimag.c += -fno-builtin-cimagl
+CFLAGS-creal.c += -fno-builtin-creall
+CFLAGS-cabs.c += -fno-builtin-cabsl
+CFLAGS-w_acos_compat.c += -fno-builtin-acosl
+CFLAGS-w_asin_compat.c += -fno-builtin-asinl
+CFLAGS-w_acosh_compat.c += -fno-builtin-acoshl
+CFLAGS-w_atan2_compat.c += -fno-builtin-atan2l
+CFLAGS-w_atanh_compat.c += -fno-builtin-atanhl
+CFLAGS-w_cosh_compat.c += -fno-builtin-coshl
+CFLAGS-w_exp_compat.c += -fno-builtin-expl
+CFLAGS-w_exp2_compat.c += -fno-builtin-exp2l
+CFLAGS-w_fmod_compat.c += -fno-builtin-fmodl
+CFLAGS-w_hypot_compat.c += -fno-builtin-hypotl
+CFLAGS-w_log_compat.c += -fno-builtin-logl
+CFLAGS-w_log2_compat.c += -fno-builtin-log2l
+CFLAGS-w_log10_compat.c += -fno-builtin-log10l
+CFLAGS-w_pow_compat.c += -fno-builtin-powl
+CFLAGS-w_remainder_compat.c += -fno-builtin-remainderl
+CFLAGS-w_sinh_compat.c += -fno-builtin-sinhl
+CFLAGS-w_sqrt_compat.c += -fno-builtin-sqrtl
+CFLAGS-w_tgamma_compat.c += -fno-builtin-tgammal
+CFLAGS-e_hypot.c += -fno-builtin-hypotl
+CFLAGS-e_fmod.c += -fno-builtin-fmodl
 CFLAGS-w_acos.c += -fno-builtin-acosl
 CFLAGS-w_acosh.c += -fno-builtin-acoshl
 CFLAGS-s_acospi.c += -fno-builtin-acospil
@@ -1366,6 +1410,7 @@ CFLAGS-s_cexp.c += -fno-builtin-cexpl
 CFLAGS-s_cimag.c += -fno-builtin-cimagl
 CFLAGS-s_clog.c += -fno-builtin-clogl
 CFLAGS-s_clog10.c += -fno-builtin-clog10l
+CFLAGS-s_compoundn.c += -fno-builtin-compoundnl
 CFLAGS-s_conj.c += -fno-builtin-conjl
 CFLAGS-s_copysign.c += -fno-builtin-copysignl
 CFLAGS-s_cos.c += -fno-builtin-cosl
@@ -1380,10 +1425,18 @@ CFLAGS-s_csqrt.c += -fno-builtin-csqrtl
 CFLAGS-s_ctan.c += -fno-builtin-ctanl
 CFLAGS-s_ctanh.c += -fno-builtin-ctanhl
 CFLAGS-s_erf.c += -fno-builtin-erfl
+CFLAGS-s_dadd.c += -fno-builtin-daddl
+CFLAGS-s_ddiv.c += -fno-builtin-ddivl
+CFLAGS-s_dfma.c += -fno-builtin-dfmal
+CFLAGS-s_dmul.c += -fno-builtin-dmull
+CFLAGS-s_dsqrt.c += -fno-builtin-dsqrtl
+CFLAGS-s_dsub.c += -fno-builtin-dsubl
+CFLAGS-s_erf.c += -fno-builtin-erfl -fno-builtin-erfcl
 CFLAGS-s_erfc.c += -fno-builtin-erfcl
 CFLAGS-e_exp.c += -fno-builtin-expl
 CFLAGS-w_exp10.c += -fno-builtin-exp10l
 CFLAGS-s_exp10m1.c += -fno-builtin-exp10m1l
+CFLAGS-w_exp10_compat.c += -fno-builtin-pow10l
 CFLAGS-e_exp2.c += -fno-builtin-exp2l
 CFLAGS-s_exp2m1.c += -fno-builtin-exp2m1l
 CFLAGS-s_expm1.c += -fno-builtin-expm1l
@@ -1416,6 +1469,8 @@ CFLAGS-s_fminmag.c += -fno-builtin-fminmagl
 CFLAGS-w_fmod.c += -fno-builtin-fmodl
 CFLAGS-s_fmul.c += -fno-builtin-fmull
 CFLAGS-s_frexp.c += -fno-builtin-frexpl
+CFLAGS-s_compat_fromfp.c += -fno-builtin-fromfpl
+CFLAGS-s_compat_fromfpx.c += -fno-builtin-fromfpxl
 CFLAGS-s_fromfp.c += -fno-builtin-fromfpl
 CFLAGS-s_fromfpx.c += -fno-builtin-fromfpxl
 CFLAGS-s_fsqrt.c += -fno-builtin-fsqrtl
@@ -1428,7 +1483,7 @@ CFLAGS-s_isnan.c += -fno-builtin-isnanl
 CFLAGS-w_j0.c += -fno-builtin-j0l
 CFLAGS-w_j1.c += -fno-builtin-j1l
 CFLAGS-w_jn.c += -fno-builtin-jnl
-CFLAGS-s_ldexp.c += -fno-builtin-ldexpl
+CFLAGS-s_ldexp.c += -fno-builtin-ldexpl -fno-builtin-scalbnl
 CFLAGS-w_lgamma.c += -fno-builtin-lgammal
 CFLAGS-w_lgamma_r.c += -fno-builtin-lgammal_r
 CFLAGS-w_llogb.c += -fno-builtin-llogbl
@@ -1446,24 +1501,28 @@ CFLAGS-s_lround.c += -fno-builtin-lroundl
 CFLAGS-s_modf.c += -fno-builtin-modfl
 CFLAGS-s_nan.c += -fno-builtin-nanl
 CFLAGS-s_nearbyint.c += -fno-builtin-nearbyintl
-CFLAGS-s_nextafter.c += -fno-builtin-nextafterl
+CFLAGS-s_nextafter.c += -fno-builtin-nextafterl -fno-builtin-nexttowardl -fno-builtin-nexttoward
 CFLAGS-s_nextdown.c += -fno-builtin-nextdownl
 CFLAGS-s_nexttoward.c += -fno-builtin-nexttoward -fno-builtin-nexttowardl
 CFLAGS-s_nexttowardf.c += -fno-builtin-nexttowardf
 CFLAGS-s_nextup.c += -fno-builtin-nextupl
 CFLAGS-e_pow.c += -fno-builtin-powl
+CFLAGS-s_pown.c += -fno-builtin-pownl
+CFLAGS-s_powr.c += -fno-builtin-powrl
 CFLAGS-w_remainder.c += -fno-builtin-remainderl -fno-builtin-dreml
 CFLAGS-s_remquo.c += -fno-builtin-remquol
 CFLAGS-s_rint.c += -fno-builtin-rintl
+CFLAGS-s_rootn.c += -fno-builtin-rootnl
 CFLAGS-s_round.c += -fno-builtin-roundl
 CFLAGS-s_roundeven.c += -fno-builtin-roundevenl
+CFLAGS-s_rsqrt.c += -fno-builtin-rsqrtl
 CFLAGS-w_scalb.c += -fno-builtin-scalbl
 CFLAGS-w_scalbln.c += -fno-builtin-scalblnl
 CFLAGS-s_scalbn.c += -fno-builtin-scalbnl
 CFLAGS-s_setpayload.c += -fno-builtin-setpayloadl
 CFLAGS-s_setpayloadsig.c += -fno-builtin-setpayloadsigl
 CFLAGS-s_significand.c += -fno-builtin-significandl
-CFLAGS-s_sin.c += -fno-builtin-sinl
+CFLAGS-s_sin.c += -fno-builtin-sinl -fno-builtin-cosl
 CFLAGS-s_sincos.c += -fno-builtin-sincosl
 CFLAGS-w_sinh.c += -fno-builtin-sinhl
 CFLAGS-s_sinpi.c += -fno-builtin-sinpil
@@ -1475,6 +1534,8 @@ CFLAGS-w_tgamma.c += -fno-builtin-tgammal
 CFLAGS-s_totalorder.c += -fno-builtin-totalorderl
 CFLAGS-s_totalordermag.c += -fno-builtin-totalordermagl
 CFLAGS-s_trunc.c += -fno-builtin-truncl
+CFLAGS-s_compat_ufromfp.c += -fno-builtin-ufromfpl
+CFLAGS-s_compat_ufromfpx.c += -fno-builtin-ufromfpxl
 CFLAGS-s_ufromfp.c += -fno-builtin-ufromfpl
 CFLAGS-s_ufromfpx.c += -fno-builtin-ufromfpxl
 CFLAGS-s_y0.c += -fno-builtin-y0l
@@ -1511,6 +1572,7 @@ CFLAGS-s_cexp.c += -fno-builtin-cexpf32x -fno-builtin-cexpf64
 CFLAGS-s_cimag.c += -fno-builtin-cimagf32x -fno-builtin-cimagf64
 CFLAGS-s_clog.c += -fno-builtin-clogf32x -fno-builtin-clogf64
 CFLAGS-s_clog10.c += -fno-builtin-clog10f32x -fno-builtin-clog10f64
+CFLAGS-s_compoundn.c += -fno-builtin-compoundnf32x -fno-builtin-compoundnf64
 CFLAGS-s_conj.c += -fno-builtin-conjf32x -fno-builtin-conjf64
 CFLAGS-s_copysign.c += -fno-builtin-copysignf32x -fno-builtin-copysignf64
 CFLAGS-s_cos.c += -fno-builtin-cosf32x -fno-builtin-cosf64
@@ -1554,6 +1616,8 @@ CFLAGS-s_fminmag.c += -fno-builtin-fminmagf32x -fno-builtin-fminmagf64
 CFLAGS-w_fmod.c += -fno-builtin-fmodf32x -fno-builtin-fmodf64
 CFLAGS-s_fmul.c += -fno-builtin-f32mulf32x -fno-builtin-f32mulf64
 CFLAGS-s_frexp.c += -fno-builtin-frexpf32x -fno-builtin-frexpf64
+CFLAGS-s_compat_fromfp.c += -fno-builtin-fromfpf32x -fno-builtin-fromfpf64
+CFLAGS-s_compat_fromfpx.c += -fno-builtin-fromfpxf32x -fno-builtin-fromfpxf64
 CFLAGS-s_fromfp.c += -fno-builtin-fromfpf32x -fno-builtin-fromfpf64
 CFLAGS-s_fromfpx.c += -fno-builtin-fromfpxf32x -fno-builtin-fromfpxf64
 CFLAGS-s_fsqrt.c += -fno-builtin-f32sqrtf32x -fno-builtin-f32sqrtf64
@@ -1586,11 +1650,15 @@ CFLAGS-s_nextafter.c += -fno-builtin-nextafterf32x -fno-builtin-nextafterf64
 CFLAGS-s_nextdown.c += -fno-builtin-nextdownf32x -fno-builtin-nextdownf64
 CFLAGS-s_nextup.c += -fno-builtin-nextupf32x -fno-builtin-nextupf64
 CFLAGS-e_pow.c += -fno-builtin-powf32x -fno-builtin-powf64
+CFLAGS-s_pown.c += -fno-builtin-pownf32x -fno-builtin-pownf64
+CFLAGS-s_powr.c += -fno-builtin-powrf32x -fno-builtin-powrf64
 CFLAGS-w_remainder.c += -fno-builtin-remainderf32x -fno-builtin-remainderf64
 CFLAGS-s_remquo.c += -fno-builtin-remquof32x -fno-builtin-remquof64
 CFLAGS-s_rint.c += -fno-builtin-rintf32x -fno-builtin-rintf64
+CFLAGS-s_rootn.c += -fno-builtin-rootnf32x -fno-builtin-rootnf64
 CFLAGS-s_round.c += -fno-builtin-roundf32x -fno-builtin-roundf64
 CFLAGS-s_roundeven.c += -fno-builtin-roundevenf32x -fno-builtin-roundevenf64
+CFLAGS-s_rsqrt.c += -fno-builtin-rsqrtf32x -fno-builtin-rsqrtf64
 CFLAGS-w_scalbln.c += -fno-builtin-scalblnf32x -fno-builtin-scalblnf64
 CFLAGS-s_scalbn.c += -fno-builtin-scalbnf32x -fno-builtin-scalbnf64
 CFLAGS-s_setpayload.c += -fno-builtin-setpayloadf32x -fno-builtin-setpayloadf64
@@ -1607,6 +1675,8 @@ CFLAGS-w_tgamma.c += -fno-builtin-tgammaf32x -fno-builtin-tgammaf64
 CFLAGS-s_totalorder.c += -fno-builtin-totalorderf32x -fno-builtin-totalorderf64
 CFLAGS-s_totalordermag.c += -fno-builtin-totalordermagf32x -fno-builtin-totalordermagf64
 CFLAGS-s_trunc.c += -fno-builtin-truncf32x -fno-builtin-truncf64
+CFLAGS-s_compat_ufromfp.c += -fno-builtin-ufromfpf32x -fno-builtin-ufromfpf64
+CFLAGS-s_compat_ufromfpx.c += -fno-builtin-ufromfpxf32x -fno-builtin-ufromfpxf64
 CFLAGS-s_ufromfp.c += -fno-builtin-ufromfpf32x -fno-builtin-ufromfpf64
 CFLAGS-s_ufromfpx.c += -fno-builtin-ufromfpxf32x -fno-builtin-ufromfpxf64
 CFLAGS-s_y0.c += -fno-builtin-y0f32x -fno-builtin-y0f64
@@ -1642,6 +1712,7 @@ CFLAGS-s_cexpf.c += -fno-builtin-cexpf32
 CFLAGS-s_cimagf.c += -fno-builtin-cimagf32
 CFLAGS-s_clogf.c += -fno-builtin-clogf32
 CFLAGS-s_clog10f.c += -fno-builtin-clog10f32
+CFLAGS-s_compoundnf.c += -fno-builtin-compoundnf32
 CFLAGS-s_conjf.c += -fno-builtin-conjf32
 CFLAGS-s_copysignf.c += -fno-builtin-copysignf32
 CFLAGS-s_cosf.c += -fno-builtin-cosf32
@@ -1681,6 +1752,8 @@ CFLAGS-s_fminimum_numf.c += -fno-builtin-fminimum_numf32
 CFLAGS-s_fminmagf.c += -fno-builtin-fminmagf32
 CFLAGS-w_fmodf.c += -fno-builtin-fmodf32
 CFLAGS-s_frexpf.c += -fno-builtin-frexpf32
+CFLAGS-s_compat_fromfpf.c += -fno-builtin-fromfpf32
+CFLAGS-s_compat_fromfpxf.c += -fno-builtin-fromfpxf32
 CFLAGS-s_fromfpf.c += -fno-builtin-fromfpf32
 CFLAGS-s_fromfpxf.c += -fno-builtin-fromfpxf32
 CFLAGS-s_getpayloadf.c += -fno-builtin-getpayloadf32
@@ -1711,11 +1784,15 @@ CFLAGS-s_nextafterf.c += -fno-builtin-nextafterf32
 CFLAGS-s_nextdownf.c += -fno-builtin-nextdownf32
 CFLAGS-s_nextupf.c += -fno-builtin-nextupf32
 CFLAGS-e_powf.c += -fno-builtin-powf32
+CFLAGS-s_pownf.c += -fno-builtin-pownf32
+CFLAGS-s_powrf.c += -fno-builtin-powrf32
 CFLAGS-w_remainderf.c += -fno-builtin-remainderf32
 CFLAGS-s_remquof.c += -fno-builtin-remquof32
 CFLAGS-s_rintf.c += -fno-builtin-rintf32
+CFLAGS-s_rootnf.c += -fno-builtin-rootnf32
 CFLAGS-s_roundf.c += -fno-builtin-roundf32
 CFLAGS-s_roundevenf.c += -fno-builtin-roundevenf32
+CFLAGS-s_rsqrtf.c += -fno-builtin-rsqrtf32
 CFLAGS-w_scalblnf.c += -fno-builtin-scalblnf32
 CFLAGS-s_scalbnf.c += -fno-builtin-scalbnf32
 CFLAGS-s_setpayloadf.c += -fno-builtin-setpayloadf32
@@ -1732,6 +1809,8 @@ CFLAGS-w_tgammaf.c += -fno-builtin-tgammaf32
 CFLAGS-s_totalorderf.c += -fno-builtin-totalorderf32
 CFLAGS-s_totalordermagf.c += -fno-builtin-totalordermagf32
 CFLAGS-s_truncf.c += -fno-builtin-truncf32
+CFLAGS-s_compat_ufromfpf.c += -fno-builtin-ufromfpf32
+CFLAGS-s_compat_ufromfpxf.c += -fno-builtin-ufromfpxf32
 CFLAGS-s_ufromfpf.c += -fno-builtin-ufromfpf32
 CFLAGS-s_ufromfpxf.c += -fno-builtin-ufromfpxf32
 CFLAGS-s_y0f.c += -fno-builtin-y0f32
@@ -1744,6 +1823,26 @@ CFLAGS-s_modf.c += $(config-cflags-signaling-nans)
 CFLAGS-s_modff.c += $(config-cflags-signaling-nans)
 CFLAGS-s_modfl.c += $(config-cflags-signaling-nans)
 CFLAGS-s_modff128.c += $(config-cflags-signaling-nans)
+
+# These files rely on C23 semantics for avoiding "inexact" exceptions
+# from rounding functions.  These settings can be removed when glibc
+# builds with -std=gnu23 or later.
+CFLAGS-s_fromfp.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_fromfpx.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_ufromfp.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_ufromfpx.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_fromfpf.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_fromfpxf.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_ufromfpf.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_ufromfpxf.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_fromfpl.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_fromfpxl.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_ufromfpl.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_ufromfpxl.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_fromfpf128.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_fromfpxf128.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_ufromfpf128.c += $(config-cflags-no-fp-builtin-inexact)
+CFLAGS-s_ufromfpxf128.c += $(config-cflags-no-fp-builtin-inexact)
 
 $(addprefix $(objpfx),\
 	    $(filter-out $(tests-static) $(libm-tests-vector),\

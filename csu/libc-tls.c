@@ -1,5 +1,5 @@
 /* Initialization code for TLS in statically linked application.
-   Copyright (C) 2002-2025 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <dl-extra_tls.h>
 #include <array_length.h>
 #include <elf/dl-tls_block_align.h>
+#include <dl-symbol-redir-ifunc.h>
 
 #ifdef SHARED
  #error makefile bug, this file is for static only

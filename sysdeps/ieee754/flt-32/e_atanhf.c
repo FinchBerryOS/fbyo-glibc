@@ -3,7 +3,7 @@
 Copyright (c) 2023-2024 Alexei Sibidanov.
 
 The original version of this file was copied from the CORE-MATH
-project (file src/binary32/acosh/acoshf.c, revision bc385c2).
+project (file src/binary32/acosh/acoshf.c, revision 4d6192d2).
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,8 @@ SOFTWARE.
 #include <math.h>
 #include <stdint.h>
 #include <libm-alias-finite.h>
+#include <libm-alias-float.h>
+#include <math-svid-compat.h>
 #include "math_config.h"
 
 static __attribute__((noinline)) float
@@ -42,7 +44,7 @@ as_special (float x)
 }
 
 float
-__ieee754_atanhf (float x)
+__atanhf (float x)
 {
   /* Calculate atanh(x) using the difference of two logarithms -- atanh(x) =
      (ln(1+x) - ln(1-x))/2  */
@@ -135,7 +137,7 @@ __ieee754_atanhf (float x)
     }
   double sgn = s[ux >> 31];
   unsigned int e = ax >> 24;
-  unsigned int md = ((ux << 8) | 1 << 31) >> (126 - e);
+  unsigned int md = ((ux << 8) | 1U << 31) >> (126 - e);
   unsigned int mn = -md;
   int nz = __builtin_clz (mn) + 1;
   mn <<= nz;
@@ -175,4 +177,11 @@ __ieee754_atanhf (float x)
     }
   return ub;
 }
+strong_alias (__atanhf, __ieee754_atanhf)
+#if LIBM_SVID_COMPAT
+versioned_symbol (libm, __atanhf, atanhf, GLIBC_2_43);
+libm_alias_float_other (__atanh, atanh)
+#else
+libm_alias_float (__atanh, atanh)
+#endif
 libm_alias_finite (__ieee754_atanhf, __atanhf)

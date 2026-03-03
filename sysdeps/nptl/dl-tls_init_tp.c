@@ -1,5 +1,5 @@
 /* Completion of TCB initialization after TLS_INIT_TP.  NPTL version.
-   Copyright (C) 2020-2025 Free Software Foundation, Inc.
+   Copyright (C) 2020-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 #include <tls.h>
 #include <rseq-internal.h>
 #include <thread_pointer.h>
+#include <dl-symbol-redir-ifunc.h>
 
 #define TUNABLE_NAMESPACE pthread
 #include <dl-tunables.h>
@@ -72,9 +73,10 @@ __tls_init_tp (void)
   list_add (&pd->list, &GL (dl_stack_user));
 
    /* Early initialization of the TCB.   */
-   pd->tid = INTERNAL_SYSCALL_CALL (set_tid_address, &pd->tid);
+   pd->tid = INTERNAL_SYSCALL_CALL (set_tid_address, &pd->joinstate);
    THREAD_SETMEM (pd, specific[0], &pd->specific_1stblock[0]);
-   THREAD_SETMEM (pd, user_stack, true);
+   THREAD_SETMEM (pd, stack_mode, ALLOCATE_GUARD_USER);
+   THREAD_SETMEM (pd, joinstate, THREAD_STATE_JOINABLE);
 
   /* Before initializing GL (dl_stack_user), the debugger could not
      find us and had to set __nptl_initial_report_events.  Propagate

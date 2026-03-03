@@ -1,5 +1,5 @@
 /* Return the name-within-directory of a file name.
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,5 +25,5 @@ __basename (const char *filename)
   return p ? p + 1 : (char *) filename;
 }
 libc_hidden_def (__basename)
-weak_alias (__basename, basename)
+static_weak_alias (__basename, basename)
 libc_hidden_weak (basename)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -235,7 +235,7 @@ gethostbyname3_context (struct resolv_context *ctx,
 	case EMFILE:
 	case ENFILE:
 	  h_errno = NETDB_INTERNAL;
-	  /* Fall through.  */
+	  [[fallthrough]];
 	case ECONNREFUSED:
 	case ETIMEDOUT:
 	  status = NSS_STATUS_UNAVAIL;
@@ -444,7 +444,7 @@ _nss_dns_gethostbyname4_r (const char *name, struct gaih_addrtuple **pat,
 	case EMFILE:
 	case ENFILE:
 	  h_errno = NETDB_INTERNAL;
-	  /* Fall through.  */
+	  [[fallthrough]];
 	case ECONNREFUSED:
 	case ETIMEDOUT:
 	  status = NSS_STATUS_UNAVAIL;

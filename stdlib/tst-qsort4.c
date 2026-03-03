@@ -1,5 +1,5 @@
 /* Test the heapsort implementation behind qsort.
-   Copyright (C) 2023-2025 Free Software Foundation, Inc.
+   Copyright (C) 2023-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,6 +16,10 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#undef pthread_cleanup_combined_push
+#define pthread_cleanup_combined_push(routine, arg)
+#undef pthread_cleanup_combined_pop
+#define pthread_cleanup_combined_pop(execute)
 #include "qsort.c"
 
 #include <stdio.h>

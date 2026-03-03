@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -51,7 +51,11 @@ libc_hidden_ver (___pthread_rwlock_unlock, __pthread_rwlock_unlock)
 compat_symbol (libpthread, ___pthread_rwlock_unlock, pthread_rwlock_unlock,
 	       GLIBC_2_1);
 #endif
-#if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_2, GLIBC_2_34)
+
+/* The symbol was unintentionally leaked on ports introduced after 2.34
+   release.  Provide the compat symbol for versions before 2.43 to avoid
+   breaking ABI.  */
+#if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_2, GLIBC_2_43)
 compat_symbol (libpthread, ___pthread_rwlock_unlock, __pthread_rwlock_unlock,
 	       GLIBC_2_2);
 #endif

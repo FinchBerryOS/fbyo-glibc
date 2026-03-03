@@ -1,6 +1,6 @@
 #!/bin/bash
 # Test for iconv (the program) buffer management.
-# Copyright (C) 2024-2025 Free Software Foundation, Inc.
+# Copyright (C) 2024-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -75,6 +75,10 @@ run_iconv () {
 }
 
 check_out_expected () {
+    if test -x "$tmp/out" ; then
+	echo "error: iconv output file is executable"
+	failure=true
+    fi
     if ! cmp -s "$tmp/out" "$tmp/expected" ; then
         echo "error: iconv output difference" >&$logfd
         echo "*** expected ***" >&$logfd
@@ -123,7 +127,7 @@ ignore_failure () {
     set -e
 }
 
-# Concatentation test.
+# Concatenation test.
 run_iconv -o "$tmp/out" "$tmp/abc" "$tmp/def"
 expect_files abc def
 

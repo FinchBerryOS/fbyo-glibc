@@ -1,5 +1,5 @@
 /* Test exception in current environment.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
 #include <fenv_libc.h>
 
 int
-fetestexcept (int excepts)
+__fetestexcept (int excepts)
 {
   unsigned long tmp;
 
@@ -28,4 +28,6 @@ fetestexcept (int excepts)
 
   return tmp & excepts & SWCR_STATUS_MASK;
 }
+libm_hidden_def (__fetestexcept)
+weak_alias (__fetestexcept, fetestexcept)
 libm_hidden_def (fetestexcept)

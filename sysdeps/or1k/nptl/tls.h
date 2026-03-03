@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  NPTL/OpenRISC version.
-   Copyright (C) 2022-2025 Free Software Foundation, Inc.
+   Copyright (C) 2022-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -65,10 +65,7 @@ register tcbhead_t *__thread_self __asm__("r10");
 
 /* Requirements for the TCB.  */
 # define TLS_INIT_TCB_SIZE    sizeof (tcbhead_t)
-# define TLS_INIT_TCB_ALIGN   __alignof__ (struct pthread)
-
 # define TLS_TCB_SIZE         sizeof (tcbhead_t)
-# define TLS_TCB_ALIGN        __alignof__ (struct pthread)
 
 /* This is the size of the TCB.  */
 

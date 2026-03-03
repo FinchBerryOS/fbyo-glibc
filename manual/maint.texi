@@ -303,6 +303,10 @@ The following functions and macros are fortified in @theglibc{}:
 
 @item @code{getwd}
 
+@item @code{inet_ntop}
+
+@item @code{inet_pton}
+
 @item @code{longjmp}
 
 @item @code{mbsnrtowcs}
@@ -318,6 +322,8 @@ The following functions and macros are fortified in @theglibc{}:
 @item @code{mempcpy}
 
 @item @code{memset}
+
+@item @code{memset_explicit}
 
 @item @code{mq_open}
 
@@ -492,7 +498,7 @@ the symbol's name.  For instance, the macro @code{__clock_gettime64}
 expands to @code{clock_gettime}.
 
 When @code{__TIMESIZE} is set to 64, @theglibc{} will also define
-the@code{__USE_TIME_BITS64} macro.  It is used by the Linux kernel ABI
+the @code{__USE_TIME_BITS64} macro.  It is used by the Linux kernel ABI
 to set the expected @code{time_t} size used on some syscalls.
 
 These macros are purely internal to @theglibc{} and exist only so that
@@ -721,8 +727,8 @@ just @w{@samp{--with-@var{package}}} (no argument), then it sets
 @item configure.ac
 
 This file is an Autoconf input fragment to be processed into the file
-@file{configure} in this subdirectory.  @xref{Introduction,,,
-autoconf.info, Autoconf: Generating Automatic Configuration Scripts},
+@file{configure} in this subdirectory.  @xref{Introduction,,, autoconf,
+Autoconf: Generating Automatic Configuration Scripts},
 for a description of Autoconf.  You should write either @file{configure}
 or @file{configure.ac}, but not both.  The first line of
 @file{configure.ac} should invoke the @code{m4} macro

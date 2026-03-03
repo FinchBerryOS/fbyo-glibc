@@ -1,5 +1,5 @@
 /* Round double value to long int.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,6 +30,9 @@
 long int
 __lround (double x)
 {
+#if USE_LROUND_BUILTIN
+  return __builtin_lround (x);
+#else
   int32_t j0;
   int64_t i0;
   long int result;
@@ -90,6 +93,7 @@ __lround (double x)
     }
 
   return sign * result;
+#endif /* ! USE_LROUND_BUILTIN  */
 }
 
 libm_alias_double (__lround, lround)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -146,6 +146,7 @@ arg_trimdomain_list (const char *fname, int line_num, const char *args)
 	      free (buf);
 	      return NULL;
 	    }
+	  [[fallthrough]];
 	default:
 	  break;
 	}

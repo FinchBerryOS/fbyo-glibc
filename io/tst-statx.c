@@ -1,5 +1,5 @@
 /* Basic test of statx system call.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -37,7 +37,8 @@ _Static_assert (offsetof (struct statx, stx_nlink) == 16, "statx nlink");
 _Static_assert (offsetof (struct statx, stx_ino) == 32, "statx ino");
 _Static_assert (offsetof (struct statx, stx_atime) == 64, "statx atime");
 _Static_assert (offsetof (struct statx, stx_rdev_major) == 128, "statx rdev");
-_Static_assert (offsetof (struct statx, __statx_pad2) == 144, "statx pad2");
+_Static_assert (offsetof (struct statx, __statx_pad2) == 188, "statx pad2");
+_Static_assert (offsetof (struct statx, __statx_pad3) == 192, "statx pad3");
 
 #include "statx_generic.c"
 

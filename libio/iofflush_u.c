@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -39,5 +39,5 @@ __fflush_unlocked (FILE *fp)
     }
 }
 libc_hidden_def (__fflush_unlocked)
-weak_alias (__fflush_unlocked, fflush_unlocked)
+static_weak_alias (__fflush_unlocked, fflush_unlocked)
 libc_hidden_weak (fflush_unlocked)

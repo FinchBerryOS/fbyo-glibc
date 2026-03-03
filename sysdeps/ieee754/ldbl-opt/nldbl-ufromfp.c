@@ -1,5 +1,5 @@
 /* Compatibility routine for IEEE double as long double for ufromfp.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
 
 #include "nldbl-compat.h"
 
-uintmax_t
+double
 attribute_hidden
 ufromfpl (double x, int round, unsigned int width)
 {

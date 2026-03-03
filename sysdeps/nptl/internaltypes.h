@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,6 +21,8 @@
 #include <stdint.h>
 #include <atomic.h>
 #include <endian.h>
+#include <semaphore.h>
+#include <atomic-sem_t.h>
 
 
 struct pthread_attr
@@ -159,7 +161,7 @@ struct pthread_key_struct
 /* Semaphore variable structure.  */
 struct new_sem
 {
-#if __HAVE_64B_ATOMICS
+#if USE_64B_ATOMICS_ON_SEM_T
   /* The data field holds both value (in the least-significant 32 bits) and
      nwaiters.  */
 # if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -183,6 +185,12 @@ struct new_sem
   unsigned int nwaiters;
 #endif
 };
+
+_Static_assert (sizeof (sem_t) >= sizeof (struct new_sem),
+		"sizeof (sem_t) >= sizeof (struct new_sem)");
+
+_Static_assert (__alignof (sem_t) >= __alignof (struct new_sem),
+		"__alignof (sem_t) >= __alignof (struct new_sem)");
 
 struct old_sem
 {

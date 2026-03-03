@@ -1,5 +1,5 @@
 /* Configuration for double precision math routines.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 #include <math_private.h>
 #include <nan-high-order-bit.h>
 #include <stdint.h>
+#include <stdbit.h>
 
 #ifndef WANT_ROUNDING
 /* Correct special case results in non-nearest rounding modes.  */
@@ -37,43 +38,70 @@
 # define WANT_ERRNO_UFLOW (WANT_ROUNDING && WANT_ERRNO)
 #endif
 
+#ifndef ROUNDEVEN_INTRINSICS
+/* When set, roundeven_finite will route to the internal roundeven function.  */
+# define ROUNDEVEN_INTRINSICS 1
+#endif
+
+/* Round x to nearest integer value in floating-point format, rounding halfway
+  cases to even.  If the input is non finite the result is unspecified.  */
+static inline double
+roundeven_finite (double x)
+{
+  if (!isfinite (x))
+    __builtin_unreachable ();
+#if ROUNDEVEN_INTRINSICS
+  return roundeven (x);
+#else
+  double y = round (x);
+  if (fabs (x - y) == 0.5)
+    {
+      union { double f; uint64_t i; } u = {y};
+      union { double f; uint64_t i; } v = {y - copysign (1.0, x)};
+      if (__builtin_ctzll (v.i) > __builtin_ctzll (u.i))
+        y = v.f;
+    }
+  return y;
+#endif
+}
+
 #ifndef TOINT_INTRINSICS
 /* When set, the roundtoint and converttoint functions are provided with
    the semantics documented below.  */
 # define TOINT_INTRINSICS 0
 #endif
 
-static inline int
-clz_uint64 (uint64_t x)
-{
-  if (sizeof (uint64_t) == sizeof (unsigned long))
-    return __builtin_clzl (x);
-  else
-    return __builtin_clzll (x);
-}
-
-static inline int
-ctz_uint64 (uint64_t x)
-{
-  if (sizeof (uint64_t) == sizeof (unsigned long))
-    return __builtin_ctzl (x);
-  else
-    return __builtin_ctzll (x);
-}
-
 #if TOINT_INTRINSICS
 /* Round x to nearest int in all rounding modes, ties have to be rounded
    consistently with converttoint so the results match.  If the result
    would be outside of [-2^31, 2^31-1] then the semantics is unspecified.  */
-static inline double_t
-roundtoint (double_t x);
+static inline double
+roundtoint (double x);
 
 /* Convert x to nearest int in all rounding modes, ties have to be rounded
    consistently with roundtoint.  If the result is not representible in an
    int32_t then the semantics is unspecified.  */
 static inline int32_t
-converttoint (double_t x);
+converttoint (double x);
 #endif
+
+#ifndef TOINT64_INTRINSICS
+# define TOINT64_INTRINSICS 1
+#endif
+
+static inline double convertfromint64 (int64_t a)
+{
+#if !TOINT64_INTRINSICS
+  union { int64_t x; double d; } low = {.d = 0x1.0p52};
+
+  double high = (int32_t)(a >> 32) * 0x1.0p32;
+  low.x |= a & INT64_C(0x00000000ffffffff);
+
+  return (high - 0x1.0p52) + low.d;
+#else
+  return a;
+#endif
+}
 
 static inline uint64_t
 asuint64 (double f)
@@ -109,6 +137,7 @@ issignaling_inline (double x)
 #define BIT_WIDTH       64
 #define MANTISSA_WIDTH  52
 #define EXPONENT_WIDTH  11
+#define EXPONENT_BIAS   1023
 #define MANTISSA_MASK   UINT64_C(0x000fffffffffffff)
 #define EXPONENT_MASK   UINT64_C(0x7ff0000000000000)
 #define EXP_MANT_MASK   UINT64_C(0x7fffffffffffffff)
@@ -121,10 +150,22 @@ is_nan (uint64_t x)
   return (x & EXP_MANT_MASK) > EXPONENT_MASK;
 }
 
+static inline bool
+is_inf (uint64_t x)
+{
+  return (x << 1) == (EXPONENT_MASK << 1);
+}
+
 static inline uint64_t
 get_mantissa (uint64_t x)
 {
   return x & MANTISSA_MASK;
+}
+
+static inline int
+get_exponent (uint64_t x)
+{
+  return (int)((x >> MANTISSA_WIDTH & 0x7ff) - EXPONENT_BIAS);
 }
 
 /* Convert integer number X, unbiased exponent EP, and sign S to double:
@@ -135,7 +176,7 @@ get_mantissa (uint64_t x)
 static inline double
 make_double (uint64_t x, int64_t ep, uint64_t s)
 {
-  int lz = clz_uint64 (x) - EXPONENT_WIDTH;
+  int lz = stdc_leading_zeros (x) - EXPONENT_WIDTH;
   x <<= lz;
   ep -= lz;
 
@@ -157,6 +198,9 @@ attribute_hidden double __math_oflow (uint32_t);
 attribute_hidden double __math_uflow (uint32_t);
 /* The result underflows to 0 in some directed rounding mode only.  */
 attribute_hidden double __math_may_uflow (uint32_t);
+/* The result underflows, raise the exception, set errno, and returns the
+   value.  */
+attribute_hidden double __math_uflow_value (double);
 /* Division by zero.  */
 attribute_hidden double __math_divzero (uint32_t);
 
@@ -164,6 +208,8 @@ attribute_hidden double __math_divzero (uint32_t);
 
 /* Invalid input unless it is a quiet NaN.  */
 attribute_hidden double __math_invalid (double);
+attribute_hidden int __math_invalid_i (int);
+attribute_hidden long int __math_invalid_li (long int);
 
 /* Error handling using output checking, only for errno setting.  */
 
@@ -174,6 +220,12 @@ attribute_hidden double __math_edom (double x);
 attribute_hidden double __math_check_oflow (double);
 /* Check if the result underflowed to 0.  */
 attribute_hidden double __math_check_uflow (double);
+/* Check if the |X| if less than Y.  */
+attribute_hidden double __math_check_uflow_lt (double, double);
+/* Check if the |X| if less than Y.  */
+attribute_hidden double __math_check_uflow_zero_lt (double, double, double);
+/* Return pole error.  */
+attribute_hidden double __math_erange (double);
 
 /* Check if the result overflowed to infinity.  */
 static inline double
@@ -195,16 +247,18 @@ check_uflow (double x)
 extern const struct exp_data
 {
   double invln2N;
-  double shift;
   double negln2hiN;
   double negln2loN;
   double poly[4]; /* Last four coefficients.  */
+  double shift;
+
   double exp2_shift;
   double exp2_poly[EXP2_POLY_ORDER];
-  double invlog10_2N;
+
   double neglog10_2hiN;
   double neglog10_2loN;
   double exp10_poly[5];
+  double invlog10_2N;
   uint64_t tab[2*(1 << EXP_TABLE_BITS)];
 } __exp_data attribute_hidden;
 

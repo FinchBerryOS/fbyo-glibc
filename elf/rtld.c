@@ -1,5 +1,5 @@
 /* Run time dynamic linker.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,7 +35,6 @@
 #include <unsecvars.h>
 #include <dl-cache.h>
 #include <dl-osinfo.h>
-#include <dl-procinfo.h>
 #include <dl-prop.h>
 #include <dl-vdso.h>
 #include <dl-vdso-setup.h>
@@ -53,9 +52,6 @@
 #include <dl-find_object.h>
 #include <dl-audit-check.h>
 #include <dl-call_tls_init_tp.h>
-
-#include <stdlib.h>  // für malloc/free
-#include <string.h>  // für strcmp/strcpy
 
 #include <assert.h>
 
@@ -326,7 +322,7 @@ struct rtld_global _rtld_global =
 #include <dl-procruntime.c>
     /* Generally the default presumption without further information is an
      * executable stack but this is not true for all platforms.  */
-    ._dl_stack_flags = DEFAULT_STACK_PERMS,
+    ._dl_stack_prot_flags = DEFAULT_STACK_PROT_PERMS,
 #ifdef _LIBC_REENTRANT
     ._dl_load_lock = _RTLD_LOCK_RECURSIVE_INITIALIZER,
     ._dl_load_write_lock = _RTLD_LOCK_RECURSIVE_INITIALIZER,
@@ -363,7 +359,6 @@ struct rtld_global_ro _rtld_global_ro attribute_relro =
     ._dl_fpu_control = _FPU_DEFAULT,
     ._dl_pagesize = EXEC_PAGESIZE,
     ._dl_inhibit_cache = 0,
-    ._dl_profile_output = "/var/tmp",
 
     /* Function pointers.  */
     ._dl_debug_printf = _dl_debug_printf,
@@ -431,7 +426,6 @@ static ElfW(Addr) _dl_start_final (void *arg,
 
 /* These are defined magically by the linker.  */
 extern const ElfW(Ehdr) __ehdr_start attribute_hidden;
-extern char _etext[] attribute_hidden;
 extern char _end[] attribute_hidden;
 
 
@@ -462,6 +456,7 @@ _dl_start_final (void *arg, struct dl_start_final_info *info)
   /* Do not use an initializer for these members because it would
      interfere with __rtld_static_init.  */
   GLRO (dl_find_object) = &_dl_find_object;
+  GLRO (dl_readonly_area) = &_dl_readonly_area;
 
   /* If it hasn't happen yet record the startup time.  */
   rtld_timer_start (&start_time);
@@ -480,8 +475,10 @@ _dl_start_final (void *arg, struct dl_start_final_info *info)
 #endif
   _dl_setup_hash (&_dl_rtld_map);
   _dl_rtld_map.l_real = &_dl_rtld_map;
-  _dl_rtld_map.l_map_start = (ElfW(Addr)) &__ehdr_start;
-  _dl_rtld_map.l_map_end = (ElfW(Addr)) _end;
+  _dl_rtld_map.l_map_start
+    = (ElfW(Addr)) DL_ADDRESS_WITHOUT_RELOC (&__ehdr_start);
+  _dl_rtld_map.l_map_end
+    = (ElfW(Addr)) DL_ADDRESS_WITHOUT_RELOC (_end);
   /* Copy the TLS related data if necessary.  */
 #ifndef DONT_USE_BOOTSTRAP_MAP
 # if NO_TLS_OFFSET != 0
@@ -1058,13 +1055,9 @@ static void
 rtld_chain_load (struct link_map *main_map, char *argv0)
 {
   /* The dynamic loader run against itself.  */
-  const char *rtld_soname
-    = ((const char *) D_PTR (&_dl_rtld_map, l_info[DT_STRTAB])
-       + _dl_rtld_map.l_info[DT_SONAME]->d_un.d_val);
-  if (main_map->l_info[DT_SONAME] != NULL
-      && strcmp (rtld_soname,
-		 ((const char *) D_PTR (main_map, l_info[DT_STRTAB])
-		  + main_map->l_info[DT_SONAME]->d_un.d_val)) == 0)
+  const char *rtld_soname = l_soname (&_dl_rtld_map);
+  if (l_soname (main_map) != NULL
+      && strcmp (rtld_soname, l_soname (main_map)) == 0)
     _dl_fatal_printf ("%s: loader cannot load itself\n", rtld_soname);
 
   /* With DT_NEEDED dependencies, the executable is dynamically
@@ -1203,7 +1196,7 @@ rtld_setup_main_map (struct link_map *main_map)
 	break;
 
       case PT_GNU_STACK:
-	GL(dl_stack_flags) = ph->p_flags;
+	GL(dl_stack_prot_flags) = pf_to_prot (ph->p_flags);
 	break;
 
       case PT_GNU_RELRO:
@@ -1243,6 +1236,60 @@ rtld_setup_main_map (struct link_map *main_map)
     assert (_dl_rtld_map.l_libname); /* How else did we get here?  */
 
   return has_interp;
+}
+
+/* Set up the program header information for the dynamic linker
+   itself.  It can be accessed via _r_debug and dl_iterate_phdr
+   callbacks, and it is used by _dl_find_object.  */
+static void
+rtld_setup_phdr (void)
+{
+  /* Starting from binutils-2.23, the linker will define the magic
+     symbol __ehdr_start to point to our own ELF header if it is
+     visible in a segment that also includes the phdrs.  */
+
+  const ElfW(Ehdr) *rtld_ehdr = &__ehdr_start;
+  assert (rtld_ehdr->e_ehsize == sizeof *rtld_ehdr);
+  assert (rtld_ehdr->e_phentsize == sizeof (ElfW(Phdr)));
+
+  const ElfW(Phdr) *rtld_phdr = (const void *) rtld_ehdr + rtld_ehdr->e_phoff;
+
+  _dl_rtld_map.l_phdr = rtld_phdr;
+  _dl_rtld_map.l_phnum = rtld_ehdr->e_phnum;
+
+
+  _dl_rtld_map.l_contiguous = 1;
+  /* The linker may not have produced a contiguous object.  The kernel
+     will load the object with actual gaps (unlike the glibc loader
+     for shared objects, which always produces a contiguous mapping).
+     See similar logic in rtld_setup_main_map above.  */
+  {
+    ElfW(Addr) expected_load_address = 0;
+    for (const ElfW(Phdr) *ph = rtld_phdr; ph < &rtld_phdr[rtld_ehdr->e_phnum];
+	 ++ph)
+      if (ph->p_type == PT_LOAD)
+	{
+	  ElfW(Addr) mapstart = ph->p_vaddr & ~(GLRO(dl_pagesize) - 1);
+	  if (_dl_rtld_map.l_contiguous && expected_load_address != 0
+	      && expected_load_address != mapstart)
+	    _dl_rtld_map.l_contiguous = 0;
+	  ElfW(Addr) allocend = ph->p_vaddr + ph->p_memsz;
+	  /* The next expected address is the page following this load
+	     segment.  */
+	  expected_load_address = ((allocend + GLRO(dl_pagesize) - 1)
+				   & ~(GLRO(dl_pagesize) - 1));
+	}
+  }
+
+  /* PT_GNU_RELRO is usually the last phdr.  */
+  size_t cnt = rtld_ehdr->e_phnum;
+  while (cnt-- > 0)
+    if (rtld_phdr[cnt].p_type == PT_GNU_RELRO)
+      {
+	_dl_rtld_map.l_relro_addr = rtld_phdr[cnt].p_vaddr;
+	_dl_rtld_map.l_relro_size = rtld_phdr[cnt].p_memsz;
+	break;
+      }
 }
 
 /* Adjusts the contents of the stack and related globals for the user
@@ -1299,177 +1346,6 @@ _dl_start_args_adjust (int skip_args, int skip_env)
     }
   while (ax.a_type != AT_NULL);
 #endif
-}
-
-/* Forward declarations für libsystemcore Integration */
-static void _dl_load_libsystemcore (void) __attribute__ ((cold));
-static void _dl_read_fybos_sections (const void **frameworks_data, size_t *frameworks_size,
-                                    const void **libbds_data, size_t *libbds_size) __attribute__ ((cold));
-
-/* libsystemcore Init-Funktion Name */
-#ifndef LIBSYSTEMCORE_INIT_FUNC  
-# define LIBSYSTEMCORE_INIT_FUNC "_libsc_ld_main"
-#endif
-
-/* FybOS ELF-Sektionen auslesen */
-static void
-_dl_read_fybos_sections (const void **frameworks_data, size_t *frameworks_size,
-                        const void **libbds_data, size_t *libbds_size)
-{
-  /* Default: NULL falls Sektionen nicht vorhanden */
-  *frameworks_data = NULL;
-  *frameworks_size = 0;
-  *libbds_data = NULL;
-  *libbds_size = 0;
-  
-  /* GL(dl_ns)[LM_ID_BASE]._ns_loaded ist main_map in glibc */
-  struct link_map *main_map = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
-  if (main_map == NULL || main_map->l_addr == 0)
-    return;
-    
-  const ElfW(Ehdr) *ehdr = (const ElfW(Ehdr) *) main_map->l_addr;
-  
-  /* Section Header Table validieren */
-  if (ehdr->e_shoff == 0 || ehdr->e_shnum == 0 || ehdr->e_shstrndx >= ehdr->e_shnum)
-    return;
-    
-  const ElfW(Shdr) *shdrs = (const ElfW(Shdr) *) (main_map->l_addr + ehdr->e_shoff);
-  const ElfW(Shdr) *shstrtab_hdr = &shdrs[ehdr->e_shstrndx];
-  
-  /* String Table validieren */
-  if (shstrtab_hdr->sh_offset == 0 || shstrtab_hdr->sh_size == 0)
-    return;
-    
-  const char *shstrtab = (const char *) (main_map->l_addr + shstrtab_hdr->sh_offset);
-  
-  /* Durch alle Sektionen iterieren */
-  for (ElfW(Half) i = 0; i < ehdr->e_shnum; i++)
-    {
-      const ElfW(Shdr) *shdr = &shdrs[i];
-      
-      /* Section Name validieren */
-      if (shdr->sh_name >= shstrtab_hdr->sh_size)
-        continue;
-        
-      const char *section_name = shstrtab + shdr->sh_name;
-      
-      /* .fybos_frameworks Sektion */
-      if (strcmp(section_name, ".fybos_frameworks") == 0)
-        {
-          if (shdr->sh_size > 0 && shdr->sh_offset != 0)
-            {
-              *frameworks_data = (const void *) (main_map->l_addr + shdr->sh_offset);
-              *frameworks_size = shdr->sh_size;
-            }
-        }
-      /* .fybos_libbds Sektion */
-      else if (strcmp(section_name, ".fybos_libbds") == 0)
-        {
-          if (shdr->sh_size > 0 && shdr->sh_offset != 0)
-            {
-              *libbds_data = (const void *) (main_map->l_addr + shdr->sh_offset);
-              *libbds_size = shdr->sh_size;
-            }
-        }
-    }
-}
-
-/* libsystemcore.so path - hardcoded im selben Ordner wie ld.so */
-static char *
-_dl_get_systemcore_path (void)
-{
-  /* ld.so path ermitteln */
-  const char *ldso_path = _dl_rtld_map.l_name;
-  if (ldso_path == NULL)
-    return NULL;
-    
-  /* Directory von ld.so extrahieren */
-  const char *last_slash = strrchr(ldso_path, '/');
-  if (last_slash == NULL)
-    return NULL;
-    
-  size_t dir_len = last_slash - ldso_path;
-  size_t systemcore_path_len = dir_len + sizeof("/libsystemcore.so");
-  
-  char *systemcore_path = malloc(systemcore_path_len);
-  if (systemcore_path == NULL)
-    return NULL;
-    
-  /* Path konstruieren: /lib/x86_64-linux-gnu/libsystemcore.so */
-  memcpy(systemcore_path, ldso_path, dir_len);
-  strcpy(systemcore_path + dir_len, "/libsystemcore.so");
-  
-  return systemcore_path;
-}
-
-/* libsystemcore.so laden und initialisieren */
-static void
-_dl_load_libsystemcore (void)
-{
-  struct link_map *systemcore_map = NULL;
-  void (*init_func)(const void *, size_t, const void *, size_t) = NULL;
-  char *systemcore_path = NULL;
-  const void *frameworks_data = NULL, *libbds_data = NULL;
-  size_t frameworks_size = 0, libbds_size = 0;
-  
-  /* FybOS Sektionen aus main_map auslesen */
-  _dl_read_fybos_sections (&frameworks_data, &frameworks_size,
-                          &libbds_data, &libbds_size);
-  
-  /* Systemcore path ermitteln */
-  systemcore_path = _dl_get_systemcore_path();
-  if (systemcore_path == NULL)
-    return;
-  
-  /* main_map korrekt referenzieren */
-  struct link_map *main_map = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
-  
-  /* libsystemcore.so laden */
-  systemcore_map = _dl_map_object (NULL, systemcore_path, lt_library,
-                                   0, LM_ID_BASE, &main_map->l_scope[0]);
-  
-  /* Path freigeben */
-  free(systemcore_path);
-  
-  if (systemcore_map == NULL)
-    return;
-    
-  /* Dependencies auflösen - void function */
-  _dl_map_object_deps (systemcore_map, NULL, 0, 0, 0);
-    
-  /* Relocations durchführen - void function */
-  _dl_relocate_object (systemcore_map, systemcore_map->l_scope,
-                      RTLD_LAZY | RTLD_GLOBAL, 0);
-    
-  /* Init-Funktion suchen */
-  const ElfW(Sym) *ref = NULL;
-  lookup_t result = _dl_lookup_symbol_x (LIBSYSTEMCORE_INIT_FUNC,
-                                        systemcore_map,
-                                        &ref,
-                                        systemcore_map->l_scope,
-                                        NULL,
-                                        ELF_RTYPE_CLASS_PLT,
-                                        DL_LOOKUP_ADD_DEPENDENCY,
-                                        NULL);
-  
-  if (result == NULL || ref == NULL)
-    return;
-    
-  /* Funktion-Pointer berechnen */
-  init_func = (void (*)(const void *, size_t, const void *, size_t)) 
-              DL_SYMBOL_ADDRESS (result, ref);
-  
-  if (init_func == NULL)
-    return;
-    
-  /* Init-Funktion mit FybOS-Daten ausführen */
-  init_func(frameworks_data, frameworks_size, libbds_data, libbds_size);
-  
-  /* systemcore_map in globale Namespace einfügen */
-  systemcore_map->l_global = 1;
-  _dl_add_to_namespace_list (systemcore_map, LM_ID_BASE);
-  ++GL(dl_ns)[LM_ID_BASE]._ns_nloaded;
-  ++GL(dl_load_adds);
 }
 
 static void
@@ -1664,12 +1540,12 @@ dl_main (const ElfW(Phdr) *phdr,
       --_dl_argc;
       ++_dl_argv;
 
-      /* The initialization of _dl_stack_flags done below assumes the
+      /* The initialization of dl_stack_prot_flags done below assumes the
 	 executable's PT_GNU_STACK may have been honored by the kernel, and
 	 so a PT_GNU_STACK with PF_X set means the stack started out with
 	 execute permission.  However, this is not really true if the
 	 dynamic linker is the executable the kernel loaded.  For this
-	 case, we must reinitialize _dl_stack_flags to match the dynamic
+	 case, we must reinitialize dl_stack_prot_flags to match the dynamic
 	 linker itself.  If the dynamic linker was built with a
 	 PT_GNU_STACK, then the kernel may have loaded us with a
 	 nonexecutable stack that we will have to make executable when we
@@ -1679,7 +1555,7 @@ dl_main (const ElfW(Phdr) *phdr,
       for (const ElfW(Phdr) *ph = phdr; ph < &phdr[phnum]; ++ph)
 	if (ph->p_type == PT_GNU_STACK)
 	  {
-	    GL(dl_stack_flags) = ph->p_flags;
+	    GL(dl_stack_prot_flags) = pf_to_prot (ph->p_flags);
 	    break;
 	  }
 
@@ -1800,26 +1676,54 @@ dl_main (const ElfW(Phdr) *phdr,
 
   bool has_interp = rtld_setup_main_map (main_map);
 
-  if ((__glibc_unlikely (GL(dl_stack_flags)) & PF_X)
-      && TUNABLE_GET (glibc, rtld, execstack, int32_t, NULL) == 0)
-    _dl_fatal_printf ("Fatal glibc error: executable stack is not allowed\n");
+  /* --- FBOS BUNDLE DETECTION START --- */
+  if (main_map->l_origin != NULL)
+    {
+      /* 1. executable_path als Anker für das Bundle setzen */
+      /* Wir nutzen hier strdup, da wir uns in der Initialisierungsphase befinden */
+      main_map->l_executable_path = strdup (main_map->l_origin);
+
+      /* 2. Prüfung auf .app Struktur (/Contents/Linux) */
+      char *marker = strstr (main_map->l_origin, "/Contents/FBOS");
+      if (marker != NULL)
+        {
+          main_map->l_is_bundle = 1;
+
+          /* Berechne den Pfad bis zum 'Contents' Ordner */
+          /* marker zeigt auf den Anfang von "/Contents/Linux" */
+          size_t root_len = (marker - main_map->l_origin) + 9; /* 9 = "/Contents" */
+          main_map->l_bundle_root = strndup (main_map->l_origin, root_len);
+
+          /* Debug-Ausgabe für den Testlauf auf dem Raspi */
+          if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES))
+            _dl_debug_printf ("FBOS: Bundle detected! Root: %s\n", main_map->l_bundle_root);
+        }
+      else
+        {
+          main_map->l_is_bundle = 0;
+          main_map->l_bundle_root = NULL;
+        }
+    }
+  /* --- FBOS BUNDLE DETECTION END --- */
+
+  _dl_handle_execstack_tunable ();
 
   /* If the current libname is different from the SONAME, add the
      latter as well.  */
-  if (_dl_rtld_map.l_info[DT_SONAME] != NULL
-      && strcmp (_dl_rtld_map.l_libname->name,
-		 (const char *) D_PTR (&_dl_rtld_map, l_info[DT_STRTAB])
-		 + _dl_rtld_map.l_info[DT_SONAME]->d_un.d_val) != 0)
-    {
-      static struct libname_list newname;
-      newname.name = ((char *) D_PTR (&_dl_rtld_map, l_info[DT_STRTAB])
-		      + _dl_rtld_map.l_info[DT_SONAME]->d_un.d_ptr);
-      newname.next = NULL;
-      newname.dont_free = 1;
+  {
+    const char *soname = l_soname (&_dl_rtld_map);
+    if (soname != NULL
+	&& strcmp (_dl_rtld_map.l_libname->name, soname) != 0)
+      {
+	static struct libname_list newname;
+	newname.name = soname;
+	newname.next = NULL;
+	newname.dont_free = 1;
 
-      assert (_dl_rtld_map.l_libname->next == NULL);
-      _dl_rtld_map.l_libname->next = &newname;
-    }
+	assert (_dl_rtld_map.l_libname->next == NULL);
+	_dl_rtld_map.l_libname->next = &newname;
+      }
+  }
   /* The ld.so must be relocated since otherwise loading audit modules
      will fail since they reuse the very same ld.so.  */
   assert (_dl_rtld_map.l_relocated);
@@ -1832,10 +1736,8 @@ dl_main (const ElfW(Phdr) *phdr,
       /* If the main map is libc.so, update the base namespace to
 	 refer to this map.  If libc.so is loaded later, this happens
 	 in _dl_map_object_from_fd.  */
-      if (main_map->l_info[DT_SONAME] != NULL
-	  && (strcmp (((const char *) D_PTR (main_map, l_info[DT_STRTAB])
-		      + main_map->l_info[DT_SONAME]->d_un.d_val), LIBC_SO)
-	      == 0))
+      if (l_soname (main_map) != NULL
+	  && strcmp (l_soname (main_map), LIBC_SO) == 0)
 	GL(dl_ns)[LM_ID_BASE].libc_map = main_map;
 
       /* Set up our cache of pointers into the hash table.  */
@@ -1866,8 +1768,6 @@ dl_main (const ElfW(Phdr) *phdr,
      objects.  */
   call_init_paths (&state);
 
-  _dl_load_libsystemcore ();
-
   /* Initialize _r_debug_extended.  */
   struct r_debug *r = _dl_debug_initialize (_dl_rtld_map.l_addr,
 					    LM_ID_BASE);
@@ -1886,33 +1786,7 @@ dl_main (const ElfW(Phdr) *phdr,
   ++GL(dl_ns)[LM_ID_BASE]._ns_nloaded;
   ++GL(dl_load_adds);
 
-  /* Starting from binutils-2.23, the linker will define the magic symbol
-     __ehdr_start to point to our own ELF header if it is visible in a
-     segment that also includes the phdrs.  If that's not available, we use
-     the old method that assumes the beginning of the file is part of the
-     lowest-addressed PT_LOAD segment.  */
-
-  /* Set up the program header information for the dynamic linker
-     itself.  It is needed in the dl_iterate_phdr callbacks.  */
-  const ElfW(Ehdr) *rtld_ehdr = &__ehdr_start;
-  assert (rtld_ehdr->e_ehsize == sizeof *rtld_ehdr);
-  assert (rtld_ehdr->e_phentsize == sizeof (ElfW(Phdr)));
-
-  const ElfW(Phdr) *rtld_phdr = (const void *) rtld_ehdr + rtld_ehdr->e_phoff;
-
-  _dl_rtld_map.l_phdr = rtld_phdr;
-  _dl_rtld_map.l_phnum = rtld_ehdr->e_phnum;
-
-
-  /* PT_GNU_RELRO is usually the last phdr.  */
-  size_t cnt = rtld_ehdr->e_phnum;
-  while (cnt-- > 0)
-    if (rtld_phdr[cnt].p_type == PT_GNU_RELRO)
-      {
-	_dl_rtld_map.l_relro_addr = rtld_phdr[cnt].p_vaddr;
-	_dl_rtld_map.l_relro_size = rtld_phdr[cnt].p_memsz;
-	break;
-      }
+  rtld_setup_phdr ();
 
   /* Add the dynamic linker to the TLS list if it also uses TLS.  */
   if (_dl_rtld_map.l_tls_blocksize != 0)
@@ -1959,8 +1833,7 @@ dl_main (const ElfW(Phdr) *phdr,
   elf_setup_debug_entry (main_map, r);
 
   /* We start adding objects.  */
-  r->r_state = RT_ADD;
-  _dl_debug_state ();
+  _dl_debug_change_state (r, RT_ADD);
   LIBC_PROBE (init_start, 2, LM_ID_BASE, r);
 
   /* Auditing checkpoint: we are ready to signal that the initial map
@@ -2495,6 +2368,9 @@ dl_main (const ElfW(Phdr) *phdr,
 
       __rtld_mutex_init ();
       __rtld_malloc_init_real (main_map);
+
+      /* Update copy-relocated _r_debug if necessary.  */
+      _dl_debug_post_relocate (main_map);
     }
 
   /* All ld.so initialization is complete.  Apply RELRO.  */
@@ -2515,8 +2391,7 @@ dl_main (const ElfW(Phdr) *phdr,
   /* Notify the debugger all new objects are now ready to go.  We must re-get
      the address since by now the variable might be in another object.  */
   r = _dl_debug_update (LM_ID_BASE);
-  r->r_state = RT_CONSISTENT;
-  _dl_debug_state ();
+  _dl_debug_change_state (r, RT_CONSISTENT);
   LIBC_PROBE (init_complete, 2, LM_ID_BASE, r);
 
   /* Auditing checkpoint: we have added all objects.  */
@@ -2582,10 +2457,14 @@ process_dl_debug (struct dl_main_state *state, const char *dl_debug)
 	DL_DEBUG_VERSIONS | DL_DEBUG_IMPCALLS },
       { LEN_AND_STR ("scopes"), "display scope information",
 	DL_DEBUG_SCOPES },
+      { LEN_AND_STR ("tls"), "display TLS structures processing",
+	DL_DEBUG_TLS },
+      { LEN_AND_STR ("security"), "show security warnings for input files",
+	DL_DEBUG_SECURITY },
       { LEN_AND_STR ("all"), "all previous options combined",
 	DL_DEBUG_LIBS | DL_DEBUG_RELOC | DL_DEBUG_FILES | DL_DEBUG_SYMBOLS
 	| DL_DEBUG_BINDINGS | DL_DEBUG_VERSIONS | DL_DEBUG_IMPCALLS
-	| DL_DEBUG_SCOPES },
+	| DL_DEBUG_SCOPES | DL_DEBUG_TLS | DL_DEBUG_SECURITY },
       { LEN_AND_STR ("statistics"), "display relocation statistics",
 	DL_DEBUG_STATISTICS },
       { LEN_AND_STR ("unused"), "determined unused DSOs",
@@ -2648,7 +2527,7 @@ Valid options for the LD_DEBUG environment variable are:\n\n");
 
       for (cnt = 0; cnt < ndebopts; ++cnt)
 	_dl_printf ("  %.*s%s%s\n", debopts[cnt].len, debopts[cnt].name,
-		    "         " + debopts[cnt].len - 3,
+		    &"         "[debopts[cnt].len - 3],
 		    debopts[cnt].helptext);
 
       _dl_printf ("\n\
@@ -2858,6 +2737,15 @@ process_envvars_default (struct dl_main_state *state)
 	}
     }
 
+  /* There is no fixed, safe directory to store profiling data, so
+     activate LD_PROFILE only if LD_PROFILE_OUTPUT is set as well.  */
+  if (GLRO(dl_profile) != NULL && GLRO(dl_profile_output) == NULL)
+    {
+      _dl_error_printf ("\
+warning: LD_PROFILE ignored because LD_PROFILE_OUTPUT not specified\n");
+      GLRO(dl_profile) = NULL;
+    }
+
   /* If we have to run the dynamic linker in debugging mode and the
      LD_DEBUG_OUTPUT environment variable is given, we write the debug
      messages to this file.  */
@@ -2909,10 +2797,10 @@ print_statistics_item (const char *title, hp_timing_t time,
     {
     case 3:
       *wp++ = *cp++;
-      /* Fall through.  */
+      [[fallthrough]];
     case 2:
       *wp++ = *cp++;
-      /* Fall through.  */
+      [[fallthrough]];
     case 1:
       *wp++ = '.';
       *wp++ = *cp++;

@@ -1,5 +1,5 @@
 /* Optimized strncmp implementation for PowerPC64/POWER10.
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2025-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,17 +30,6 @@
 # define STRNCMP strncmp
 #endif
 
-/* TODO: Change this to actual instructions when minimum binutils is upgraded
-   to 2.27.  Macros are defined below for these newer instructions in order
-   to maintain compatibility.  */
-
-#define LXVP(xtp,dq,ra)              \
-	.long(((6)<<(32-6))          \
-	| ((((xtp)-32)>>1)<<(32-10)) \
-	| ((1)<<(32-11))             \
-	| ((ra)<<(32-16))            \
-	| dq)
-
 #define COMPARE_16(vreg1,vreg2,offset) \
 	lxv	  vreg1+32,offset(r3); \
 	lxv	  vreg2+32,offset(r4); \
@@ -51,8 +40,8 @@
 	addi	  r5,r5,-16;
 
 #define COMPARE_32(vreg1,vreg2,offset,label1,label2) \
-	LXVP(vreg1+32,offset,r3);                    \
-	LXVP(vreg2+32,offset,r4);                    \
+	lxvp	  vreg1+32,offset(r3);               \
+	lxvp	  vreg2+32,offset(r4);               \
 	vcmpnezb. v7,vreg1+1,vreg2+1;                \
 	bne	  cr6,L(label1);                     \
 	vcmpnezb. v7,vreg1,vreg2;                    \
@@ -94,9 +83,7 @@
 	ble	  cr7,L(ret0);		 \
 	sub	  r5,r5,len_reg;	 \
 
-	/* TODO: change this to .machine power10 when the minimum required
-	 binutils allows it.  */
-	.machine  power9
+	.machine  power10
 ENTRY_TOCLESS (STRNCMP, 4)
 	/* Check if size is 0.  */
 	cmpdi	 cr0,r5,0
@@ -246,21 +233,15 @@ L(different):
 	.p2align 5
 L(32B_aligned_loop):
 	COMPARE_32(v14,v16,0,tail1,tail2)
-	COMPARE_32(v18,v20,32,tail3,tail4)
-	COMPARE_32(v22,v24,64,tail5,tail6)
-	COMPARE_32(v26,v28,96,tail7,tail8)
+	COMPARE_32(v14,v16,32,tail1,tail2)
+	COMPARE_32(v14,v16,64,tail1,tail2)
+	COMPARE_32(v14,v16,96,tail1,tail2)
 	addi	r3,r3,128
 	addi	r4,r4,128
 	b	L(32B_aligned_loop)
 
 L(tail1): TAIL_FIRST_16B(v15,v17)
 L(tail2): TAIL_SECOND_16B(v14,v16)
-L(tail3): TAIL_FIRST_16B(v19,v21)
-L(tail4): TAIL_SECOND_16B(v18,v20)
-L(tail5): TAIL_FIRST_16B(v23,v25)
-L(tail6): TAIL_SECOND_16B(v22,v24)
-L(tail7): TAIL_FIRST_16B(v27,v29)
-L(tail8): TAIL_SECOND_16B(v26,v28)
 
 	.p2align 5
 L(ret0):

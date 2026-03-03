@@ -1,5 +1,5 @@
 /* Configure optimized libm functions.  AArch64 version.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,14 +25,14 @@
 /* Use inline round and lround instructions.  */
 #define TOINT_INTRINSICS 1
 
-static inline double_t
-roundtoint (double_t x)
+static inline double
+roundtoint (double x)
 {
   return round (x);
 }
 
 static inline int32_t
-converttoint (double_t x)
+converttoint (double x)
 {
   return lround (x);
 }

@@ -1,5 +1,5 @@
 /* Test for pvalloc.
-   Copyright (C) 2013-2025 Free Software Foundation, Inc.
+   Copyright (C) 2013-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <libc-diag.h>
+#include "tst-malloc-aux.h"
 
 static int errors = 0;
 

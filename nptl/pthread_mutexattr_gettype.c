@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,8 +25,7 @@ __pthread_mutexattr_gettype (const pthread_mutexattr_t *attr, int *kind)
 
   iattr = (const struct pthread_mutexattr *) attr;
 
-  *kind = (iattr->mutexkind & ~PTHREAD_MUTEXATTR_FLAG_BITS
-	   & ~PTHREAD_MUTEX_NO_ELISION_NP);
+  *kind = iattr->mutexkind & ~PTHREAD_MUTEXATTR_FLAG_BITS;
 
   return 0;
 }

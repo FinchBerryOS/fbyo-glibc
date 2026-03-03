@@ -48,10 +48,10 @@ versions are from the numeric extensions to C included in @w{ISO C99}.
 Which of the three versions of a function should be used depends on the
 situation.  For most calculations, the @code{float} functions are the
 fastest.  On the other hand, the @code{long double} functions have the
-highest precision.  @code{double} is somewhere in between.  It is
-usually wise to pick the narrowest type that can accommodate your data.
-Not all machines have a distinct @code{long double} type; it may be the
-same as @code{double}.
+most precision and exponent range.  @code{double} is somewhere in between.
+It is usually wise to pick the smallest type that can accommodate your data.
+On some machines @code{long double} has no more precision or exponent
+range than @code{double}, though the types remain distinct for type checking.
 
 @Theglibc{} also provides @code{_Float@var{N}} and
 @code{_Float@var{N}x} types.  These types are defined in @w{ISO/IEC TS
@@ -80,7 +80,7 @@ aarch64, alpha, loongarch, mips64, riscv, s390 and sparc.
 * Exponents and Logarithms::    Also pow and sqrt.
 * Hyperbolic Functions::        sinh, cosh, tanh, etc.
 * Special Functions::           Bessel, gamma, erf.
-* Errors in Math Functions::    Known Maximum Errors in Math Functions.
+* Errors in Math Functions::    Remarks in Errors in Math Functions.
 * Pseudo-Random Numbers::       Functions for generating pseudo-random
 				 numbers.
 * FP Function Optimizations::   Fast code or small code.
@@ -774,6 +774,51 @@ do that, so instead it signals a domain error. @code{pow} may also
 underflow or overflow the destination type.
 @end deftypefun
 
+@deftypefun double powr (double @var{base}, double @var{power})
+@deftypefunx float powrf (float @var{base}, float @var{power})
+@deftypefunx {long double} powrl (long double @var{base}, long double @var{power})
+@deftypefunx _FloatN powrfN (_Float@var{N} @var{base}, _Float@var{N} @var{power})
+@deftypefunx _FloatNx powrfNx (_Float@var{N}x @var{base}, _Float@var{N}x @var{power})
+@standards{TS 18661-4:2015, math.h}
+@safety{@prelim{}@mtsafe{}@assafe{}@acsafe{}}
+These return @var{base} raised to @var{power}, but with special cases
+based on @code{exp (power * log (base))}.  For example, if @var{base}
+is negative, the @code{powr} functions always signal a domain error,
+but this is valid for @code{pow} if @var{power} is an integer.
+
+The @code{powr} functions are from TS 18661-4:2015.
+@end deftypefun
+
+@deftypefun double pown (double @var{base}, long long int @var{power})
+@deftypefunx float pownf (float @var{base}, long long int @var{power})
+@deftypefunx {long double} pownl (long double @var{base}, long long int @var{power})
+@deftypefunx _FloatN pownfN (_Float@var{N} @var{base}, long long int @var{power})
+@deftypefunx _FloatNx pownfNx (_Float@var{N}x @var{base}, long long int @var{power})
+@standards{TS 18661-4:2015, math.h}
+@safety{@prelim{}@mtsafe{}@assafe{}@acsafe{}}
+These return @var{base} raised to @var{power} (an integer).
+
+The @code{pown} functions are from TS 18661-4:2015 (which used
+@code{intmax_t} as the type of @var{power}; the type changed to
+@code{long long int} in C23).
+@end deftypefun
+
+@deftypefun double compoundn (double @var{x}, long long int @var{power})
+@deftypefunx float compoundnf (float @var{x}, long long int @var{power})
+@deftypefunx {long double} compoundnl (long double @var{x}, long long int @var{power})
+@deftypefunx _FloatN compoundnfN (_Float@var{N} @var{x}, long long int @var{power})
+@deftypefunx _FloatNx compoundnfNx (_Float@var{N}x @var{x}, long long int @var{power})
+@standards{TS 18661-4:2015, math.h}
+@safety{@prelim{}@mtsafe{}@assafe{}@acsafe{}}
+These return @code{1 + @var{x}} raised to @var{power} (an integer).
+If @var{x} is less than @minus{}1, @code{compoundn} signals a domain
+error.
+
+The @code{compoundn} functions are from TS 18661-4:2015 (which used
+@code{intmax_t} as the type of @var{power}; the type changed to
+@code{long long int} in C23).
+@end deftypefun
+
 @cindex square root function
 @deftypefun double sqrt (double @var{x})
 @deftypefunx float sqrtf (float @var{x})
@@ -788,6 +833,19 @@ These functions return the nonnegative square root of @var{x}.
 
 If @var{x} is negative, @code{sqrt} signals a domain error.
 Mathematically, it should return a complex number.
+@end deftypefun
+
+@deftypefun double rsqrt (double @var{x})
+@deftypefunx float rsqrtf (float @var{x})
+@deftypefunx {long double} rsqrtl (long double @var{x})
+@deftypefunx _FloatN rsqrtfN (_Float@var{N} @var{x})
+@deftypefunx _FloatNx rsqrtfNx (_Float@var{N}x @var{x})
+@standards{TS 18661-4:2015, math.h}
+@safety{@prelim{}@mtsafe{}@assafe{}@acsafe{}}
+These functions return the reciprocal of the nonnegative square root of @var{x}.
+If @var{x} is negative, @code{rsqrt} signals a domain error.
+
+The @code{rsqrt} functions are from TS 18661-4:2015.
 @end deftypefun
 
 @cindex cube root function
@@ -823,6 +881,22 @@ triangle with sides of length @var{x} and @var{y}, or the distance
 of the point (@var{x}, @var{y}) from the origin.  Using this function
 instead of the direct formula is wise, since the error is
 much smaller.  See also the function @code{cabs} in @ref{Absolute Value}.
+@end deftypefun
+
+@deftypefun double rootn (double @var{x}, long long int @var{n})
+@deftypefunx float rootnf (float @var{x}, long long int @var{n})
+@deftypefunx {long double} rootnl (long double @var{x}, long long int @var{n})
+@deftypefunx _FloatN rootnfN (_Float@var{N} @var{x}, long long int @var{n})
+@deftypefunx _FloatNx rootnfNx (_Float@var{N}x @var{x}, long long int @var{n})
+@standards{TS 18661-4:2015, math.h}
+@safety{@prelim{}@mtsafe{}@assafe{}@acsafe{}}
+These return the @var{n}th root of @var{x}.  If @var{n} is zero, or if
+@var{x} is negative and @var{n} is even, @code{rootn} signals a domain
+error.
+
+The @code{rootn} functions are from TS 18661-4:2015 (which used
+@code{intmax_t} as the type of @var{n}; the type changed to
+@code{long long int} in C23).
 @end deftypefun
 
 @deftypefun double expm1 (double @var{x})
@@ -1448,12 +1522,11 @@ extensions.
 @end deftypefun
 
 @node Errors in Math Functions
-@section Known Maximum Errors in Math Functions
+@section Errors in Math Functions
 @cindex math errors
 @cindex ulps
 
-This section lists the known errors of the functions in the math
-library.  Errors are measured in ``units of the last place''.  This is a
+Errors are measured in ``units of the last place''.  This is a
 measure for the relative error.  For a number @math{z} with the
 representation @math{d.d@dots{}d@mul{}2^e} (we assume IEEE
 floating-point numbers with base 2) the ULP is represented by
@@ -1563,22 +1636,25 @@ functions.
 @end itemize
 
 Therefore many of the functions in the math library have errors.  The
-table lists the maximum error for each function which is exposed by one
-of the existing tests in the test suite.  The table tries to cover as much
-as possible and list the actual maximum error (or at least a ballpark
-figure) but this is often not achieved due to the large search space.
+math testsuite only flags results larger than 9ulp (or 16 for IBM
+@code{long double} format) as errors; although most of the implementations
+show errors smaller than the limit.
 
-The table lists the ULP values for different architectures.  Different
-architectures have different results since their hardware support for
-floating-point operations varies and also the existing hardware support
-is different.  Only the round-to-nearest rounding mode is covered by
-this table.  Functions not listed do not have known errors.  Vector
-versions of functions in the x86_64 libmvec library have a maximum error
-of 4 ulps.
+A more comprehensive analysis of @theglibc{} math functions precision could
+be found in 'Accuracy of Mathematical Functions in Single, Double, Double
+Extended, and Quadruple Precision'; Brian Gladman, Vincenzo Innocente,
+John Mather, and Paul Zimmermann at
+@url{<https://inria.hal.science/hal-03141101>}.  It does not cover complex
+functions, nor @code{jn}/@code{yn}, and it is only for x86_64, and for
+rounding to nearest, and does not cover any architecture variations (in
+particular IBM @code{long double} is out of scope).
 
-@page
-@c This multitable does not fit on a single page
-@include libm-err.texi
+For complex functions, some analysis of @theglibc{} math functions can be
+found in 'Accuracy of Complex Mathematical Operations and Functions in Single
+and Double Precision'; Paul Caprioli, Vincenzo Innocente, Paul Zimmermann
+at @url{https://inria.hal.science/hal-04714173}.  It only covers @code{float}
+and @code{double}, only for x86_64, and for rounding to nearest, and does not
+cover any architecture variations.
 
 @node Pseudo-Random Numbers
 @section Pseudo-Random Numbers

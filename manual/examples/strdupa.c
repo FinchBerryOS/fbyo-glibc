@@ -1,5 +1,5 @@
 /* strdupa example.
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -15,6 +15,7 @@
    along with this program; if not, see <https://www.gnu.org/licenses/>.
 */
 
+#define _GNU_SOURCE 1
 #include <paths.h>
 #include <string.h>
 #include <stdio.h>

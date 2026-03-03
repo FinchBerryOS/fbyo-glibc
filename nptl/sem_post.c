@@ -1,5 +1,5 @@
 /* sem_post -- post to a POSIX semaphore.  Generic futex-using version.
-   Copyright (C) 2003-2025 Free Software Foundation, Inc.
+   Copyright (C) 2003-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ __new_sem_post (sem_t *sem)
   struct new_sem *isem = (struct new_sem *) sem;
   int private = isem->private;
 
-#if __HAVE_64B_ATOMICS
+#if USE_64B_ATOMICS_ON_SEM_T
   /* Add a token to the semaphore.  We use release MO to make sure that a
      thread acquiring this token synchronizes with us and other threads that
      added tokens before (the release sequence includes atomic RMW operations

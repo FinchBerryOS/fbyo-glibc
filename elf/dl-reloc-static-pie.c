@@ -1,5 +1,5 @@
 /* Support for relocating static PIE.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -51,7 +51,8 @@ _dl_relocate_static_pie (void)
     switch (ph->p_type)
       {
       case PT_LOAD:
-	if (ph->p_offset == 0)
+	/* Skip the empty PT_LOAD segment at offset 0.  */
+	if (ph->p_filesz != 0 && ph->p_offset == 0)
 	  file_p_vaddr = ph->p_vaddr;
 	break;
       case PT_DYNAMIC:

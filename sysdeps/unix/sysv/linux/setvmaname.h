@@ -1,5 +1,5 @@
 /* Utilities functions to name memory mappings.
-   Copyright (C) 2023-2025 Free Software Foundation, Inc.
+   Copyright (C) 2023-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,9 +19,17 @@
 #ifndef __SETVMANAME_H
 #define __SETVMANAME_H
 
+/* Maximum supported name from initial kernel support, not exported
+   by user API.  */
+#define ANON_VMA_NAME_MAX_LEN 80
+
 /* Set the NAME to the anonymous memory map START with size of LEN.
    It assumes well-formatted input.  */
 #if IS_IN(libc) || IS_IN(rtld)
+#include <stdbool.h>
+
+bool __is_decorate_maps_enabled (void) attribute_hidden;
+
 void __set_vma_name (void *start, size_t len, const char *name)
   attribute_hidden;
 #else

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -291,4 +291,4 @@ __confstr (int name, char *buf, size_t len)
 }
 libc_hidden_def (__confstr)
 libc_hidden_def (confstr)
-weak_alias (__confstr, confstr)
+static_weak_alias (__confstr, confstr)

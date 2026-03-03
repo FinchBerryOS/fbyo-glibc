@@ -1,6 +1,6 @@
 /* Common definition for ifunc resolvers.  Linux/ARM version.
    This file is part of the GNU C Library.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,9 @@
 
 #define arm_libc_ifunc_redirected(redirected_name, name, expr)	\
   __ifunc (redirected_name, name, expr(hwcap), int hwcap, INIT_ARCH)
+
+#define arm_libm_ifunc(name, expr)				\
+  __ifunc (name, name, expr, int hwcap, libm_ifunc_init)
 
 #if defined SHARED
 # define arm_libc_ifunc_hidden_def(redirect_name, name) \

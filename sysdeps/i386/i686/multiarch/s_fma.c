@@ -1,5 +1,5 @@
 /* Multiple versions of fma.
-   Copyright (C) 2010-2025 Free Software Foundation, Inc.
+   Copyright (C) 2010-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,4 +38,4 @@ libm_alias_double_narrow (__fma, fma)
 
 #define __fma __fma_ia32
 
-#include <sysdeps/ieee754/ldbl-96/s_fma.c>
+#include <sysdeps/ieee754/dbl-64/s_fma.c>

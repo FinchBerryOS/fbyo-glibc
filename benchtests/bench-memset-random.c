@@ -1,5 +1,5 @@
 /* Measure memset performance.
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ typedef struct { uint8_t align; uint16_t freq; } align_data_t;
 
 #define SIZE_NUM 65536
 #define SIZE_MASK (SIZE_NUM-1)
-static uint8_t len_arr[SIZE_NUM];
+static uint16_t len_arr[SIZE_NUM];
 
 /* Frequency data for memset sizes up to 4096 bytes based on SPEC2017.  */
 static freq_data_t memset_len_freq[] =

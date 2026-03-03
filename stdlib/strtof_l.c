@@ -1,5 +1,5 @@
 /* Convert string representing a number to float value, using given locale.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -47,8 +47,8 @@ extern float ____strtof_l_internal (const char *, char **, int, locale_t);
 # undef strtof32_l
 # undef wcstof32_l
 # ifdef USE_WIDE_CHAR
-weak_alias (wcstof_l, wcstof32_l)
+weak_alias (__wcstof_l, wcstof32_l)
 # else
-weak_alias (strtof_l, strtof32_l)
+weak_alias (__strtof_l, strtof32_l)
 # endif
 #endif

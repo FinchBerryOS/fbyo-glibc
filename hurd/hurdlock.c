@@ -1,5 +1,5 @@
 /* Hurd helpers for lowlevellocks.
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -64,6 +64,7 @@ __lll_abstimed_wait_intr (void *ptr, int val,
   int mlsec = compute_reltime (tsp, clk);
   return mlsec < 0 ? KERN_TIMEDOUT : __lll_timed_wait_intr (ptr, val, mlsec, flags);
 }
+libc_hidden_def (__lll_abstimed_wait_intr)
 
 int
 __lll_abstimed_xwait (void *ptr, int lo, int hi,
@@ -99,6 +100,7 @@ __lll_abstimed_lock (void *ptr,
         return ETIMEDOUT;
     }
 }
+libc_hidden_def (__lll_abstimed_lock)
 
 /* Robust locks.  */
 
@@ -157,6 +159,7 @@ __lll_robust_lock (void *ptr, int flags)
         }
     }
 }
+libc_hidden_def (__lll_robust_lock)
 
 int
 __lll_robust_abstimed_lock (void *ptr,
@@ -206,6 +209,7 @@ __lll_robust_abstimed_lock (void *ptr,
         }
     }
 }
+libc_hidden_def (__lll_robust_abstimed_lock)
 
 int
 __lll_robust_trylock (void *ptr)
@@ -225,6 +229,7 @@ __lll_robust_trylock (void *ptr)
 
   return EBUSY;
 }
+libc_hidden_def (__lll_robust_trylock)
 
 void
 __lll_robust_unlock (void *ptr, int flags)
@@ -241,3 +246,5 @@ __lll_robust_unlock (void *ptr, int flags)
         break;
     }
 }
+
+libc_hidden_def (__lll_robust_unlock)

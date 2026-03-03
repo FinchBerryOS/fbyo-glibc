@@ -1,5 +1,5 @@
 /* Support for GNU properties.  Generic version.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ _rtld_main_check (struct link_map *m, const char *program)
 }
 
 static inline void __attribute__ ((always_inline))
-_dl_open_check (struct link_map *m)
+_dl_open_check (struct link_map *m, int dlopen_mode)
 {
 }
 

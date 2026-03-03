@@ -1,5 +1,5 @@
 # Makefile for sysdeps/ieee754/ldbl-96.
-# Copyright (C) 2016-2025 Free Software Foundation, Inc.
+# Copyright (C) 2016-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -92,6 +92,8 @@ CFLAGS-s_fminmagl.c += -fno-builtin-fminmagf64x
 CFLAGS-w_fmodl.c += -fno-builtin-fmodf64x
 CFLAGS-s_fmull.c += -fno-builtin-f32mulf64x
 CFLAGS-s_frexpl.c += -fno-builtin-frexpf64x
+CFLAGS-s_compat_fromfpl.c += -fno-builtin-fromfpf64x
+CFLAGS-s_compat_fromfpxl.c += -fno-builtin-fromfpxf64x
 CFLAGS-s_fromfpl.c += -fno-builtin-fromfpf64x
 CFLAGS-s_fromfpxl.c += -fno-builtin-fromfpxf64x
 CFLAGS-s_fsqrtl.c += -fno-builtin-f32sqrtf64x
@@ -141,6 +143,8 @@ CFLAGS-w_tgammal.c += -fno-builtin-tgammaf64x
 CFLAGS-s_totalorderl.c += -fno-builtin-totalorderf64x
 CFLAGS-s_totalordermagl.c += -fno-builtin-totalordermagf64x
 CFLAGS-s_truncl.c += -fno-builtin-truncf64x
+CFLAGS-s_compat_ufromfpl.c += -fno-builtin-ufromfpf64x
+CFLAGS-s_compat_ufromfpxl.c += -fno-builtin-ufromfpxf64x
 CFLAGS-s_ufromfpl.c += -fno-builtin-ufromfpf64x
 CFLAGS-s_ufromfpxl.c += -fno-builtin-ufromfpxf64x
 CFLAGS-s_y0l.c += -fno-builtin-y0f64x
@@ -148,3 +152,7 @@ CFLAGS-s_y1l.c += -fno-builtin-y1f64x
 CFLAGS-s_ynl.c += -fno-builtin-ynf64x
 
 endif # $(subdir) == math
+
+ifeq ($(subdir),stdio-common)
+fmt-xscanf-real-convs += ldouble
+endif

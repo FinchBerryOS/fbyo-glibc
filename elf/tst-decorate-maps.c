@@ -1,5 +1,5 @@
 /* Check the VMA name decoration.
-   Copyright (C) 2023-2025 Free Software Foundation, Inc.
+   Copyright (C) 2023-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -109,7 +109,7 @@ do_test_threads (bool set_guard)
   xpthread_barrier_init (&b, NULL, num_threads + 1);
 
   /* Issue a large malloc to trigger a mmap call.  */
-  void *p = xmalloc (256 * 1024);
+  void *p = xmalloc (2 * 1024 * 1024);
 
   pthread_t thr[num_threads];
   {

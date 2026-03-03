@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -30,5 +30,5 @@ __fesetround (int round)
   return 0;
 }
 libm_hidden_def (__fesetround)
-weak_alias (__fesetround, fesetround)
+static_weak_alias (__fesetround, fesetround)
 libm_hidden_weak (fesetround)

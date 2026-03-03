@@ -1,5 +1,5 @@
 /* C11 threads thread detach tests.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,7 +28,10 @@ detach_thrd (void *arg)
 {
   if (thrd_detach (thrd_current ()) != thrd_success)
     FAIL_EXIT1 ("thrd_detach failed");
-  thrd_exit (thrd_success);
+
+  pause ();
+
+  return 0;
 }
 
 static int
@@ -43,8 +46,9 @@ do_test (void)
   /* Give some time so the thread can finish.  */
   thrd_sleep (&(struct timespec) {.tv_sec = 2}, NULL);
 
+  /* Calling thrd_join on a detached thread is UB... */
   if (thrd_join (id, NULL) == thrd_success)
-    FAIL_EXIT1 ("thrd_join succeed where it should fail");
+    FAIL_EXIT1 ("thrd_join succeeded where it should fail");
 
   return 0;
 }

@@ -20,7 +20,10 @@
 #include <fenv_private.h>
 #include <math-underflow.h>
 #include <libm-alias-finite.h>
+#include <libm-alias-float.h>
+#include <math-svid-compat.h>
 #include <reduce_aux.h>
+#include "math_config.h"
 
 static float ponef(float), qonef(float);
 
@@ -207,7 +210,7 @@ j1f_asympt (float x)
     }
   double y = 1.0 / (double) x;
   double y2 = y * y;
-  double beta1 = 1.0f + y2 * (0x3p-4 - 0x3.18p-4 * y2);
+  double beta1 = 1.0 + y2 * (0x3p-4 - 0x3.18p-4 * y2);
   double alpha1;
   alpha1 = y * (-0x6p-4 + y2 * (0x2.ap-4 - 0x5.ef33333333334p-4 * y2));
   double h;
@@ -260,7 +263,7 @@ j1f_near_root (float x, float z)
 }
 
 float
-__ieee754_j1f(float x)
+__j1f(float x)
 {
 	float z, s,c,ss,cc,r,u,v,y;
 	int32_t hx,ix;
@@ -317,6 +320,13 @@ __ieee754_j1f(float x)
 	r *= x;
 	return(x*(float)0.5+r/s);
 }
+strong_alias (__j1f, __ieee754_j1f)
+#if LIBM_SVID_COMPAT
+versioned_symbol (libm, __j1f, j1f, GLIBC_2_43);
+libm_alias_float_other (__j1, j1)
+#else
+libm_alias_float (__j1, j1)
+#endif
 libm_alias_finite (__ieee754_j1f, __j1f)
 
 static const float U0[5] = {
@@ -494,7 +504,7 @@ y1f_asympt (float x)
   float cst = 0xc.c422ap-4; /* sqrt(2/pi) rounded to nearest  */
   double y = 1.0 / (double) x;
   double y2 = y * y;
-  double beta1 = 1.0f + y2 * (0x3p-4 - 0x3.18p-4 * y2);
+  double beta1 = 1.0 + y2 * (0x3p-4 - 0x3.18p-4 * y2);
   double alpha1;
   alpha1 = y * (-0x6p-4 + y2 * (0x2.ap-4 - 0x5.ef33333333334p-4 * y2));
   double h;
@@ -537,17 +547,19 @@ y1f_near_root (float x, float z)
     return z;
   float xmid = p[1];
   float y = x - xmid, p6;
+  /* Using float rather than double in the constants below is enough to get
+     the desired accuracy (at most 9 ulps).  */
   if (index == 0)
-    p6 = p[6] + y * (-0x1.28043p-8 + y * 0x2.50e83p-8);
+    p6 = p[6] + y * (-0x1.28043p-8f + y * 0x2.50e83p-8f);
   else if (index == 1)
-    p6 = p[6] + y * -0xf.ff6b8p-12;
+    p6 = p[6] + y * -0xf.ff6b8p-12f;
   else
     p6 = p[6];
   return p[3] + y * (p[4] + y * (p[5] + y * p6));
 }
 
 float
-__ieee754_y1f(float x)
+__y1f(float x)
 {
 	float z, s,c,ss,cc,u,v;
 	int32_t hx,ix;
@@ -555,10 +567,15 @@ __ieee754_y1f(float x)
 	GET_FLOAT_WORD(hx,x);
 	ix = 0x7fffffff&hx;
     /* if Y1(NaN) is NaN, Y1(-inf) is NaN, Y1(inf) is 0 */
-	if(__builtin_expect(ix>=0x7f800000, 0)) return  one/(x+x*x);
-	if(__builtin_expect(ix==0, 0))
-		return -1/zero; /* -inf and divide by zero exception.  */
-	if(__builtin_expect(hx<0, 0)) return zero/(zero*x);
+	if(ix>=0x7f800000)
+	  {
+	    if (hx==0xFF800000)
+	      return __math_invalidf (1);
+	    else
+	      return one/(x+x*x);
+	  }
+	if(ix==0) return __math_divzerof (1); /* -inf and divide by zero exception.  */
+	if(hx<0) return __math_invalidf (x);
         if (ix >= 0x3fe0dfbc) { /* |x| >= 0x1.c1bf78p+0 */
 		SET_RESTORE_ROUNDF (FE_TONEAREST);
 		__sincosf (x, &s, &c);
@@ -609,6 +626,13 @@ __ieee754_y1f(float x)
 	v = one+z*(V0[0]+z*(V0[1]+z*(V0[2]+z*(V0[3]+z*V0[4]))));
 	return(x*(u/v) + tpi*(__ieee754_j1f(x)*__ieee754_logf(x)-one/x));
 }
+strong_alias (__y1f, __ieee754_y1f)
+#if LIBM_SVID_COMPAT
+versioned_symbol (libm, __y1f, y1f, GLIBC_2_43);
+libm_alias_float_other (__y1, y1)
+#else
+libm_alias_float (__y1, y1)
+#endif
 libm_alias_finite (__ieee754_y1f, __y1f)
 
 /* For x >= 8, the asymptotic expansion of pone is

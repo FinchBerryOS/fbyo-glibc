@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2025 Free Software Foundation, Inc.
+# Copyright (C) 1991-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@ include ../Makeconfig
 headers := \
   $(wildcard arpa/*.h protocols/*.h) \
   bits/in.h \
+  bits/inet-fortified-decl.h \
+  bits/inet-fortified.h \
   ifaddrs.h \
   netinet/ether.h \
   netinet/icmp6.h \
@@ -122,9 +124,6 @@ ifeq ($(have-thread-library),yes)
 CFLAGS-rcmd.c += -fexceptions
 CFLAGS-either_ntoh.c += -fexceptions
 CFLAGS-either_hton.c += -fexceptions
-CFLAGS-in6_addr.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-if_index.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-ifaddrs.c += $(config-cflags-wno-ignored-attributes)
 
 CFLAGS-tst-checks-posix.c += -std=c99
 CFLAGS-tst-sockaddr.c += -fno-strict-aliasing

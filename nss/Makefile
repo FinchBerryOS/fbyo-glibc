@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2025 Free Software Foundation, Inc.
+# Copyright (C) 1996-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -348,6 +348,7 @@ xtests := \
 tests-container := \
   tst-initgroups1 \
   tst-initgroups2 \
+  tst-nss-action-parse \
   tst-nss-compat1 \
   tst-nss-db-endgrent \
   tst-nss-db-endpwent \
@@ -367,6 +368,7 @@ tests += tst-nss-files-hosts-multi
 tests += tst-nss-files-hosts-getent
 tests += tst-nss-files-alias-leak
 tests += tst-nss-files-alias-truncated
+tests += tst-nss-files-network
 # tst_fgetgrent currently only works with shared libraries
 test-srcs :=  tst_fgetgrent
 ifeq ($(run-built-tests),yes)
@@ -443,6 +445,9 @@ generated += mtrace-tst-nss-gai-hv2-canonname.out \
 
 include ../Rules
 
+LOCALES := tr_TR.UTF-8
+include ../gen-locales.mk
+
 ifeq (yes,$(have-selinux))
 LDLIBS-makedb		:= -lselinux
 endif
@@ -475,39 +480,39 @@ libof-nss_test1 = extramodules
 libof-nss_test2 = extramodules
 libof-nss_test_errno = extramodules
 libof-nss_test_gai_hv2_canonname = extramodules
-$(objpfx)/libnss_test1.so: $(objpfx)nss_test1.os $(link-libc-deps)
+$(objpfx)libnss_test1.so: $(objpfx)nss_test1.os $(link-libc-deps)
 	$(build-module)
-$(objpfx)/libnss_test2.so: $(objpfx)nss_test2.os $(link-libc-deps)
+$(objpfx)libnss_test2.so: $(objpfx)nss_test2.os $(link-libc-deps)
 	$(build-module)
-$(objpfx)/libnss_test_errno.so: $(objpfx)nss_test_errno.os $(link-libc-deps)
+$(objpfx)libnss_test_errno.so: $(objpfx)nss_test_errno.os $(link-libc-deps)
 	$(build-module)
-$(objpfx)/libnss_test_gai_hv2_canonname.so: \
+$(objpfx)libnss_test_gai_hv2_canonname.so: \
   $(objpfx)nss_test_gai_hv2_canonname.os $(link-libc-deps)
 	$(build-module)
 $(objpfx)nss_test2.os : nss_test1.c
 # Use the nss_files suffix for these objects as well.
-$(objpfx)/libnss_test1.so$(libnss_files.so-version): $(objpfx)/libnss_test1.so
+$(objpfx)libnss_test1.so$(libnss_files.so-version): $(objpfx)libnss_test1.so
 	$(make-link)
-$(objpfx)/libnss_test2.so$(libnss_files.so-version): $(objpfx)/libnss_test2.so
+$(objpfx)libnss_test2.so$(libnss_files.so-version): $(objpfx)libnss_test2.so
 	$(make-link)
-$(objpfx)/libnss_test_errno.so$(libnss_files.so-version): \
-  $(objpfx)/libnss_test_errno.so
+$(objpfx)libnss_test_errno.so$(libnss_files.so-version): \
+  $(objpfx)libnss_test_errno.so
 	$(make-link)
-$(objpfx)/libnss_test_gai_hv2_canonname.so$(libnss_files.so-version): \
-  $(objpfx)/libnss_test_gai_hv2_canonname.so
+$(objpfx)libnss_test_gai_hv2_canonname.so$(libnss_files.so-version): \
+  $(objpfx)libnss_test_gai_hv2_canonname.so
 	$(make-link)
 $(patsubst %,$(objpfx)%.out,$(tests) $(tests-container)) : \
-	$(objpfx)/libnss_test1.so$(libnss_files.so-version) \
-	$(objpfx)/libnss_test2.so$(libnss_files.so-version) \
-	$(objpfx)/libnss_test_errno.so$(libnss_files.so-version) \
-	$(objpfx)/libnss_test_gai_hv2_canonname.so$(libnss_files.so-version)
+	$(objpfx)libnss_test1.so$(libnss_files.so-version) \
+	$(objpfx)libnss_test2.so$(libnss_files.so-version) \
+	$(objpfx)libnss_test_errno.so$(libnss_files.so-version) \
+	$(objpfx)libnss_test_gai_hv2_canonname.so$(libnss_files.so-version)
 
 ifeq (yes,$(have-thread-library))
 $(objpfx)tst-cancel-getpwuid_r: $(shared-thread-library)
 endif
 
-$(objpfx)tst-nss-files-alias-leak.out: $(objpfx)/libnss_files.so
-$(objpfx)tst-nss-files-alias-truncated.out: $(objpfx)/libnss_files.so
+$(objpfx)tst-nss-files-alias-leak.out: $(objpfx)libnss_files.so
+$(objpfx)tst-nss-files-alias-truncated.out: $(objpfx)libnss_files.so
 
 tst-nss-gai-hv2-canonname-ENV = \
 		MALLOC_TRACE=$(objpfx)tst-nss-gai-hv2-canonname.mtrace \
@@ -519,6 +524,8 @@ $(objpfx)mtrace-tst-nss-gai-hv2-canonname.out: \
 	&& $(common-objpfx)malloc/mtrace \
 	$(objpfx)tst-nss-gai-hv2-canonname.mtrace; } > $@; \
 	$(evaluate-test)
+
+$(objpfx)tst-nss-action-parse.out: $(gen-locales)
 
 # Disable DT_RUNPATH on NSS tests so that the glibc internal NSS
 # functions can load testing NSS modules via DT_RPATH.

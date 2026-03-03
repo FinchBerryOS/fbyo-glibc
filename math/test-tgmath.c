@@ -1,5 +1,5 @@
 /* Test compilation of tgmath macros.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ volatile int count_cdouble;
 volatile int count_cfloat;
 volatile int count_cldouble;
 
-#define NCALLS     183
+#define NCALLS     194
 #define NCALLS_INT 4
 #define NCCALLS    47
 
@@ -227,9 +227,7 @@ F(compile_test) (void)
   int i = 2;
   int saved_count;
   long int j;
-  long long int k;
-  intmax_t m;
-  uintmax_t um;
+  long long int k = 2;
 
   a = cos (cos (x));
   a = cospi (cospi (x));
@@ -268,7 +266,12 @@ F(compile_test) (void)
   a = log10p1 (log10p1 (x));
   a = logp1 (logp1 (x));
   a = pow (pow (x, a), pow (c, b));
+  b = pown (pown (x, k), k);
+  b = compoundn (compoundn (x, k), k);
+  b = rootn (rootn (x, k), k);
+  a = powr (powr (x, a), powr (c, b));
   b = sqrt (sqrt (a));
+  a = rsqrt (rsqrt (b));
   a = hypot (hypot (x, b), hypot (c, a));
   b = cbrt (cbrt (a));
   a = ceil (ceil (x));
@@ -282,8 +285,8 @@ F(compile_test) (void)
   b = remquo (remquo (a, b, &i), remquo (c, x, &i), &i);
   j = lrint (x) + lround (a);
   k = llrint (b) + llround (c);
-  m = fromfp (a, FP_INT_UPWARD, 2) + fromfpx (b, FP_INT_DOWNWARD, 3);
-  um = ufromfp (c, FP_INT_TONEAREST, 4) + ufromfpx (a, FP_INT_TOWARDZERO, 5);
+  c = fromfp (a, FP_INT_UPWARD, 2) + fromfpx (b, FP_INT_DOWNWARD, 3);
+  c = ufromfp (c, FP_INT_TONEAREST, 4) + ufromfpx (a, FP_INT_TOWARDZERO, 5);
   a = erf (erf (x));
   b = erfc (erfc (a));
   a = tgamma (tgamma (x));
@@ -319,7 +322,7 @@ F(compile_test) (void)
   c = fma (i, b, i);
   a = pow (i, c);
 #endif
-  x = a + b + c + i + j + k + m + um;
+  x = a + b + c + i + j + k;
 
   saved_count = count;
   if (ccount != 0)
@@ -393,7 +396,12 @@ F(compile_test) (void)
       a = log10p1 (y);
       a = logp1 (y);
       a = pow (y, y);
+      a = pown (y, 12345);
+      a = compoundn (y, 12345);
+      a = rootn (y, 12345);
+      a = powr (y, y);
       a = sqrt (y);
+      a = rsqrt (y);
       a = hypot (y, y);
       a = cbrt (y);
       a = ceil (y);
@@ -407,9 +415,9 @@ F(compile_test) (void)
       a = remquo (y, y, &i);
       j = lrint (y) + lround (y);
       k = llrint (y) + llround (y);
-      m = fromfp (y, FP_INT_UPWARD, 6) + fromfpx (y, FP_INT_DOWNWARD, 7);
-      um = (ufromfp (y, FP_INT_TONEAREST, 8)
-	    + ufromfpx (y, FP_INT_TOWARDZERO, 9));
+      b = fromfp (y, FP_INT_UPWARD, 6) + fromfpx (y, FP_INT_DOWNWARD, 7);
+      b = (ufromfp (y, FP_INT_TONEAREST, 8)
+	   + ufromfpx (y, FP_INT_TOWARDZERO, 9));
       a = erf (y);
       a = erfc (y);
       a = tgamma (y);
@@ -770,7 +778,47 @@ TYPE
 }
 
 TYPE
+(F(pown)) (TYPE x, long long int y)
+{
+  ++count;
+  P ();
+  return x + y;
+}
+
+TYPE
+(F(powr)) (TYPE x, TYPE y)
+{
+  ++count;
+  P ();
+  return x + y;
+}
+
+TYPE
+(F(compoundn)) (TYPE x, long long int y)
+{
+  ++count;
+  P ();
+  return x + y;
+}
+
+TYPE
+(F(rootn)) (TYPE x, long long int y)
+{
+  ++count;
+  P ();
+  return x + y;
+}
+
+TYPE
 (F(sqrt)) (TYPE x)
+{
+  ++count;
+  P ();
+  return x;
+}
+
+TYPE
+(F(rsqrt)) (TYPE x)
 {
   ++count;
   P ();
@@ -897,7 +945,7 @@ long long int
   return x;
 }
 
-intmax_t
+TYPE
 (F(fromfp)) (TYPE x, int round, unsigned int width)
 {
   ++count;
@@ -905,7 +953,7 @@ intmax_t
   return x;
 }
 
-intmax_t
+TYPE
 (F(fromfpx)) (TYPE x, int round, unsigned int width)
 {
   ++count;
@@ -913,7 +961,7 @@ intmax_t
   return x;
 }
 
-uintmax_t
+TYPE
 (F(ufromfp)) (TYPE x, int round, unsigned int width)
 {
   ++count;
@@ -921,7 +969,7 @@ uintmax_t
   return x;
 }
 
-uintmax_t
+TYPE
 (F(ufromfpx)) (TYPE x, int round, unsigned int width)
 {
   ++count;

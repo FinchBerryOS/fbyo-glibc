@@ -1,5 +1,5 @@
 /* x86 version of hardware capability information handling macros.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -24,15 +24,5 @@ enum
   HWCAP_X86_64			= 1 << 1,
   HWCAP_X86_AVX512_1		= 1 << 2
 };
-
-static inline const char *
-__attribute__ ((unused))
-_dl_hwcap_string (int idx)
-{
-  return GLRO(dl_x86_hwcap_flags)[idx];
-};
-
-/* We cannot provide a general printing function.  */
-#define _dl_procinfo(type, word) -1
 
 #endif /* dl-hwcap.h */

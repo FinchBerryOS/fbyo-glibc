@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2025 Free Software Foundation, Inc.
+# Copyright (C) 1995-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -159,7 +159,8 @@ $(objpfx)tst-gettext6.out: $(objpfx)tst-gettext.out
 
 CPPFLAGS += -D'LOCALEDIR="$(localedir)"' \
 	    -D'LOCALE_ALIAS_PATH="$(localedir)"' \
-	    -Wno-unused-but-set-variable
+	    -Wno-unused-but-set-variable \
+	    -Wno-implicit-fallthrough
 BISONFLAGS = --yacc --no-lines --name-prefix=__gettext --output
 
 $(inst_localedir)/locale.alias: locale.alias $(+force)

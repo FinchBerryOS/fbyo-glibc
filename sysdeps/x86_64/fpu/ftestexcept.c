@@ -1,5 +1,5 @@
 /* Test exception in current environment.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,17 +17,20 @@
    <https://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
+#include <math-inline-asm.h>
 
 int
-fetestexcept (int excepts)
+__fetestexcept (int excepts)
 {
   int temp;
   unsigned int mxscr;
 
   /* Get current exceptions.  */
-  __asm__ ("fnstsw %0\n"
-	   "stmxcsr %1" : "=m" (*&temp), "=m" (*&mxscr));
+  asm volatile ("fnstsw %0" : "=m" (temp));
+  stmxcsr_inline_asm (&mxscr);
 
   return (temp | mxscr) & excepts & FE_ALL_EXCEPT;
 }
+libm_hidden_def (__fetestexcept)
+static_weak_alias (__fetestexcept, fetestexcept)
 libm_hidden_def (fetestexcept)

@@ -1,5 +1,5 @@
 /* Early initialization of libc.so, libc.so side.
-   Copyright (C) 2020-2025 Free Software Foundation, Inc.
+   Copyright (C) 2020-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,13 +17,13 @@
    <https://www.gnu.org/licenses/>.  */
 
 #include <ctype.h>
-#include <elision-conf.h>
 #include <libc-early-init.h>
 #include <libc-internal.h>
 #include <lowlevellock.h>
 #include <pthread_early_init.h>
 #include <sys/single_threaded.h>
 #include <getrandom-internal.h>
+#include <malloc/malloc-internal.h>
 
 #ifdef SHARED
 _Bool __libc_initial;
@@ -46,7 +46,6 @@ __libc_early_init (_Bool initial)
 
   __getrandom_early_init (initial);
 
-#if ENABLE_ELISION_SUPPORT
-  __lll_elision_init ();
-#endif
+  /* Initialize system malloc (needs __libc_initial to be set).  */
+  call_function_static_weak (__ptmalloc_init);
 }

@@ -1,5 +1,5 @@
 /* Malloc huge page support.  Generic implementation.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -40,5 +40,9 @@ enum malloc_thp_mode_t __malloc_thp_mode (void) attribute_hidden;
    matched against the sizes supported by the system.  */
 void __malloc_hugepage_config (size_t requested, size_t *pagesize, int *flags)
      attribute_hidden;
+
+#ifndef DEFAULT_THP_PAGESIZE
+# define DEFAULT_THP_PAGESIZE	0
+#endif
 
 #endif /* _MALLOC_HUGEPAGES_H */

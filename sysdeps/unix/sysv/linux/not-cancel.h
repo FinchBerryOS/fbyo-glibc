@@ -1,5 +1,5 @@
 /* Uncancelable versions of cancelable interfaces.  Linux/NPTL version.
-   Copyright (C) 2003-2025 Free Software Foundation, Inc.
+   Copyright (C) 2003-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -53,6 +53,9 @@ __typeof (__write) __write_nocancel;
 /* Uncancelable close.  */
 __typeof (__close) __close_nocancel;
 
+/* Uncancellable close that does not also set errno in case of failure.  */
+void __close_nocancel_nostatus (int);
+
 /* Uncancelable fcntl.  */
 int __fcntl64_nocancel (int, int, ...);
 
@@ -65,16 +68,9 @@ hidden_proto (__read_nocancel)
 hidden_proto (__pread64_nocancel)
 hidden_proto (__write_nocancel)
 hidden_proto (__close_nocancel)
+hidden_proto (__close_nocancel_nostatus)
 hidden_proto (__fcntl64_nocancel)
 #endif
-
-/* Non cancellable close syscall that does not also set errno in case of
-   failure.  */
-static inline void
-__close_nocancel_nostatus (int fd)
-{
-  __close_nocancel (fd);
-}
 
 /* Non cancellable writev syscall that does not also set errno in case of
    failure.  */

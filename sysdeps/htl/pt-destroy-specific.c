@@ -1,5 +1,5 @@
 /* __pthread_destory_specific.  Hurd version.
-   Copyright (C) 2002-2025 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 
 #include <pt-internal.h>
+#include <string.h>
 
 void
 __pthread_destroy_specific (struct __pthread *thread)
@@ -100,3 +101,4 @@ __pthread_destroy_specific (struct __pthread *thread)
   memset (&thread->static_thread_specifics, 0,
 	  sizeof (thread->static_thread_specifics));
 }
+libc_hidden_def (__pthread_destroy_specific)

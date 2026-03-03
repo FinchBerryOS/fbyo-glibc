@@ -1,5 +1,5 @@
 /* Test strlen functions.
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ typedef size_t (*proto_t) (const CHAR *, size_t);
 #undef STRNLEN
 #ifndef WIDE
 # define MEMCHR __memchr_default
-# define weak_alias(a, b)
+# define static_weak_alias(a, b)
 # define libc_hidden_def(a)
 # define libc_hidden_builtin_def(a)
 # include "string/memchr.c"
@@ -58,11 +58,12 @@ typedef size_t (*proto_t) (const CHAR *, size_t);
 IMPL (__strnlen_default, 1)
 #else
 # define WMEMCHR __wmemchr_default
-# define weak_alias(a, b)
+# define static_weak_alias(a, b)
 # define libc_hidden_def(a)
 # define libc_hidden_weak(a)
 # include "wcsmbs/wmemchr.c"
 # define WCSNLEN __wcsnlen_default
+# undef wmemchr
 # define wmemchr __wmemchr_default
 # include "wcsmbs/wcsnlen.c"
 IMPL (__wcsnlen_default, 1)

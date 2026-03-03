@@ -1,6 +1,6 @@
 /* Round argument to nearest integral value according to current rounding
    direction.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 #include <math_private.h>
 #include <libm-alias-ldouble.h>
 #include <fix-fp-int-convert-overflow.h>
-#include <math-use-builtins.h>
 
 
 long long int

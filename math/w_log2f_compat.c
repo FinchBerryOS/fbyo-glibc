@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ __log2f_compat (float x)
 {
   if (__builtin_expect (islessequal (x, 0.0f), 0) && _LIB_VERSION != _IEEE_)
     {
-      if (x == 0.0)
+      if (x == 0.0f)
 	{
 	  feraiseexcept (FE_DIVBYZERO);
 	  return __kernel_standard_f (x, x, 148); /* log2(0) */

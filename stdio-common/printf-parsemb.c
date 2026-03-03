@@ -1,5 +1,5 @@
 /* Helper functions for parsing printf format strings.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    This file is part of th GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
    <https://www.gnu.org/licenses/>.  */
 
 #include <ctype.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -271,7 +272,7 @@ __parse_one_specmb (const UCHAR_T *format, size_t posn,
 	if (*format != L_('l'))
 	  break;
 	++format;
-	/* FALLTHROUGH */
+	[[fallthrough]];
       case L_('L'):
 	/* doubles are long doubles, and ints are long long ints.  */
       case L_('q'):

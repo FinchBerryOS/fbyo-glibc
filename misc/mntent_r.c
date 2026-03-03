@@ -1,5 +1,5 @@
 /* Utilities for reading/writing fstab, mtab, etc.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -167,10 +167,10 @@ get_mnt_entry (FILE *stream, struct mntent *mp, char *buffer, int bufsiz)
     {
     case 0:
       mp->mnt_freq = 0;
-      /* Fall through.  */
+      [[fallthrough]];
     case 1:
       mp->mnt_passno = 0;
-      /* Fall through.  */
+      [[fallthrough]];
     case 2:
       break;
     }

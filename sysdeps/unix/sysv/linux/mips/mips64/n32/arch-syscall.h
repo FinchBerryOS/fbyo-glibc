@@ -71,6 +71,8 @@
 #define __NR_fcntl64 6212
 #define __NR_fdatasync 6073
 #define __NR_fgetxattr 6185
+#define __NR_file_getattr 6468
+#define __NR_file_setattr 6469
 #define __NR_finit_module 6312
 #define __NR_flistxattr 6188
 #define __NR_flock 6071
@@ -124,6 +126,7 @@
 #define __NR_gettimeofday 6094
 #define __NR_getuid 6100
 #define __NR_getxattr 6183
+#define __NR_getxattrat 6464
 #define __NR_init_module 6168
 #define __NR_inotify_add_watch 6248
 #define __NR_inotify_init 6247
@@ -156,6 +159,7 @@
 #define __NR_listen 6049
 #define __NR_listmount 6458
 #define __NR_listxattr 6186
+#define __NR_listxattrat 6465
 #define __NR_llistxattr 6187
 #define __NR_lookup_dcookie 6206
 #define __NR_lremovexattr 6190
@@ -210,6 +214,7 @@
 #define __NR_open 6002
 #define __NR_open_by_handle_at 6304
 #define __NR_open_tree 6428
+#define __NR_open_tree_attr 6467
 #define __NR_openat 6251
 #define __NR_openat2 6437
 #define __NR_pause 6033
@@ -258,6 +263,7 @@
 #define __NR_recvmsg 6046
 #define __NR_remap_file_pages 6210
 #define __NR_removexattr 6189
+#define __NR_removexattrat 6466
 #define __NR_rename 6080
 #define __NR_renameat 6258
 #define __NR_renameat2 6315
@@ -323,6 +329,7 @@
 #define __NR_settimeofday 6159
 #define __NR_setuid 6103
 #define __NR_setxattr 6180
+#define __NR_setxattrat 6463
 #define __NR_shmat 6029
 #define __NR_shmctl 6030
 #define __NR_shmdt 6065

@@ -1,6 +1,6 @@
 /* Include file for internal GNU MP types and definitions.
 
-Copyright (C) 1991-2025 Free Software Foundation, Inc.
+Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -297,6 +297,8 @@ typedef unsigned int UHWtype;
 #define impn_mul_n		__MPN(impn_mul_n)
 #define impn_sqr_n_basecase	__MPN(impn_sqr_n_basecase)
 #define impn_sqr_n		__MPN(impn_sqr_n)
+
+#include <gmp-arch.h>
 
 #ifndef _PROTO
 #if defined (__STDC__) || defined (__cplusplus)

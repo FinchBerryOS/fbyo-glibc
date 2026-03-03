@@ -1,5 +1,5 @@
 /* Stack cache management for NPTL.
-   Copyright (C) 2002-2025 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ extern int32_t __nptl_stack_hugetlb;
 static inline bool
 __nptl_stack_in_use (struct pthread *pd)
 {
-  return pd->tid <= 0;
+  return atomic_load_relaxed (&pd->joinstate) == THREAD_STATE_EXITED;
 }
 
 /* Remove the stack ELEM from its list.  */

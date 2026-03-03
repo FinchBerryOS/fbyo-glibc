@@ -1,6 +1,6 @@
 /* Single-precision AdvSIMD log1p
 
-   Copyright (C) 2023-2025 Free Software Foundation, Inc.
+   Copyright (C) 2023-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,76 +20,49 @@
 #include "v_math.h"
 #include "v_log1pf_inline.h"
 
-#if WANT_SIMD_EXCEPT
-
-const static struct data
+static const struct data
 {
-  uint32x4_t minus_one, thresh;
   struct v_log1pf_data d;
+  float32x4_t nan, pinf, minf;
 } data = {
   .d = V_LOG1PF_CONSTANTS_TABLE,
-  .thresh = V4 (0x4b800000), /* asuint32(INFINITY) - TinyBound.  */
-  .minus_one = V4 (0xbf800000),
+  .nan = V4 (NAN),
+  .pinf = V4 (INFINITY),
+  .minf = V4 (-INFINITY),
 };
 
-/* asuint32(0x1p-23). ulp=0.5 at 0x1p-23.  */
-#  define TinyBound v_u32 (0x34000000)
-
-static float32x4_t NOINLINE VPCS_ATTR
+static inline float32x4_t
 special_case (float32x4_t x, uint32x4_t cmp, const struct data *d)
 {
-  /* Side-step special lanes so fenv exceptions are not triggered
-     inadvertently.  */
-  float32x4_t x_nospecial = v_zerofy_f32 (x, cmp);
-  return v_call_f32 (log1pf, x, log1pf_inline (x_nospecial, &d->d), cmp);
+  float32x4_t y = log1pf_inline (x, ptr_barrier (&d->d));
+  y = vbslq_f32 (cmp, d->nan, y);
+  uint32x4_t ret_pinf = vceqq_f32 (x, d->pinf);
+  uint32x4_t ret_minf = vceqq_f32 (x, v_f32 (-1.0));
+
+  y = vbslq_f32 (ret_pinf, d->pinf, y);
+  return vbslq_f32 (ret_minf, d->minf, y);
 }
 
-/* Vector log1pf approximation using polynomial on reduced interval. Worst-case
-   error is 1.69 ULP:
-   _ZGVnN4v_log1pf(0x1.04418ap-2) got 0x1.cfcbd8p-3
-				 want 0x1.cfcbdcp-3.  */
-VPCS_ATTR float32x4_t V_NAME_F1 (log1p) (float32x4_t x)
+/* Single-precision implementation of vector log1pf(x).
+  Maximum observed error: 1.20 + 0.5
+  _ZGVnN4v_log1pf(0x1.04418ap-2) got 0x1.cfcbd8p-3
+				want 0x1.cfcbdcp-3.  */
+float32x4_t VPCS_ATTR NOINLINE V_NAME_F1 (log1p) (float32x4_t x)
 {
   const struct data *d = ptr_barrier (&data);
-  uint32x4_t ix = vreinterpretq_u32_f32 (x);
-  uint32x4_t ia = vreinterpretq_u32_f32 (vabsq_f32 (x));
 
-  uint32x4_t special_cases
-      = vorrq_u32 (vcgeq_u32 (vsubq_u32 (ia, TinyBound), d->thresh),
-		   vcgeq_u32 (ix, d->minus_one));
+  /* Use signed integers here to ensure that negative numbers between 0 and -1
+    don't make this expression true.  */
+  uint32x4_t is_infnan
+      = vcgeq_s32 (vreinterpretq_s32_f32 (x), vreinterpretq_s32_f32 (d->pinf));
+  /* The OR-NOT is needed to catch -NaN.  */
+  uint32x4_t special = vornq_u32 (is_infnan, vcgtq_f32 (x, v_f32 (-1)));
 
-  if (__glibc_unlikely (v_any_u32 (special_cases)))
-    return special_case (x, special_cases, d);
+  if (__glibc_unlikely (v_any_u32 (special)))
+    return special_case (x, special, d);
 
   return log1pf_inline (x, &d->d);
 }
-
-#else
-
-const static struct v_log1pf_data data = V_LOG1PF_CONSTANTS_TABLE;
-
-static float32x4_t NOINLINE VPCS_ATTR
-special_case (float32x4_t x, uint32x4_t cmp)
-{
-  return v_call_f32 (log1pf, x, log1pf_inline (x, ptr_barrier (&data)), cmp);
-}
-
-/* Vector log1pf approximation using polynomial on reduced interval. Worst-case
-   error is 1.63 ULP:
-   _ZGVnN4v_log1pf(0x1.216d12p-2) got 0x1.fdcb12p-3
-				 want 0x1.fdcb16p-3.  */
-VPCS_ATTR float32x4_t V_NAME_F1 (log1p) (float32x4_t x)
-{
-  uint32x4_t special_cases = vornq_u32 (vcleq_f32 (x, v_f32 (-1)),
-					vcaleq_f32 (x, v_f32 (0x1p127f)));
-
-  if (__glibc_unlikely (v_any_u32 (special_cases)))
-    return special_case (x, special_cases);
-
-  return log1pf_inline (x, ptr_barrier (&data));
-}
-
-#endif
 
 libmvec_hidden_def (V_NAME_F1 (log1p))
 HALF_WIDTH_ALIAS_F1 (log1p)

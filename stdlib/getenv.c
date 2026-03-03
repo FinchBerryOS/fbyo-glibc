@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,9 +19,6 @@
 #include <setenv.h>
 #include <string.h>
 #include <unistd.h>
-
-struct environ_array *__environ_array_list;
-environ_counter __environ_counter;
 
 char *
 getenv (const char *name)

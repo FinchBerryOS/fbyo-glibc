@@ -1,5 +1,5 @@
 /* Conversion module for ISO-2022-CN-EXT.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -403,7 +403,7 @@ enum
    involved in determining the code page and is the indicator that
    tmpbuf[2] is initialized.  */
 DIAG_PUSH_NEEDS_COMMENT;
-DIAG_IGNORE_Os_NEEDS_COMMENT (5, "-Wmaybe-uninitialized");
+DIAG_IGNORE_Os_NEEDS_COMMENT_GCC (5, "-Wmaybe-uninitialized");
 #define BODY \
   {									      \
     uint32_t ch;							      \
@@ -562,7 +562,7 @@ DIAG_IGNORE_Os_NEEDS_COMMENT (5, "-Wmaybe-uninitialized");
 		  }							      \
 									      \
 		assert (used >= 1 && used <= 4);			      \
-		escseq = ")A\0\0)G)E" + (used - 1) * 2;			      \
+		escseq = &")A\0\0)G)E"[(used - 1) * 2];			      \
 		*outptr++ = ESC;					      \
 		*outptr++ = '$';					      \
 		*outptr++ = *escseq++;					      \
@@ -600,7 +600,7 @@ DIAG_IGNORE_Os_NEEDS_COMMENT (5, "-Wmaybe-uninitialized");
 		  }							      \
 									      \
 		assert ((used >> 5) >= 3 && (used >> 5) <= 7);		      \
-		escseq = "+I+J+K+L+M" + ((used >> 5) - 3) * 2;		      \
+		escseq = &"+I+J+K+L+M"[((used >> 5) - 3) * 2];		      \
 		*outptr++ = ESC;					      \
 		*outptr++ = '$';					      \
 		*outptr++ = *escseq++;					      \

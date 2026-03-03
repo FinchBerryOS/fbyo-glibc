@@ -1,5 +1,5 @@
 /* Test program for returning the canonical absolute name of a given file.
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -165,7 +165,7 @@ do_test (int argc, char ** argv)
 
   int has_dir = mkdir ("doesExist", 0777) == 0;
 
-  int fd = has_dir ? creat ("doesExist/someFile", 0777) : -1;
+  int fd = has_dir ? creat ("doesExist/someFile", 0666) : -1;
 
   for (i = 0; i < (int) (sizeof (tests) / sizeof (tests[0])); ++i)
     {

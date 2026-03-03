@@ -1,14 +1,14 @@
 # Polish translation for GNU libc.
-# Copyright (C) 1996, 1997, 1998, 1999, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024 Free Software Foundation, Inc.
+# Copyright (C) 1996, 1997, 1998, 1999, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026 Free Software Foundation, Inc.
 # This file is distributed under the same license as the glibc package.
 # Paweł Krawczyk <kravietz@ceti.pl>, 1996-1999.
-# Jakub Bogusz <qboosh@pld-linux.org>, 2002-2025.
+# Jakub Bogusz <qboosh@pld-linux.org>, 2002-2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libc 2.40.9000\n"
-"POT-Creation-Date: 2025-01-28 12:35+0100\n"
-"PO-Revision-Date: 2025-01-06 21:30+0100\n"
+"Project-Id-Version: libc 2.42.9000\n"
+"POT-Creation-Date: 2026-01-19 16:22+0100\n"
+"PO-Revision-Date: 2026-01-19 17:45+0100\n"
 "Last-Translator: Jakub Bogusz <qboosh@pld-linux.org>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -66,7 +66,7 @@ msgstr "Wyświetlenie tego tekstu pomocy"
 msgid "Give a short usage message"
 msgstr "Wyświetlenie krótkiej informacji o składni polecenia"
 
-#: argp/argp-parse.c:88 catgets/gencat.c:110 catgets/gencat.c:114
+#: argp/argp-parse.c:88 catgets/gencat.c:111 catgets/gencat.c:115
 #: iconv/iconv_prog.c:61 iconv/iconv_prog.c:62 nscd/nscd.c:106 nscd/nscd.c:110
 #: nss/makedb.c:122
 msgid "NAME"
@@ -97,33 +97,33 @@ msgstr "(BŁĄD PROGRAMU) Nieznana wersja?!"
 msgid "%s: Too many arguments\n"
 msgstr "%s: Za dużo argumentów\n"
 
-#: argp/argp-parse.c:751
+#: argp/argp-parse.c:754
 msgid "(PROGRAM ERROR) Option should have been recognized!?"
 msgstr "(BŁĄD PROGRAMU) Opcja powinna zostać rozpoznana?!"
 
-#: assert/assert-perr.c:35
+#: assert/assert-perr.c:45
 #, c-format
-msgid "%s%s%s:%u: %s%sUnexpected error: %s.\n"
-msgstr "%s%s%s:%u %s%sNiespodziewany błąd: %s.\n"
+msgid "%s%s%s:%s: %s%sUnexpected error: %s.\n"
+msgstr "%s%s%s:%s %s%sNiespodziewany błąd: %s.\n"
 
-#: assert/assert.c:127
+#: assert/assert.c:37
 #, c-format
-msgid "%s%s%s:%u: %s%sAssertion `%s' failed.\n"
-msgstr "%s%s%s:%u: %s%sWarunek zapewnienia `%s' nie został spełniony.\n"
+msgid "%s%s%s:%s: %s%sAssertion `%s' failed.\n"
+msgstr "%s%s%s:%s: %s%sWarunek zapewnienia `%s' nie został spełniony.\n"
 
-#: catgets/gencat.c:111
+#: catgets/gencat.c:112
 msgid "Create C header file NAME containing symbol definitions"
 msgstr "Tworzenie pliku nagłówkowego C o tej NAZWIE zawierającego definicje symboli"
 
-#: catgets/gencat.c:113
+#: catgets/gencat.c:114
 msgid "Do not use existing catalog, force new output file"
 msgstr "Zamiast do istniejącego katalogu, zapisanie do nowego pliku"
 
-#: catgets/gencat.c:114 nss/makedb.c:122
+#: catgets/gencat.c:115 nss/makedb.c:122
 msgid "Write output to file NAME"
 msgstr "Zapisanie wyników do pliku NAZWA"
 
-#: catgets/gencat.c:119
+#: catgets/gencat.c:120
 msgid ""
 "Generate message catalog.\vIf INPUT-FILE is -, input is read from standard input.  If OUTPUT-FILE\n"
 "is -, output is written to standard output.\n"
@@ -131,7 +131,7 @@ msgstr ""
 "Generowanie katalogu komunikatów.\vJeśli PLIK-WE to -, dane są czytane ze standardowego wejścia. Jeśli PLIK-WY\n"
 "to -, dane są zapisywane na standardowe wyjście.\n"
 
-#: catgets/gencat.c:124
+#: catgets/gencat.c:125
 msgid ""
 "-o OUTPUT-FILE [INPUT-FILE]...\n"
 "[OUTPUT-FILE [INPUT-FILE]...]"
@@ -139,12 +139,12 @@ msgstr ""
 "-o PLIK-WY [PLIK-WE]...\n"
 "[PLIK-WY [PLIK-WE]...]"
 
-#: catgets/gencat.c:230 debug/pcprofiledump.c:219 elf/ldconfig.c:217
-#: elf/pldd.c:246 elf/sln.c:77 elf/sprof.c:371 iconv/iconv_prog.c:374
+#: catgets/gencat.c:231 debug/pcprofiledump.c:219 elf/ldconfig.c:216
+#: elf/pldd.c:246 elf/sln.c:77 elf/sprof.c:372 iconv/iconv_prog.c:374
 #: iconv/iconvconfig.c:380 locale/programs/locale.c:275
 #: locale/programs/localedef.c:437 login/programs/pt_chown.c:88
 #: malloc/memusagestat.c:564 nss/getent.c:961 nss/makedb.c:371
-#: posix/getconf.c:505
+#: posix/getconf.c:551
 #, c-format
 msgid ""
 "For bug reporting instructions, please see:\n"
@@ -153,12 +153,12 @@ msgstr ""
 "Instrukcje dotyczące zgłaszania błędów znajdują się pod adresem:\n"
 "%s.\n"
 
-#: catgets/gencat.c:246 debug/pcprofiledump.c:235 debug/xtrace.sh:63
-#: elf/ldconfig.c:233 elf/ldd.bash.in:38 elf/pldd.c:262 elf/sotruss.sh:75
-#: elf/sprof.c:388 iconv/iconv_prog.c:391 iconv/iconvconfig.c:397
+#: catgets/gencat.c:247 debug/pcprofiledump.c:235 debug/xtrace.sh:63
+#: elf/ldconfig.c:232 elf/ldd.bash.in:39 elf/pldd.c:262 elf/sotruss.sh:75
+#: elf/sprof.c:389 iconv/iconv_prog.c:391 iconv/iconvconfig.c:397
 #: locale/programs/locale.c:292 locale/programs/localedef.c:459
 #: login/programs/pt_chown.c:62 malloc/memusage.sh:70 malloc/memusagestat.c:582
-#: nscd/nscd.c:521 nss/getent.c:92 nss/makedb.c:387 posix/getconf.c:487
+#: nscd/nscd.c:521 nss/getent.c:92 nss/makedb.c:387 posix/getconf.c:533
 #, c-format
 msgid ""
 "Copyright (C) %s Free Software Foundation, Inc.\n"
@@ -171,101 +171,101 @@ msgstr ""
 "SPRZEDAŻY lub PRZYDATNOŚCI DO KONKRETNYCH ZASTOSOWAŃ.\n"
 
 # w %s wchodzi nazwisko autora danego programu/procedury -PK
-#: catgets/gencat.c:251 debug/pcprofiledump.c:240 debug/xtrace.sh:67
-#: elf/ldconfig.c:238 elf/pldd.c:267 elf/sprof.c:394 iconv/iconv_prog.c:396
+#: catgets/gencat.c:252 debug/pcprofiledump.c:240 debug/xtrace.sh:67
+#: elf/ldconfig.c:237 elf/pldd.c:267 elf/sprof.c:395 iconv/iconv_prog.c:396
 #: iconv/iconvconfig.c:402 locale/programs/locale.c:297
 #: locale/programs/localedef.c:464 malloc/memusage.sh:74
 #: malloc/memusagestat.c:587 nscd/nscd.c:526 nss/getent.c:97 nss/makedb.c:392
-#: posix/getconf.c:492
+#: posix/getconf.c:538
 #, c-format
 msgid "Written by %s.\n"
 msgstr "Autorem jest %s.\n"
 
-#: catgets/gencat.c:282
+#: catgets/gencat.c:283
 msgid "*standard input*"
 msgstr "*standardowe wejście*"
 
-#: catgets/gencat.c:288 iconv/iconv_charmap.c:172 iconv/iconv_prog.c:279
+#: catgets/gencat.c:289 iconv/iconv_charmap.c:172 iconv/iconv_prog.c:279
 #: iconv/iconv_prog.c:432 nss/makedb.c:248
 #, c-format
 msgid "cannot open input file `%s'"
 msgstr "nie można otworzyć pliku wejściowego `%s'"
 
-#: catgets/gencat.c:417 catgets/gencat.c:492
+#: catgets/gencat.c:418 catgets/gencat.c:493
 msgid "illegal set number"
 msgstr "błędny numer zbioru"
 
-#: catgets/gencat.c:444
+#: catgets/gencat.c:445
 msgid "duplicate set definition"
 msgstr "powtórzona definicja zbioru"
 
-#: catgets/gencat.c:446 catgets/gencat.c:618 catgets/gencat.c:670
+#: catgets/gencat.c:447 catgets/gencat.c:619 catgets/gencat.c:671
 msgid "this is the first definition"
 msgstr "to pierwsza definicja"
 
-#: catgets/gencat.c:517
+#: catgets/gencat.c:518
 #, c-format
 msgid "unknown set `%s'"
 msgstr "nieznany zbiór `%s'"
 
-#: catgets/gencat.c:558
+#: catgets/gencat.c:559
 msgid "invalid quote character"
 msgstr "niepoprawny znak cudzysłowu"
 
-#: catgets/gencat.c:571
+#: catgets/gencat.c:572
 #, c-format
 msgid "unknown directive `%s': line ignored"
 msgstr "nieznana dyrektywa `%s': linia zignorowana"
 
-#: catgets/gencat.c:616
+#: catgets/gencat.c:617
 msgid "duplicated message number"
 msgstr "powtórzony numer komunikatu"
 
-#: catgets/gencat.c:667
+#: catgets/gencat.c:668
 msgid "duplicated message identifier"
 msgstr "powtórzony identyfikator komunikatu"
 
-#: catgets/gencat.c:724
+#: catgets/gencat.c:725
 msgid "invalid character: message ignored"
 msgstr "niepoprawny znak: komunikat zignorowany"
 
-#: catgets/gencat.c:767
+#: catgets/gencat.c:768
 msgid "invalid line"
 msgstr "niepoprawna linia"
 
-#: catgets/gencat.c:821
+#: catgets/gencat.c:822
 msgid "malformed line ignored"
 msgstr "błędnie sformułowana linia została pominięta"
 
-#: catgets/gencat.c:939 catgets/gencat.c:947
+#: catgets/gencat.c:940 catgets/gencat.c:948
 #, c-format
 msgid "cannot allocate memory"
 msgstr "nie można przydzielić pamięci"
 
-#: catgets/gencat.c:1000 catgets/gencat.c:1045
+#: catgets/gencat.c:1001 catgets/gencat.c:1046
 #, c-format
 msgid "cannot open output file `%s'"
 msgstr "nie można otworzyć pliku wyjściowego `%s'"
 
-#: catgets/gencat.c:1210 locale/programs/linereader.c:588
+#: catgets/gencat.c:1211 locale/programs/linereader.c:588
 msgid "invalid escape sequence"
 msgstr "błędna sekwencja specjalna"
 
-#: catgets/gencat.c:1234
+#: catgets/gencat.c:1235
 msgid "unterminated message"
-msgstr "nie zakończony komunikat"
+msgstr "niezakończony komunikat"
 
-#: catgets/gencat.c:1258
+#: catgets/gencat.c:1259
 #, c-format
 msgid "while opening old catalog file"
 msgstr "podczas otwierania starego pliku katalogu"
 
-#: catgets/gencat.c:1349
+#: catgets/gencat.c:1350
 #, c-format
 msgid "conversion modules not available"
 msgstr "moduły konwersji niedostępny"
 
-#: catgets/gencat.c:1375
+#: catgets/gencat.c:1376
 #, c-format
 msgid "cannot determine escape character"
 msgstr "nie można określić znaku escape"
@@ -352,7 +352,7 @@ msgstr ""
 "krótkich opcji.\n"
 "\n"
 
-#: debug/xtrace.sh:56 elf/ldd.bash.in:55 elf/sotruss.sh:49
+#: debug/xtrace.sh:56 elf/ldd.bash.in:56 elf/sotruss.sh:49
 #: malloc/memusage.sh:63
 msgid "For bug reporting instructions, please see:\\\\n%s.\\\\n"
 msgstr "Instrukcje dotyczące zgłaszania błędów znajdują się pod adresem:\\\\n%s.\\\\n"
@@ -404,7 +404,7 @@ msgstr "Plik pamięci podręcznej ma niewłaściwą kolejność bajtów.\n"
 msgid "Cache generated by: "
 msgstr "Pamięć podręczna wygenerowana przez: "
 
-#: elf/cache.c:296 elf/ldconfig.c:1239
+#: elf/cache.c:296 elf/ldconfig.c:1238
 #, c-format
 msgid "Can't open cache file %s\n"
 msgstr "Nie można otworzyć pliku pamięci podręcznej %s\n"
@@ -473,17 +473,17 @@ msgstr "błąd podczas wczytywania bibliotek dzielonych"
 msgid "DYNAMIC LINKER BUG!!!"
 msgstr "BŁĄD DYNAMICZNEGO LINKERA!!!"
 
-#: elf/dl-close.c:363 elf/dl-open.c:298
+#: elf/dl-close.c:363 elf/dl-open.c:297
 msgid "cannot create scope list"
 msgstr "nie można utworzyć listy zakresów"
 
-#: elf/dl-close.c:792
+#: elf/dl-close.c:790
 msgid "shared object not open"
 msgstr "obiekt dzielony nie jest otwarty"
 
 #: elf/dl-deps.c:96
 msgid "DST not allowed in SUID/SGID programs"
-msgstr "DST nie dozwolone dla programów SUID/SGID"
+msgstr "DST niedozwolone dla programów SUID/SGID"
 
 #: elf/dl-deps.c:109
 msgid "empty dynamic string token substitution"
@@ -506,11 +506,11 @@ msgstr "nie można przydzielić pamięci dla listy zależności"
 msgid "cannot allocate symbol search list"
 msgstr "nie można przydzielić pamięci dla listy przeszukiwania symboli"
 
-#: elf/dl-hwcaps.c:104
+#: elf/dl-hwcaps.c:103
 msgid "cannot create HWCAP priorities"
 msgstr "nie można utworzyć priorytetów HWCAP"
 
-#: elf/dl-hwcaps.c:196
+#: elf/dl-hwcaps.c:195
 msgid "cannot create capability list"
 msgstr "nie można utworzyć listy uprawnień"
 
@@ -530,111 +530,111 @@ msgstr "nie można utworzyć kopii RUNPATH/RPATH"
 msgid "cannot create search path array"
 msgstr "nie można utworzyć tablicy ścieżki przeszukiwania"
 
-#: elf/dl-load.c:973
+#: elf/dl-load.c:978
 msgid "cannot stat shared object"
 msgstr "nie można wykonać stat na obiekcie dzielonym"
 
-#: elf/dl-load.c:1066 elf/dl-load.c:2155
+#: elf/dl-load.c:1071 elf/dl-load.c:2160
 msgid "cannot create shared object descriptor"
 msgstr "nie można utworzyć deskryptora obiektu dzielonego"
 
-#: elf/dl-load.c:1085 elf/dl-load.c:1604 elf/dl-load.c:1710
+#: elf/dl-load.c:1090 elf/dl-load.c:1594 elf/dl-load.c:1704
 msgid "cannot read file data"
 msgstr "nie można odczytać danych z pliku"
 
-#: elf/dl-load.c:1138 elf/dl-map-segments.h:117
+#: elf/dl-load.c:1143 elf/dl-map-segments.h:118
 msgid "ELF load command address/offset not page-aligned"
-msgstr "adres/przesunięcie polecenia wczytania ELF nie wyrównane do strony"
+msgstr "adres/przesunięcie polecenia wczytania ELF niewyrównane do strony"
 
-#: elf/dl-load.c:1230
+#: elf/dl-load.c:1224
 msgid "object file has no loadable segments"
 msgstr "plik obiektu nie ma segmentów ładowalnych"
 
-#: elf/dl-load.c:1247
+#: elf/dl-load.c:1241
 msgid "cannot dynamically load executable"
 msgstr "nie można dynamicznie załadować pliku wykonywalnego"
 
-#: elf/dl-load.c:1254
+#: elf/dl-load.c:1248
 msgid "object file has no dynamic section"
 msgstr "plik obiektu nie ma sekcji dynamicznej"
 
-#: elf/dl-load.c:1289
+#: elf/dl-load.c:1283
 msgid "cannot dynamically load position-independent executable"
 msgstr "nie można dynamicznie załadować pliku wykonywalnego niezależnego od położenia"
 
-#: elf/dl-load.c:1291
+#: elf/dl-load.c:1285
 msgid "shared object cannot be dlopen()ed"
 msgstr "obiekt dzielony nie może być otwarty przez dlopen()"
 
-#: elf/dl-load.c:1304
+#: elf/dl-load.c:1298
 msgid "cannot allocate memory for program header"
 msgstr "nie można przydzielić pamięci na nagłówek programu"
 
-#: elf/dl-load.c:1329
+#: elf/dl-load.c:1323
 msgid "cannot enable executable stack as shared object requires"
 msgstr "nie można włączyć wykonywalnego stosu wymaganego przez obiekt dzielony"
 
-#: elf/dl-load.c:1357
+#: elf/dl-load.c:1351
 msgid "cannot close file descriptor"
 msgstr "nie można zamknąć deskryptora pliku"
 
-#: elf/dl-load.c:1604
+#: elf/dl-load.c:1594
 msgid "file too short"
 msgstr "plik za krótki"
 
-#: elf/dl-load.c:1638
+#: elf/dl-load.c:1628
 msgid "invalid ELF header"
 msgstr "nieprawidłowy nagłówek ELF"
 
-#: elf/dl-load.c:1653
+#: elf/dl-load.c:1645
 msgid "ELF file data encoding not big-endian"
 msgstr "kodowanie danych w pliku ELF nie jest big-endian"
 
-#: elf/dl-load.c:1655
+#: elf/dl-load.c:1647
 msgid "ELF file data encoding not little-endian"
 msgstr "kodowanie danych w pliku ELF nie jest little-endian"
 
-#: elf/dl-load.c:1659
+#: elf/dl-load.c:1651
 msgid "ELF file version ident does not match current one"
 msgstr "identyfikator wersji pliku ELF nie zgadza się z aktualnym"
 
-#: elf/dl-load.c:1663
+#: elf/dl-load.c:1655
 msgid "ELF file OS ABI invalid"
 msgstr "niepoprawne ABI systemu w pliku ELF"
 
-#: elf/dl-load.c:1666
+#: elf/dl-load.c:1658
 msgid "ELF file ABI version invalid"
 msgstr "niepoprawna wersja ABI w pliku ELF"
 
-#: elf/dl-load.c:1669
+#: elf/dl-load.c:1661
 msgid "nonzero padding in e_ident"
 msgstr "niezerowe wypełnienie w e_ident"
 
-#: elf/dl-load.c:1672
+#: elf/dl-load.c:1664
 msgid "internal error"
 msgstr "błąd wewnętrzny"
 
-#: elf/dl-load.c:1679
+#: elf/dl-load.c:1671
 msgid "ELF file version does not match current one"
 msgstr "wersja pliku ELF nie zgadza się z aktualną"
 
-#: elf/dl-load.c:1691
+#: elf/dl-load.c:1685
 msgid "only ET_DYN and ET_EXEC can be loaded"
 msgstr "tylko ET_DYN i ET_EXEC mogą być wczytane"
 
-#: elf/dl-load.c:1696
+#: elf/dl-load.c:1690
 msgid "ELF file's phentsize not the expected size"
 msgstr "phentsize w pliku ELF nie jest oczekiwanym rozmiarem"
 
-#: elf/dl-load.c:2174
+#: elf/dl-load.c:2179
 msgid "wrong ELF class: ELFCLASS64"
 msgstr "niewłaściwa klasa ELF: ELFCLASS64"
 
-#: elf/dl-load.c:2175
+#: elf/dl-load.c:2180
 msgid "wrong ELF class: ELFCLASS32"
 msgstr "niewłaściwa klasa ELF: ELFCLASS32"
 
-#: elf/dl-load.c:2178
+#: elf/dl-load.c:2183
 msgid "cannot open shared object file"
 msgstr "nie można otworzyć pliku obiektu dzielonego"
 
@@ -650,19 +650,19 @@ msgstr "nie można zmienić ochrony pamięci"
 msgid "cannot map zero-fill pages"
 msgstr "nie można odwzorować stron wypełnionych zerami"
 
-#: elf/dl-lookup.c:800
+#: elf/dl-lookup.c:808
 msgid "symbol lookup error"
 msgstr "błąd wyszukiwania symbolu"
 
-#: elf/dl-open.c:84
+#: elf/dl-open.c:83
 msgid "cannot extend global scope"
 msgstr "nie można rozszerzyć zakresu globalnego"
 
-#: elf/dl-open.c:382
+#: elf/dl-open.c:381
 msgid "TLS generation counter wrapped!  Please report this."
 msgstr "Licznik generacji TLS przekręcił się! Proszę to zgłosić."
 
-#: elf/dl-open.c:716
+#: elf/dl-open.c:717
 msgid "cannot allocate address lookup data"
 msgstr "nie można przydzielić pamięci dla danych wyszukiwania adresów"
 
@@ -701,9 +701,9 @@ msgstr "nie można nałożyć dodatkowej ochrony pamięci po relokacji"
 
 #: elf/dl-sym.c:138
 msgid "RTLD_NEXT used in code not dynamically loaded"
-msgstr "RTLD_NEXT wystąpiło w kodzie nie ładowanym dynamicznie"
+msgstr "RTLD_NEXT wystąpiło w kodzie nieładowanym dynamicznie"
 
-#: elf/dl-tls.c:1196
+#: elf/dl-tls.c:1217
 msgid "cannot create TLS data structures"
 msgstr "nie można utworzyć struktur danych TLS"
 
@@ -715,229 +715,229 @@ msgstr "błąd wyszukiwania wersji"
 msgid "cannot allocate version reference table"
 msgstr "nie można przydzielić tablicy odniesień do wersji"
 
-#: elf/dl-version.c:380
+#: elf/dl-version.c:387
 msgid "DT_RELR without GLIBC_ABI_DT_RELR dependency"
 msgstr "DT_RELR bez zależności GLIBC_ABI_DT_RELR"
 
-#: elf/ldconfig.c:125
+#: elf/ldconfig.c:124
 msgid "Print cache"
 msgstr "Wypisanie zawartości pamięci podręcznej"
 
-#: elf/ldconfig.c:126
+#: elf/ldconfig.c:125
 msgid "Generate verbose messages"
 msgstr "Wyświetlanie większej liczby komunikatów"
 
-#: elf/ldconfig.c:127
+#: elf/ldconfig.c:126
 msgid "Don't build cache"
 msgstr "Niebudowanie pamięci podręcznej"
 
-#: elf/ldconfig.c:128
+#: elf/ldconfig.c:127
 msgid "Don't update symbolic links"
 msgstr "Bez uaktualniania dowiązań symbolicznych"
 
-#: elf/ldconfig.c:129
+#: elf/ldconfig.c:128
 msgid "Change to and use ROOT as root directory"
 msgstr "Przejście do i używanie KATALOGU jako głównego katalogu"
 
-#: elf/ldconfig.c:129
+#: elf/ldconfig.c:128
 msgid "ROOT"
 msgstr "KATALOG"
 
-#: elf/ldconfig.c:130
+#: elf/ldconfig.c:129
 msgid "CACHE"
 msgstr "BUFOR"
 
-#: elf/ldconfig.c:130
+#: elf/ldconfig.c:129
 msgid "Use CACHE as cache file"
 msgstr "Użycie BUFORA jako pliku pamięci podręcznej"
 
-#: elf/ldconfig.c:131
+#: elf/ldconfig.c:130
 msgid "CONF"
 msgstr "KONF"
 
-#: elf/ldconfig.c:131
+#: elf/ldconfig.c:130
 msgid "Use CONF as configuration file"
 msgstr "Użycie KONF jako pliku konfiguracyjnego"
 
-#: elf/ldconfig.c:132
+#: elf/ldconfig.c:131
 msgid "Only process directories specified on the command line.  Don't build cache."
 msgstr "Przetwarzanie wyłącznie katalogów podanych z linii poleceń; niebudowanie pamięci podręcznej."
 
-#: elf/ldconfig.c:133
+#: elf/ldconfig.c:132
 msgid "Manually link individual libraries."
 msgstr "Ręczne tworzenie dowiązań do pojedynczych bibliotek."
 
-#: elf/ldconfig.c:134
+#: elf/ldconfig.c:133
 msgid "FORMAT"
 msgstr "FORMAT"
 
-#: elf/ldconfig.c:134
+#: elf/ldconfig.c:133
 msgid "Format to use: new (default), old, or compat"
 msgstr "Używany format: new (domyślny), old lub compat"
 
-#: elf/ldconfig.c:135
+#: elf/ldconfig.c:134
 msgid "Ignore auxiliary cache file"
 msgstr "Ignorowanie dodatkowego pliku pamięci podręcznej"
 
-#: elf/ldconfig.c:143
+#: elf/ldconfig.c:142
 msgid "Configure Dynamic Linker Run Time Bindings."
 msgstr "Konfiguracja powiązań dynamicznego linkera."
 
-#: elf/ldconfig.c:277
+#: elf/ldconfig.c:276
 #, c-format
 msgid "Path `%s' given more than once"
 msgstr "Ścieżka `%s' podana więcej niż raz"
 
-#: elf/ldconfig.c:278
+#: elf/ldconfig.c:277
 #, c-format
 msgid "(from %s:%d and %s:%d)\n"
 msgstr "(od %s:%d i %s:%d)\n"
 
-#: elf/ldconfig.c:310 elf/ldconfig.c:351
+#: elf/ldconfig.c:309 elf/ldconfig.c:350
 #, c-format
 msgid "Could not form glibc-hwcaps path"
 msgstr "Nie udało się uformować ścieżki glibc-hwcaps"
 
-#: elf/ldconfig.c:324
+#: elf/ldconfig.c:323
 #, c-format
 msgid "Listing directory %s"
 msgstr "Listowanie katalogu %s"
 
-#: elf/ldconfig.c:406
+#: elf/ldconfig.c:405
 #, c-format
 msgid "Can't stat %s"
 msgstr "Nie można wykonać stat na %s"
 
-#: elf/ldconfig.c:487
+#: elf/ldconfig.c:486
 #, c-format
 msgid "Can't stat %s\n"
 msgstr "Nie można wykonać stat na %s\n"
 
-#: elf/ldconfig.c:497
+#: elf/ldconfig.c:496
 #, c-format
 msgid "%s is not a symbolic link\n"
 msgstr "%s nie jest dowiązaniem symbolicznym\n"
 
-#: elf/ldconfig.c:516
+#: elf/ldconfig.c:515
 #, c-format
 msgid "Can't unlink %s"
 msgstr "Nie można usunąć %s"
 
-#: elf/ldconfig.c:522
+#: elf/ldconfig.c:521
 #, c-format
 msgid "Can't link %s to %s"
 msgstr "Nie można dowiązać %s do %s"
 
-#: elf/ldconfig.c:528
+#: elf/ldconfig.c:527
 msgid " (changed)\n"
 msgstr " (zmieniono)\n"
 
-#: elf/ldconfig.c:530
+#: elf/ldconfig.c:529
 msgid " (SKIPPED)\n"
 msgstr " (POMINIĘTO)\n"
 
-#: elf/ldconfig.c:585
+#: elf/ldconfig.c:584
 #, c-format
 msgid "Can't find %s"
 msgstr "Nie można znaleźć %s"
 
-#: elf/ldconfig.c:601 elf/ldconfig.c:760 elf/ldconfig.c:827
+#: elf/ldconfig.c:600 elf/ldconfig.c:759 elf/ldconfig.c:826
 #, c-format
 msgid "Cannot lstat %s"
 msgstr "Nie można wykonać lstat na %s"
 
-#: elf/ldconfig.c:607
+#: elf/ldconfig.c:606
 #, c-format
 msgid "Ignored file %s since it is not a regular file."
 msgstr "Zignorowano plik %s ponieważ nie jest zwykłym plikiem."
 
-#: elf/ldconfig.c:615
+#: elf/ldconfig.c:614
 #, c-format
 msgid "No link created since soname could not be found for %s"
 msgstr "Nie utworzono dowiązania ponieważ nie znaleziono soname dla %s"
 
-#: elf/ldconfig.c:701
+#: elf/ldconfig.c:700
 #, c-format
 msgid " (from %s:%d)\n"
 msgstr " (od %s:%d)\n"
 
-#: elf/ldconfig.c:716
+#: elf/ldconfig.c:715
 #, c-format
 msgid "Can't open directory %s"
 msgstr "Nie można otworzyć katalogu %s"
 
-#: elf/ldconfig.c:743 elf/ldconfig.c:748
+#: elf/ldconfig.c:742 elf/ldconfig.c:747
 #, c-format
 msgid "Could not form library path"
 msgstr "Nie można złożyć ścieżki biblioteki"
 
-#: elf/ldconfig.c:777 elf/ldconfig.c:815 elf/readlib.c:81
+#: elf/ldconfig.c:776 elf/ldconfig.c:814 elf/readlib.c:81
 #, c-format
 msgid "Input file %s not found.\n"
 msgstr "Nie znaleziono pliku wejściowego %s.\n"
 
-#: elf/ldconfig.c:784
+#: elf/ldconfig.c:783
 #, c-format
 msgid "Cannot stat %s"
 msgstr "Nie można wykonać stat na %s"
 
-#: elf/ldconfig.c:903
+#: elf/ldconfig.c:902
 #, c-format
 msgid "libc6 library %s in wrong directory"
 msgstr "biblioteka libc6 %s w złym katalogu"
 
-#: elf/ldconfig.c:922
+#: elf/ldconfig.c:921
 #, c-format
 msgid "libraries %s and %s in directory %s have same soname but different type."
 msgstr "biblioteki %s i %s w katalogu %s mają to samo soname ale inny rodzaj."
 
-#: elf/ldconfig.c:1051
+#: elf/ldconfig.c:1050
 #, c-format
 msgid "Warning: ignoring configuration file that cannot be opened: %s"
 msgstr "Uwaga: zignorowano plik konfiguracyjny, którego nie można otworzyć: %s"
 
-#: elf/ldconfig.c:1099
+#: elf/ldconfig.c:1098
 #, c-format
 msgid "%s:%u: hwcap directive ignored"
 msgstr "%s:%u: zignorowano dyrektywę hwcap"
 
-#: elf/ldconfig.c:1118
+#: elf/ldconfig.c:1117
 #, c-format
 msgid "need absolute file name for configuration file when using -r"
 msgstr "opcja -r wymaga bezwzględnej ścieżki pliku konfiguracyjnego"
 
-#: elf/ldconfig.c:1125 locale/programs/xasprintf.c:31
+#: elf/ldconfig.c:1124 locale/programs/xasprintf.c:31
 #: locale/programs/xmalloc.c:63 malloc/obstack.c:416 malloc/obstack.c:418
-#: posix/getconf.c:460 posix/getconf.c:699
+#: posix/getconf.c:503 posix/getconf.c:745
 #, c-format
 msgid "memory exhausted"
 msgstr "pamięć wyczerpana"
 
-#: elf/ldconfig.c:1158
+#: elf/ldconfig.c:1157
 #, c-format
 msgid "%s:%u: cannot read directory %s"
 msgstr "%s:%u: nie można odczytać %s"
 
-#: elf/ldconfig.c:1196
+#: elf/ldconfig.c:1195
 #, c-format
 msgid "relative path `%s' used to build cache"
 msgstr "użyto względnej ścieżki `%s' do utworzenia pamięci podręcznej"
 
-#: elf/ldconfig.c:1218
+#: elf/ldconfig.c:1217
 #, c-format
 msgid "Can't chdir to /"
 msgstr "Nie można przejść do katalogu /"
 
-#: elf/ldconfig.c:1259
+#: elf/ldconfig.c:1258
 #, c-format
 msgid "Can't open cache file directory %s\n"
 msgstr "Nie można otworzyć katalogu pliku pamięci podręcznej %s\n"
 
-#: elf/ldd.bash.in:42
+#: elf/ldd.bash.in:43
 msgid "Written by %s and %s.\n"
 msgstr "Autorami są %s i %s.\n"
 
-#: elf/ldd.bash.in:47
+#: elf/ldd.bash.in:48
 msgid ""
 "Usage: ldd [OPTION]... FILE...\n"
 "      --help              print this help and exit\n"
@@ -955,46 +955,46 @@ msgstr ""
 "  -u, --unused            wypisanie nieużywanych bezpośrednich zależności\n"
 "  -v, --verbose           wypisanie wszystkich informacji\n"
 
-#: elf/ldd.bash.in:80
+#: elf/ldd.bash.in:81
 msgid "ldd: option \\`$1' is ambiguous"
 msgstr "ldd: opcja \\`$1' jest niejednoznaczna"
 
-#: elf/ldd.bash.in:87
+#: elf/ldd.bash.in:88
 msgid "unrecognized option"
 msgstr "nieznana opcja"
 
-#: elf/ldd.bash.in:88 elf/ldd.bash.in:125
+#: elf/ldd.bash.in:89 elf/ldd.bash.in:126
 msgid "Try \\`ldd --help' for more information."
 msgstr "Polecenie \\`ldd --help' pozwoli uzyskać więcej informacji."
 
-#: elf/ldd.bash.in:124
+#: elf/ldd.bash.in:125
 msgid "missing file arguments"
 msgstr "brakujące argumenty plikowe"
 
 #. TRANS This is a ``file doesn't exist'' error
 #. TRANS for ordinary files that are referenced in contexts where they are
 #. TRANS expected to already exist.
-#: elf/ldd.bash.in:147 sysdeps/gnu/errlist.h:13
+#: elf/ldd.bash.in:148 sysdeps/gnu/errlist.h:13
 msgid "No such file or directory"
 msgstr "Nie ma takiego pliku ani katalogu"
 
-#: elf/ldd.bash.in:150 inet/rcmd.c:483
+#: elf/ldd.bash.in:151 inet/rcmd.c:483
 msgid "not regular file"
 msgstr "nie jest zwykłym plikiem"
 
-#: elf/ldd.bash.in:153
+#: elf/ldd.bash.in:154
 msgid "warning: you do not have execution permission for"
 msgstr "uwaga: brak uprawnień do wykonywania"
 
-#: elf/ldd.bash.in:170
+#: elf/ldd.bash.in:171
 msgid "\tnot a dynamic executable"
 msgstr "\tnie jest dynamicznym programem wykonywalnym"
 
-#: elf/ldd.bash.in:178
+#: elf/ldd.bash.in:179
 msgid "exited with unknown exit code"
 msgstr "zakończył działanie z nieznanym kodem wyjścia"
 
-#: elf/ldd.bash.in:183
+#: elf/ldd.bash.in:184
 msgid "error: you do not have read permission for"
 msgstr "błąd: brak uprawnień do odczytu"
 
@@ -1134,12 +1134,12 @@ msgstr "Nie można wykonać fstat na pliku %s.\n"
 #: elf/readlib.c:98
 #, c-format
 msgid "File %s is empty, not checked."
-msgstr "Plik %s jest pusty, nie sprawdzony."
+msgstr "Plik %s jest pusty, niesprawdzony."
 
 #: elf/readlib.c:104
 #, c-format
 msgid "File %s is too small, not checked."
-msgstr "Plik %s jest za mały, nie sprawdzony."
+msgstr "Plik %s jest za mały, niesprawdzony."
 
 #: elf/readlib.c:114
 #, c-format
@@ -1252,112 +1252,127 @@ msgstr ""
 msgid "%s: unrecognized option '%c%s'\\n"
 msgstr "%s: nieznana opcja '%c%s'\\n"
 
-#: elf/sprof.c:76
+#: elf/sprof.c:77
 msgid "Output selection:"
 msgstr "Wybór wyjścia:"
 
 # XXX poprawic -PK
-#: elf/sprof.c:78
+#: elf/sprof.c:79
 msgid "print list of count paths and their number of use"
 msgstr "wypisanie listy ścieżek zliczania i ich liczników użycia"
 
-#: elf/sprof.c:80
+#: elf/sprof.c:81
 msgid "generate flat profile with counts and ticks"
 msgstr "generowanie prostego profilu z licznikami i czasami"
 
-#: elf/sprof.c:81
+#: elf/sprof.c:82
 msgid "generate call graph"
 msgstr "generowanie wykresu wywołań"
 
-#: elf/sprof.c:88
+#: elf/sprof.c:89
 msgid "Read and display shared object profiling data."
 msgstr "Odczyt i wyświetlanie danych profilujących dla obiektów współdzielonych."
 
-#: elf/sprof.c:93
+#: elf/sprof.c:94
 msgid "SHOBJ [PROFDATA]"
 msgstr "OBIEKT_DZIELONY [DANE_PROFILUJĄCE]"
 
-#: elf/sprof.c:432
+#: elf/sprof.c:434
 #, c-format
 msgid "failed to load shared object `%s'"
 msgstr "załadowanie dzielonego obiektu `%s' nie powiodło się"
 
-#: elf/sprof.c:441 elf/sprof.c:824 elf/sprof.c:922
+#: elf/sprof.c:443 elf/sprof.c:860 elf/sprof.c:958
 #, c-format
 msgid "cannot create internal descriptor"
 msgstr "nie można utworzyć wewnętrznego deskryptora"
 
-#: elf/sprof.c:553
+#: elf/sprof.c:552
 #, c-format
 msgid "Reopening shared object `%s' failed"
 msgstr "Ponowne otwarcie obiektu dzielonego `%s' nie powiodło się"
 
-#: elf/sprof.c:560 elf/sprof.c:655
+#: elf/sprof.c:556 elf/sprof.c:672
+#, c-format
+msgid "stat(%s) failure"
+msgstr "stat(%s) nie powiodło się"
+
+#: elf/sprof.c:573
+#, c-format
+msgid "read outside of file extents %zu + %jd > %jd"
+msgstr "odczyt spoza ekstentów pliku %zu + %jd > %jd"
+
+#: elf/sprof.c:582 elf/sprof.c:689
 #, c-format
 msgid "reading of section headers failed"
 msgstr "odczyt nagłówków sekcji nie powiódł się"
 
-#: elf/sprof.c:568 elf/sprof.c:663
+#: elf/sprof.c:592 elf/sprof.c:699
 #, c-format
 msgid "reading of section header string table failed"
 msgstr "odczyt tablicy łańcuchów nagłówków sekcji nie powiódł się"
 
-#: elf/sprof.c:594
+#: elf/sprof.c:619
 #, c-format
 msgid "*** Cannot read debuginfo file name: %m\n"
 msgstr "*** Nie można odczytać nazwy pliku informacji diagnostycznych: %m\n"
 
-#: elf/sprof.c:615
+#: elf/sprof.c:640
 #, c-format
 msgid "cannot determine file name"
 msgstr "nie można określić nazwy pliku"
 
-#: elf/sprof.c:648
+#: elf/sprof.c:678
 #, c-format
 msgid "reading of ELF header failed"
 msgstr "odczyt nagłówka ELF nie powiódł się"
 
-#: elf/sprof.c:684
+#: elf/sprof.c:683
+#, c-format
+msgid "too many section headers"
+msgstr "za dużo nagłówków sekcji"
+
+#: elf/sprof.c:720
 #, c-format
 msgid "*** The file `%s' is stripped: no detailed analysis possible\n"
 msgstr "*** Symbole z pliku `%s' zostały usunięte, dokładna analiza jest niemożliwa\n"
 
-#: elf/sprof.c:714
+#: elf/sprof.c:750
 #, c-format
 msgid "failed to load symbol data"
 msgstr "załadowanie danych o symbolach nie powiodło się"
 
-#: elf/sprof.c:779
+#: elf/sprof.c:815
 #, c-format
 msgid "cannot load profiling data"
 msgstr "nie można załadować danych do profilowania"
 
-#: elf/sprof.c:788
+#: elf/sprof.c:824
 #, c-format
 msgid "while stat'ing profiling data file"
 msgstr "podczas wykonywania stat na pliku z danymi profilującymi"
 
-#: elf/sprof.c:796
+#: elf/sprof.c:832
 #, c-format
 msgid "profiling data file `%s' does not match shared object `%s'"
 msgstr "dane profilujące w pliku `%s' nie pasują do obiektu dzielonego `%s'"
 
-#: elf/sprof.c:807
+#: elf/sprof.c:843
 #, c-format
 msgid "failed to mmap the profiling data file"
 msgstr "wykonanie mmap danych profilujących nie powiodło się"
 
-#: elf/sprof.c:815
+#: elf/sprof.c:851
 #, c-format
 msgid "error while closing the profiling data file"
 msgstr "błąd podczas zamykania pliku z danymi profilującymi"
 
-#: elf/sprof.c:898
+#: elf/sprof.c:934
 #, c-format
 msgid "`%s' is no correct profile data file for `%s'"
 msgstr "`%s' nie jest poprawnym plikiem danych profilujących dla `%s'"
 
-#: elf/sprof.c:1079 elf/sprof.c:1137
+#: elf/sprof.c:1115 elf/sprof.c:1173
 #, c-format
 msgid "cannot allocate symbol data"
 msgstr "nie można przydzielić pamięci dla symboli"
@@ -2065,7 +2080,7 @@ msgstr "%s: `position' musi być użyte dla konkretnego poziomu we wszystkich se
 #: locale/programs/ld-collate.c:1614
 #, c-format
 msgid "symbol `%s' not defined"
-msgstr "nie zdefiniowany symbol `%s'"
+msgstr "niezdefiniowany symbol `%s'"
 
 #: locale/programs/ld-collate.c:1690 locale/programs/ld-collate.c:1789
 #, c-format
@@ -2148,7 +2163,7 @@ msgstr "%s: błędna liczba reguł sortowania"
 #: locale/programs/ld-collate.c:3225
 #, c-format
 msgid "%s: multiple order definitions for unnamed section"
-msgstr "%s: wielokrotna definicja porządku dla nie nazwanej sekcji"
+msgstr "%s: wielokrotna definicja porządku dla nienazwanej sekcji"
 
 #: locale/programs/ld-collate.c:3280 locale/programs/ld-collate.c:3410
 #: locale/programs/ld-collate.c:3775
@@ -2159,12 +2174,12 @@ msgstr "%s: brak słowa kluczowego `order_end'"
 #: locale/programs/ld-collate.c:3343
 #, c-format
 msgid "%s: order for collating symbol %.*s not yet defined"
-msgstr "%s: porządek dla symbolu scalającego %.*s jeszcze nie zdefiniowany"
+msgstr "%s: porządek dla symbolu scalającego %.*s jeszcze niezdefiniowany"
 
 #: locale/programs/ld-collate.c:3361
 #, c-format
 msgid "%s: order for collating element %.*s not yet defined"
-msgstr "%s: porządek dla elementu scalającego %.*s jeszcze nie zdefiniowany"
+msgstr "%s: porządek dla elementu scalającego %.*s jeszcze niezdefiniowany"
 
 #: locale/programs/ld-collate.c:3372
 #, c-format
@@ -2252,7 +2267,7 @@ msgstr "znak <SP> nie może być w klasie `%s'"
 
 #: locale/programs/ld-ctype.c:600
 msgid "character <SP> not defined in character map"
-msgstr "znak <SP> nie zdefiniowany w tablicy znaków"
+msgstr "znak <SP> niezdefiniowany w tablicy znaków"
 
 #: locale/programs/ld-ctype.c:734
 msgid "`digit' category has not entries in groups of ten"
@@ -2440,7 +2455,7 @@ msgstr "%s: błędna wartość dla pola `%s'"
 #: locale/programs/ld-messages.c:112 locale/programs/ld-messages.c:145
 #, c-format
 msgid "%s: field `%s' undefined"
-msgstr "%s: pole `%s' nie zdefiniowane"
+msgstr "%s: pole `%s' niezdefiniowane"
 
 #: locale/programs/ld-messages.c:118 locale/programs/ld-messages.c:151
 #: locale/programs/ld-numeric.c:116
@@ -2592,7 +2607,7 @@ msgstr "śmieci na końcu specyfikacji kodu znaku"
 
 #: locale/programs/linereader.c:531
 msgid "unterminated symbolic name"
-msgstr "nie zakończona nazwa symboliczna"
+msgstr "niezakończona nazwa symboliczna"
 
 #: locale/programs/linereader.c:716
 #, c-format
@@ -2601,7 +2616,7 @@ msgstr "błędna sekwencja UTF-8 %s"
 
 #: locale/programs/linereader.c:796
 msgid "illegal 8-bit character in untranslated string"
-msgstr "niedozwolony znak 8-bitowy w nie przetłumaczonym łańcuchu"
+msgstr "niedozwolony znak 8-bitowy w nieprzetłumaczonym łańcuchu"
 
 #: locale/programs/linereader.c:804
 msgid "illegal escape sequence at end of string"
@@ -2609,7 +2624,7 @@ msgstr "niedozwolona sekwencja specjalna na końcu łańcucha"
 
 #: locale/programs/linereader.c:808 locale/programs/linereader.c:979
 msgid "unterminated string"
-msgstr "nie zakończony łańcuch"
+msgstr "niezakończony łańcuch"
 
 #: locale/programs/linereader.c:841
 msgid "illegal 8-bit escape sequence"
@@ -2859,7 +2874,7 @@ msgid "cannot resize archive file"
 msgstr "nie można zmienić rozmiaru pliku archiwum"
 
 #: locale/programs/locarchive.c:188 locale/programs/locarchive.c:451
-#: locale/programs/locarchive.c:680
+#: locale/programs/locarchive.c:686
 #, c-format
 msgid "cannot map archive header"
 msgstr "nie można odwzorować nagłówka archiwum"
@@ -2918,64 +2933,70 @@ msgstr "nie można wykonać stat na archiwum lokalizacji \"%s\""
 msgid "cannot lock locale archive \"%s\""
 msgstr "nie można zablokować archiwum lokalizacji \"%s\""
 
-#: locale/programs/locarchive.c:654
+#: locale/programs/locarchive.c:642 locale/programs/locarchive.c:656
+#: locale/programs/locarchive.c:664 locale/programs/locarchive.c:685
+#, c-format
+msgid "cannot unlock archive header"
+msgstr "nie można odblokować nagłówka archiwum"
+
+#: locale/programs/locarchive.c:657
 #, c-format
 msgid "cannot read archive header"
 msgstr "nie można odczytać nagłówka archiwum"
 
-#: locale/programs/locarchive.c:661
+#: locale/programs/locarchive.c:665
 #, c-format
 msgid "bad magic value in archive header"
 msgstr "błędna wartość magiczna w nagłówku archiwum"
 
-#: locale/programs/locarchive.c:734
+#: locale/programs/locarchive.c:740
 #, c-format
 msgid "locale '%s' already exists"
 msgstr "lokalizacja '%s' już istnieje"
 
-#: locale/programs/locarchive.c:1009 locale/programs/locarchive.c:1024
-#: locale/programs/locarchive.c:1036 locale/programs/locarchive.c:1048
+#: locale/programs/locarchive.c:1015 locale/programs/locarchive.c:1030
+#: locale/programs/locarchive.c:1042 locale/programs/locarchive.c:1054
 #: locale/programs/locfile.c:349
 #, c-format
 msgid "cannot add to locale archive"
 msgstr "nie można dodać do archiwum lokalizacji"
 
-#: locale/programs/locarchive.c:1217
+#: locale/programs/locarchive.c:1223
 #, c-format
 msgid "locale alias file `%s' not found"
 msgstr "nie znaleziono pliku aliasów lokalizacji `%s'"
 
-#: locale/programs/locarchive.c:1365
+#: locale/programs/locarchive.c:1371
 #, c-format
 msgid "Adding %s\n"
 msgstr "Dodawanie %s\n"
 
-#: locale/programs/locarchive.c:1371
+#: locale/programs/locarchive.c:1377
 #, c-format
 msgid "stat of \"%s\" failed: %s: ignored"
 msgstr "stat na \"%s\" nie powiodło się: %s: zignorowano"
 
-#: locale/programs/locarchive.c:1377
+#: locale/programs/locarchive.c:1383
 #, c-format
 msgid "\"%s\" is no directory; ignored"
 msgstr "\"%s\" nie jest katalogiem; zignorowano"
 
-#: locale/programs/locarchive.c:1384
+#: locale/programs/locarchive.c:1390
 #, c-format
 msgid "cannot open directory \"%s\": %s: ignored"
 msgstr "nie można otworzyć katalogu \"%s\": %s: zignorowano"
 
-#: locale/programs/locarchive.c:1452
+#: locale/programs/locarchive.c:1458
 #, c-format
 msgid "incomplete set of locale files in \"%s\""
 msgstr "niekompletny zestaw plików lokalizacji w \"%s\""
 
-#: locale/programs/locarchive.c:1516
+#: locale/programs/locarchive.c:1522
 #, c-format
 msgid "cannot read all files in \"%s\": ignored"
 msgstr "nie można przeczytać wszystkich plików w \"%s\": zignorowano"
 
-#: locale/programs/locarchive.c:1586
+#: locale/programs/locarchive.c:1592
 #, c-format
 msgid "locale \"%s\" not in archive"
 msgstr "lokalizacji \"%s\" nie ma w archiwum"
@@ -3231,7 +3252,7 @@ msgstr "Nie znaleziono"
 
 #: nis/nis_error.h:4
 msgid "Probably not found"
-msgstr "Prawdopodobnie nie znaleziony"
+msgstr "Prawdopodobnie nieznaleziony"
 
 #: nis/nis_error.h:5
 msgid "Cache expired"
@@ -3305,7 +3326,7 @@ msgstr "Nie znaleziono, brak takiej nazwy"
 
 #: nis/nis_error.h:22
 msgid "Name/entry isn't unique"
-msgstr "Nazwa/zapis nie jest unikalny"
+msgstr "Nazwa/zapis nie jest unikatowy"
 
 #: nis/nis_error.h:23
 msgid "Modification failed"
@@ -3349,7 +3370,7 @@ msgstr "Wystąpił błąd podczas odwołania do procedury wywołania zwrotnego"
 
 #: nis/nis_error.h:33
 msgid "Non NIS+ namespace encountered"
-msgstr "Napotkano nazwy nie należące do przestrzeni NIS+"
+msgstr "Napotkano nazwy nienależące do przestrzeni NIS+"
 
 #: nis/nis_error.h:34
 msgid "Illegal object type for operation"
@@ -3414,7 +3435,7 @@ msgstr "Serwer nadrzędny jest zajęty, pełny zrzut danych przesunięty na pó�
 #: nis/nis_local_names.c:122
 #, c-format
 msgid "LOCAL entry for UID %d in directory %s not unique\n"
-msgstr "Wpis LOKALNY dla UID %d w katalogu %s nie jest unikalny\n"
+msgstr "Wpis LOKALNY dla UID %d w katalogu %s nie jest unikatowy\n"
 
 #: nis/nis_print.c:51
 msgid "UNKNOWN"
@@ -3905,7 +3926,7 @@ msgstr "baza danych dla %s uszkodzona lub jednocześnie używana; w razie potrze
 #: nscd/connections.c:665
 #, c-format
 msgid "cannot create %s; no persistent database used"
-msgstr "nie można utworzyć %s; trwała baza danych nie używana"
+msgstr "nie można utworzyć %s; brak trwałej bazy danych w użyciu"
 
 #: nscd/connections.c:668
 #, c-format
@@ -3970,16 +3991,16 @@ msgstr "nie można obsłużyć żądań w starej wersji %d; aktualna wersja to %
 #: nscd/connections.c:1084
 #, c-format
 msgid "request from %ld not handled due to missing permission"
-msgstr "żądanie od %ld nie obsłużone z powodu braku uprawnień"
+msgstr "żądanie od %ld nieobsłużone z powodu braku uprawnień"
 
 #: nscd/connections.c:1089
 #, c-format
 msgid "request from '%s' [%ld] not handled due to missing permission"
-msgstr "żądanie od '%s' [%ld] nie obsłużone z powodu braku uprawnień"
+msgstr "żądanie od '%s' [%ld] nieobsłużone z powodu braku uprawnień"
 
 #: nscd/connections.c:1094
 msgid "request not handled due to missing permission"
-msgstr "żądanie nie obsłużone z powodu braku uprawnień"
+msgstr "żądanie nieobsłużone z powodu braku uprawnień"
 
 #: nscd/connections.c:1132 nscd/connections.c:1158
 #, c-format
@@ -4466,8 +4487,8 @@ msgstr ""
 "%15lu  sekund czasu przez który będą utrzymywane wpisy negatywne\n"
 "%15<PRIuMAX>  trafionych wpisów pozytywnych\n"
 "%15<PRIuMAX>  trafionych wpisów negatywnych\n"
-"%15<PRIuMAX>  nie trafionych wpisów pozytywnych\n"
-"%15<PRIuMAX>  nie trafionych wpisów negatywnych\n"
+"%15<PRIuMAX>  nietrafionych wpisów pozytywnych\n"
+"%15<PRIuMAX>  nietrafionych wpisów negatywnych\n"
 "%15lu%% trafień\n"
 "%15zu  aktualnie pamiętanych wartości\n"
 "%15zu  maksymalnie pamiętanych wartości\n"
@@ -4590,12 +4611,12 @@ msgstr ""
 "\n"
 "%15u  wyszukiwań wpisów\n"
 "%15u  wpisów trafionych\n"
-"%15u  wpisów nie trafionych\n"
+"%15u  wpisów nietrafionych\n"
 "%15u  usunięć wpisów\n"
 "%15u  wyszukiwań CAV\n"
 "%15u  CAV trafionych\n"
 "%15u  prób CAV\n"
-"%15u  CAV nie trafionych\n"
+"%15u  CAV nietrafionych\n"
 
 #: nscd/servicescache.c:357
 #, c-format
@@ -4634,7 +4655,7 @@ msgstr "Odczyt wpisów z bazy administracyjnej."
 #: nss/getent.c:154 nss/getent.c:466 nss/getent.c:513
 #, c-format
 msgid "Enumeration not supported on %s\n"
-msgstr "Wyliczanie nie obsługiwane dla %s\n"
+msgstr "Wyliczanie nieobsługiwane dla %s\n"
 
 #: nss/getent.c:521 nss/getent.c:534
 #, c-format
@@ -4673,7 +4694,7 @@ msgstr "ZNAK"
 
 #: nss/makedb.c:128
 msgid "Generated line not part of iteration"
-msgstr "Wygenerowana linia nie będąca częścią iteracji"
+msgstr "Wygenerowana linia niebędąca częścią iteracji"
 
 #: nss/makedb.c:133
 msgid "Create simple database from textual input."
@@ -4768,17 +4789,17 @@ msgstr "nie można zainicjować kontekstu SELinuksa"
 msgid "cannot set file creation context for `%s'"
 msgstr "nie można ustawić kontekstu utworzenia pliku dla `%s'"
 
-#: posix/getconf.c:419
+#: posix/getconf.c:462
 #, c-format
 msgid "Usage: %s [-v specification] variable_name [pathname]\n"
 msgstr "Składnia: %s [-v specyfikacja] nazwa_zmiennej [ścieżka]\n"
 
-#: posix/getconf.c:422
+#: posix/getconf.c:465
 #, c-format
 msgid "       %s -a [pathname]\n"
 msgstr "       %s -a [ścieżka]\n"
 
-#: posix/getconf.c:498
+#: posix/getconf.c:544
 #, c-format
 msgid ""
 "Usage: getconf [-v SPEC] VAR\n"
@@ -4797,21 +4818,21 @@ msgstr ""
 "kompilacji SPEC.\n"
 "\n"
 
-#: posix/getconf.c:574
+#: posix/getconf.c:620
 #, c-format
 msgid "unknown specification \"%s\""
 msgstr "nieznana specyfikacja \"%s\""
 
-#: posix/getconf.c:626
+#: posix/getconf.c:672
 #, c-format
 msgid "Couldn't execute %s"
 msgstr "Nie można wykonać %s"
 
-#: posix/getconf.c:671 posix/getconf.c:687
+#: posix/getconf.c:717 posix/getconf.c:733
 msgid "undefined"
 msgstr "niezdefiniowana"
 
-#: posix/getconf.c:709
+#: posix/getconf.c:761
 #, c-format
 msgid "Unrecognized variable `%s'"
 msgstr "Nierozpoznana zmienna `%s'"
@@ -4921,7 +4942,7 @@ msgstr "Brak wyrażenia regularnego"
 
 #: posix/wordexp.c:1794
 msgid "parameter null or not set"
-msgstr "parametr pusty lub nie ustawiony"
+msgstr "parametr pusty lub nieustawiony"
 
 #: resolv/herror.c:63
 msgid "Resolver Error 0 (no error)"
@@ -4961,17 +4982,17 @@ msgstr "%s: linia %d: nie można podać więcej niż %d prawidłowych domen"
 msgid "%s: line %d: list delimiter not followed by domain"
 msgstr "%s: linia %d: brak domeny po ograniczniku listy"
 
-#: resolv/res_hconf.c:176
+#: resolv/res_hconf.c:177
 #, c-format
 msgid "%s: line %d: expected `on' or `off', found `%s'\n"
 msgstr "%s: linia %d: oczekiwano `on' lub `off', napotkano `%s'\n"
 
-#: resolv/res_hconf.c:219
+#: resolv/res_hconf.c:220
 #, c-format
 msgid "%s: line %d: bad command `%s'\n"
 msgstr "%s: linia %d: błędne polecenie `%s'\n"
 
-#: resolv/res_hconf.c:252
+#: resolv/res_hconf.c:253
 #, c-format
 msgid "%s: line %d: ignoring trailing garbage `%s'\n"
 msgstr "%s: linia %d: zignorowano końcowe śmieci `%s'\n"
@@ -5182,7 +5203,7 @@ msgstr "Nieznany sygnał %d"
 
 #: sunrpc/auth_unix.c:113 sunrpc/clnt_tcp.c:124 sunrpc/clnt_udp.c:140
 #: sunrpc/clnt_unix.c:125 sunrpc/svc_tcp.c:189 sunrpc/svc_tcp.c:233
-#: sunrpc/svc_udp.c:161 sunrpc/svc_unix.c:186 sunrpc/svc_unix.c:226
+#: sunrpc/svc_udp.c:161 sunrpc/svc_unix.c:187 sunrpc/svc_unix.c:227
 #: sunrpc/xdr.c:631 sunrpc/xdr.c:791 sunrpc/xdr_array.c:102
 #: sunrpc/xdr_rec.c:153 sunrpc/xdr_ref.c:79
 msgid "out of memory\n"
@@ -5273,7 +5294,7 @@ msgstr "RPC: Awaria portmappera"
 
 #: sunrpc/clnt_perr.c:213
 msgid "RPC: Program not registered"
-msgstr "RPC: Nie zarejestrowany program"
+msgstr "RPC: Niezarejestrowany program"
 
 #: sunrpc/clnt_perr.c:217
 msgid "RPC: Failed (unspecified error)"
@@ -5431,17 +5452,13 @@ msgstr "cache_set: przydzielenie pamięci dla nowego wpisu jest niemożliwe"
 msgid "cache_set: could not allocate new rpc_buffer"
 msgstr "cache_set: nie można przydzielić nowego rpc_buffer"
 
-#: sunrpc/svc_unix.c:166
+#: sunrpc/svc_unix.c:167
 msgid "svc_unix.c - AF_UNIX socket creation problem"
 msgstr "svc_unix.c - problemy przy tworzeniu gniazda AF_UNIX"
 
-#: sunrpc/svc_unix.c:176
+#: sunrpc/svc_unix.c:177
 msgid "svc_unix.c - cannot getsockname or listen"
 msgstr "svc_unix.c - nie można wykonać getsockname lub listen"
-
-#: sysdeps/aarch64/dl-bti.c:72
-msgid "failed to turn on BTI protection"
-msgstr "nie udało się włączyć ochrony BTI"
 
 #: sysdeps/generic/dl-protected.h:55
 msgid "error due to GNU_PROPERTY_1_NEEDED_INDIRECT_EXTERN_ACCESS"
@@ -5874,12 +5891,12 @@ msgstr "Protokół niedostępny"
 #. TRANS @xref{Creating a Socket}.
 #: sysdeps/gnu/errlist.h:308
 msgid "Protocol not supported"
-msgstr "Protokół nie obsługiwany"
+msgstr "Protokół nieobsługiwany"
 
 #. TRANS The socket type is not supported.
 #: sysdeps/gnu/errlist.h:313
 msgid "Socket type not supported"
-msgstr "Nie obsługiwany typ gniazda"
+msgstr "Nieobsługiwany typ gniazda"
 
 #. TRANS The operation you requested is not supported.  Some socket functions
 #. TRANS don't make sense for all types of sockets, and others may not be
@@ -5889,18 +5906,18 @@ msgstr "Nie obsługiwany typ gniazda"
 #. TRANS nothing to do for that call.
 #: sysdeps/gnu/errlist.h:323
 msgid "Operation not supported"
-msgstr "Operacja nie obsługiwana"
+msgstr "Operacja nieobsługiwana"
 
 #. TRANS The socket communications protocol family you requested is not supported.
 #: sysdeps/gnu/errlist.h:328
 msgid "Protocol family not supported"
-msgstr "Nie obsługiwana rodzina protokołów"
+msgstr "Nieobsługiwana rodzina protokołów"
 
 #. TRANS The address family specified for a socket is not supported; it is
 #. TRANS inconsistent with the protocol being used on the socket.  @xref{Sockets}.
 #: sysdeps/gnu/errlist.h:334
 msgid "Address family not supported by protocol"
-msgstr "Rodzina adresów nie obsługiwana przez protokół"
+msgstr "Rodzina adresów nieobsługiwana przez protokół"
 
 #. TRANS The requested socket address is already in use.  @xref{Socket Addresses}.
 #: sysdeps/gnu/errlist.h:339
@@ -6064,7 +6081,7 @@ msgstr "Brak dostępnych blokad"
 #. TRANS install a new version of the C library or the operating system.
 #: sysdeps/gnu/errlist.h:496
 msgid "Function not implemented"
-msgstr "Nie zaimplementowana funkcja"
+msgstr "Niezaimplementowana funkcja"
 
 #. TRANS While decoding a multibyte character the function came along an invalid
 #. TRANS or an incomplete sequence of bytes or the given wide character is invalid.
@@ -6143,7 +6160,7 @@ msgstr "Numer kanału poza zakresem"
 
 #: sysdeps/gnu/errlist.h:558
 msgid "Level 2 not synchronized"
-msgstr "Poziom 2 nie zsynchronizowany"
+msgstr "Poziom 2 niezsynchronizowany"
 
 #: sysdeps/gnu/errlist.h:561
 msgid "Level 3 halted"
@@ -6227,7 +6244,7 @@ msgstr "Błąd RFS"
 
 #: sysdeps/gnu/errlist.h:621
 msgid "Name not unique on network"
-msgstr "Nazwa nie jest unikalna w sieci"
+msgstr "Nazwa nie jest unikatowa w sieci"
 
 #: sysdeps/gnu/errlist.h:624
 msgid "File descriptor in bad state"
@@ -6376,7 +6393,7 @@ msgstr "Nieoczekiwany błąd"
 #. TRANS it returns @code{ENOSYS} instead.
 #: sysdeps/gnu/errlist.h:745
 msgid "Not supported"
-msgstr "Nie obsługiwane"
+msgstr "Nieobsługiwane"
 
 #: sysdeps/gnu/errlist.h:748
 msgid "RPC program version wrong"
@@ -6434,6 +6451,20 @@ msgstr "?"
 msgid "RPC program not available"
 msgstr "Program RPC niedostępny"
 
+#: sysdeps/gnu/errlist.h:801
+msgid "Initialization error"
+msgstr "Błąd inicjowania"
+
+# to imho jest bardziej zrozumiale - zwlaszcza ze to sie czasem zdarza
+# jak sie uruchomi mountd bez -r -PK
+#: sysdeps/gnu/errlist.h:804
+msgid "Device is remote"
+msgstr "Urządzenie jest zdalne"
+
+#: sysdeps/gnu/errlist.h:807
+msgid "Too many levels of remote in path"
+msgstr "Za dużo zdalnych poziomów w ścieżce"
+
 #: sysdeps/hppa/dl-fptr.c:96
 msgid "cannot map pages for fdesc table"
 msgstr "nie można odwzorować stron dla tablicy fdesc"
@@ -6472,7 +6503,7 @@ msgstr "Wystąpił krytyczny błąd w odwzorowaniu nazw"
 
 #: sysdeps/posix/gai_strerror-strs.h:6
 msgid "ai_family not supported"
-msgstr "ai_family zawiera nie obsługiwaną rodzinę protokołów"
+msgstr "ai_family zawiera nieobsługiwaną rodzinę protokołów"
 
 #: sysdeps/posix/gai_strerror-strs.h:7
 msgid "Memory allocation failure"
@@ -6488,11 +6519,11 @@ msgstr "Ta nazwa lub usługa jest nieznana"
 
 #: sysdeps/posix/gai_strerror-strs.h:10
 msgid "Servname not supported for ai_socktype"
-msgstr "Nazwa nie obsługiwana dla ai_socktype"
+msgstr "Nazwa nieobsługiwana dla ai_socktype"
 
 #: sysdeps/posix/gai_strerror-strs.h:11
 msgid "ai_socktype not supported"
-msgstr "ai_socktype zawiera nie obsługiwany typ gniazda"
+msgstr "ai_socktype zawiera nieobsługiwany typ gniazda"
 
 #: sysdeps/posix/gai_strerror-strs.h:12
 msgid "System error"
@@ -6508,7 +6539,7 @@ msgstr "Żądanie anulowane"
 
 #: sysdeps/posix/gai_strerror-strs.h:15
 msgid "Request not canceled"
-msgstr "Żądanie nie anulowane"
+msgstr "Żądanie nie zostało anulowane"
 
 #: sysdeps/posix/gai_strerror-strs.h:16
 msgid "All requests done"
@@ -6870,7 +6901,7 @@ msgstr "błąd wejścia"
 
 #: timezone/zic.c:1679
 msgid "unterminated line"
-msgstr "nie zakończona linia"
+msgstr "niezakończona linia"
 
 #: timezone/zic.c:1683
 msgid "NUL input byte"
@@ -7100,7 +7131,7 @@ msgstr "za dużo sekund przestępnych"
 
 #: timezone/zic.c:3534
 msgid "Rolling leap seconds not supported with -r"
-msgstr "Kroczące sekundy przestępne nie obsługiwane z -r"
+msgstr "Kroczące sekundy przestępne nieobsługiwane z -r"
 
 #: timezone/zic.c:3561
 msgid "Leap seconds too close together"

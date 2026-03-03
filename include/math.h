@@ -114,9 +114,11 @@ __issignalingf (float x)
 
 # if __HAVE_DISTINCT_FLOAT128
 
+#  ifdef __USE_EXTERN_INLINES
+
 /* __builtin_isinf_sign is broken in GCC < 7 for float128.  */
-#  if ! __GNUC_PREREQ (7, 0)
-#   include <ieee754_float128.h>
+#   if ! __GNUC_PREREQ (7, 0)
+#    include <ieee754_float128.h>
 extern inline int
 __isinff128 (_Float128 x)
 {
@@ -126,45 +128,58 @@ __isinff128 (_Float128 x)
   lx |= -lx;
   return ~(lx >> 63) & (hx >> 62);
 }
-#  endif
+#   endif
 
 extern inline _Float128
 fabsf128 (_Float128 x)
 {
   return __builtin_fabsf128 (x);
 }
+#  else
+libm_hidden_proto (fabsf128)
+#  endif
 # endif
 
 
 /* NB: Internal tests don't have access to internal symbols.  */
 # if !IS_IN (testsuite_internal) \
      && !(defined __FINITE_MATH_ONLY__ && __FINITE_MATH_ONLY__ > 0)
+/* NO_MATH_REDIRECT must be defined in the source implementing function,
+   FUNC, if FUNC is implemented as an alias of __FUNC or vice versa to
+   avoid redirecting FUNC to __FUNC.  */
+# include <math-use-builtins.h>
+/* NB: Do not redirect math builtin functions when they are inlined.  */
 #  ifndef NO_MATH_REDIRECT
 /* Declare some functions for use within GLIBC.  Compilers typically
    inline those functions as a single instruction.  Use an asm to
    avoid use of PLTs if it doesn't.  */
 #   define MATH_REDIRECT(FUNC, PREFIX, ARGS)			\
-  float (FUNC ## f) (ARGS (float)) asm (PREFIX #FUNC "f");	\
-  double (FUNC) (ARGS (double)) asm (PREFIX #FUNC );		\
+  float (NO_ ## FUNC ## f ## _BUILTIN) (ARGS (float))		\
+    asm (PREFIX #FUNC "f");					\
+  double (NO_ ## FUNC ## _BUILTIN) (ARGS (double))		\
+    asm (PREFIX #FUNC );					\
   MATH_REDIRECT_LDBL (FUNC, PREFIX, ARGS)			\
   MATH_REDIRECT_F128 (FUNC, PREFIX, ARGS)
+
 #   if defined __NO_LONG_DOUBLE_MATH 				\
        || __LDOUBLE_REDIRECTS_TO_FLOAT128_ABI == 1
 #    define MATH_REDIRECT_LDBL(FUNC, PREFIX, ARGS)
 #   else
-#    define MATH_REDIRECT_LDBL(FUNC, PREFIX, ARGS)			\
-  long double (FUNC ## l) (ARGS (long double)) asm (PREFIX #FUNC "l");
+#    define MATH_REDIRECT_LDBL(FUNC, PREFIX, ARGS)		  \
+  long double (NO_ ## FUNC ## l ## _BUILTIN) (ARGS (long double)) \
+    asm (PREFIX #FUNC "l");
 #   endif
 #   if __HAVE_DISTINCT_FLOAT128
-#    define MATH_REDIRECT_F128(FUNC, PREFIX, ARGS)			\
-  _Float128 (FUNC ## f128) (ARGS (_Float128)) asm (PREFIX #FUNC "f128");
+#    define MATH_REDIRECT_F128(FUNC, PREFIX, ARGS)		 \
+  _Float128 (NO_ ## FUNC ## f128 ## _BUILTIN) (ARGS (_Float128)) \
+    asm (PREFIX #FUNC "f128");
 #   else
 #    define MATH_REDIRECT_F128(FUNC, PREFIX, ARGS)
 #   endif
 #   define MATH_REDIRECT_UNARY_ARGS(TYPE) TYPE
 #   define MATH_REDIRECT_BINARY_ARGS(TYPE) TYPE, TYPE
 #   define MATH_REDIRECT_TERNARY_ARGS(TYPE) TYPE, TYPE, TYPE
-MATH_REDIRECT (sqrt, "__ieee754_", MATH_REDIRECT_UNARY_ARGS)
+MATH_REDIRECT (sqrt, "__", MATH_REDIRECT_UNARY_ARGS)
 MATH_REDIRECT (ceil, "__", MATH_REDIRECT_UNARY_ARGS)
 MATH_REDIRECT (floor, "__", MATH_REDIRECT_UNARY_ARGS)
 MATH_REDIRECT (roundeven, "__", MATH_REDIRECT_UNARY_ARGS)

@@ -310,12 +310,17 @@ This is a GNU extension.
 The flags argument in @code{@dots{}at} functions can be a combination of
 the following flags, defined in @file{fcntl.h}.  Not all such functions
 support all flags, and some (such as @code{openat}) do not accept a
-flags argument at all.
+flags argument at all.  Although the flags specific to each function have
+distinct values from each other, some flags (relevant to different
+functions) might share the same value and therefore are not guaranteed to
+have unique values.
 
-In the flag descriptions below, the @dfn{effective final path component}
-refers to the final component (basename) of the full path constructed
-from the descriptor and file name arguments, using file name lookup, as
-described above.
+A non-exhaustive list of common flags and their descriptions follows.  Flags
+specific to a function are described alongside the function itself.  In
+these flag descriptions, the @dfn{effective final path component} refers to
+the final component (basename) of the full path constructed from the
+descriptor and file name arguments, using file name lookup, as described
+above.
 
 @vtable @code
 @item AT_EMPTY_PATH
@@ -352,6 +357,28 @@ a non-final component of the file name are still followed.
 @strong{Note:} There is no relationship between these flags and the type
 argument to the @code{getauxval} function (with @code{AT_@dots{}}
 constants defined in @file{elf.h}).  @xref{Auxiliary Vector}.
+
+@cindex common errors in descriptor-relative functions
+@cindex common errors in @code{@dots{}at} functions
+
+The @code{@dots{}at} functions have some common error conditions due to the
+nature of descriptor-relative access.  A list of common errors and their
+descriptions follows.  Errors specific to a function are described alongside
+the function itself.
+
+@table @code
+@item EBADF
+The file name argument is a relative path but the descriptor argument
+is neither @code{AT_FDCWD} nor a valid file descriptor.
+
+@item EINVAL
+If the function accepts a @var{flags} argument, the flag combination passed
+is not valid for the function.
+
+@item ENOTDIR
+The file name argument is a relative file name but the descriptor
+argument is associated with a file that is not a directory.
+@end table
 
 @node Accessing Directories
 @section Accessing Directories
@@ -409,18 +436,41 @@ entries.  It contains the following fields:
 This is the null-terminated file name component.  This is the only
 field you can count on in all POSIX systems.
 
+While this field is defined with a specified length, functions such as
+@code{readdir} may return a pointer to a @code{struct dirent} where the
+@code{d_name} extends beyond the end of the struct.
+
 @item ino_t d_fileno
 This is the file serial number.  For BSD compatibility, you can also
 refer to this member as @code{d_ino}.  On @gnulinuxhurdsystems{} and most POSIX
 systems, for most files this the same as the @code{st_ino} member that
 @code{stat} will return for the file.  @xref{File Attributes}.
 
+@item off_t d_off
+This value contains the offset of the next directory entry (after this
+entry) in the directory stream.  The value may not be compatible with
+@code{lseek} or @code{seekdir}, especially if the width of @code{d_off}
+is less than 64 bits.  Directory entries are not ordered by offset, and
+the @code{d_off} and @code{d_reclen} values are unrelated.  Seeking on
+directory streams is not recommended.  The symbol
+@code{_DIRENT_HAVE_D_OFF} is defined if the @code{d_ino} member is
+available.
+
 @item unsigned char d_namlen
 This is the length of the file name, not including the terminating
 null character.  Its type is @code{unsigned char} because that is the
 integer type of the appropriate size.  This member is a BSD extension.
 The symbol @code{_DIRENT_HAVE_D_NAMLEN} is defined if this member is
-available.
+available.  (It is not available on Linux.)
+
+@item unsigned short int d_reclen
+This is the length of the entire directory record.  When iterating
+through a buffer filled by @code{getdents64} (@pxref{Low-level Directory
+Access}), this value needs to be added to the offset of the current
+directory entry to obtain the offset of the next entry.  When using
+@code{readdir} and related functions, the value of @code{d_reclen} is
+undefined and should not be accessed.  The symbol
+@code{_DIRENT_HAVE_D_RECLEN} is defined if this member is available.
 
 @item unsigned char d_type
 This is the type of the file, possibly unknown.  The following constants
@@ -457,7 +507,7 @@ This member is a BSD extension.  The symbol @code{_DIRENT_HAVE_D_TYPE}
 is defined if this member is available.  On systems where it is used, it
 corresponds to the file type bits in the @code{st_mode} member of
 @code{struct stat}.  If the value cannot be determined the member
-value is DT_UNKNOWN.  These two macros convert between @code{d_type}
+value is @code{DT_UNKNOWN}.  These two macros convert between @code{d_type}
 values and @code{st_mode} values:
 
 @deftypefun int IFTODT (mode_t @var{mode})
@@ -631,6 +681,20 @@ and can be rewritten by a subsequent call.
 @strong{Portability Note:} On some systems @code{readdir} may not
 return entries for @file{.} and @file{..}, even though these are always
 valid file names in any directory.  @xref{File Name Resolution}.
+
+If a directory is modified between a call to @code{readdir} and after
+the directory stream was created or @code{rewinddir} was last called on
+it, it is unspecified according to POSIX whether newly created or
+removed entries appear among the entries returned by repeated
+@code{readdir} calls before the end of the directory is reached.
+However, due to practical implementation constraints, it is possible
+that entries (including unrelated, unmodified entries) appear multiple
+times or do not appear at all if the directory is modified while listing
+it.  If the application intends to create files in the directory, it may
+be necessary to complete the iteration first and create a copy of the
+information obtained before creating any new files.  (See below for
+instructions regarding copying of @code{d_name}.)  The iteration can be
+restarted using @code{rewinddir}.  @xref{Random Access Directory}.
 
 If there are no more entries in the directory or an error is detected,
 @code{readdir} returns a null pointer.  The following @code{errno} error
@@ -812,6 +876,10 @@ directory since it was opened with @code{opendir}.  (Entries for these
 files might or might not be returned by @code{readdir} if they were
 added or removed since you last called @code{opendir} or
 @code{rewinddir}.)
+
+For example, it is recommended to call @code{rewinddir} followed by
+@code{readdir} to check if a directory is empty after listing it with
+@code{readdir} and deleting all encountered files from it.
 @end deftypefun
 
 @deftypefun {long int} telldir (DIR *@var{dirstream})
@@ -823,6 +891,13 @@ added or removed since you last called @code{opendir} or
 The @code{telldir} function returns the file position of the directory
 stream @var{dirstream}.  You can use this value with @code{seekdir} to
 restore the directory stream to that position.
+
+Using the the @code{telldir} function is not recommended.
+
+The value returned by @code{telldir} may not be compatible with the
+@code{d_off} field in @code{struct dirent}, and cannot be used with the
+@code{lseek} function.  The returned value may not unambiguously
+identify the position in the directory stream.
 @end deftypefun
 
 @deftypefun void seekdir (DIR *@var{dirstream}, long int @var{pos})
@@ -836,6 +911,9 @@ stream @var{dirstream} to @var{pos}.  The value @var{pos} must be the
 result of a previous call to @code{telldir} on this particular stream;
 closing and reopening the directory can invalidate values returned by
 @code{telldir}.
+
+Using the the @code{seekdir} function is not recommended.  To seek to
+the beginning of the directory stream, use @code{rewinddir}.
 @end deftypefun
 
 
@@ -1007,9 +1085,20 @@ Note that some file systems support file names longer than
 @code{NAME_MAX} bytes (e.g., because they support up to 255 Unicode
 characters), so a buffer size of at least 1024 is recommended.
 
+If the directory has been modified since the first call to
+@code{getdents64} on the directory (opening the descriptor or seeking to
+offset zero), it is possible that the buffer contains entries that have
+been encountered before.  Likewise, it is possible that files that are
+still present are not reported before the end of the directory is
+encountered (and @code{getdents64} returns zero).
+
 This function is specific to Linux.
 @end deftypefun
 
+Systems that support @code{getdents64} support seeking on directory
+streams.  @xref{File Position Primitive}.  However, the only offset that
+works reliably is offset zero, indicating that reading the directory
+should start from the beginning.
 
 @node Working with Directory Trees
 @section Working with Directory Trees
@@ -1690,6 +1779,31 @@ file system and can't be modified.
 @end table
 @end deftypefun
 
+@deftypefun int unlinkat (int @var{filedes}, const char *@var{filename}, int @var{flags})
+@standards{POSIX.1-2008, unistd.h}
+@comment Unaudited and therefore marked AC-Unsafe and AS-Unsafe by default
+@safety{@mtsafe{}@asunsafe{@asucorrupt{}}@acunsafe{@acucorrupt{}}}
+This function is a descriptor-relative version of the @code{unlink}
+function above.  @xref{Descriptor-Relative Access}.  The @var{flags}
+argument may either be @code{0} or contain the flag @code{AT_REMOVEDIR}:
+
+@table @code
+@item AT_REMOVEDIR
+This flag causes @code{unlinkat} to perform an @code{rmdir} operation on
+@code{filename} instead of performing the equivalent of @code{unlink}.
+@end table
+
+Compared to @code{unlink}, some additional error conditions can occur due to
+descriptor-relative access.  @xref{Descriptor-Relative Access}.  In
+addition to this, the following other errors can also occur:
+
+@table @code
+@item EISDIR
+The effective final path derived from @var{filename} and @var{filedes} is a
+directory but @code{AT_REMOVEDIR} was not passed in @code{flags}.
+@end table
+@end deftypefun
+
 @deftypefun int rmdir (const char *@var{filename})
 @standards{POSIX.1, unistd.h}
 @safety{@prelim{}@mtsafe{}@assafe{}@acsafe{}}
@@ -1821,6 +1935,20 @@ file systems.
 @end table
 @end deftypefun
 
+@deftypefun int renameat (int @var{oldfiledes}, const char *@var{oldname}, int @var{newfiledes}, const char *@var{newname})
+@standards{POSIX.1-2008, stdio.h}
+@comment Unaudited and therefore marked AC-Unsafe and AS-Unsafe by default
+@safety{@mtsafe{}@asunsafe{@asucorrupt{}}@acunsafe{@acucorrupt{}}}
+This function is a descriptor-relative version of the @code{rename}
+function above.  @xref{Descriptor-Relative Access}.  If @var{oldname} or
+@var{newname} is a relative path, it is interpreted relative to the
+directory associated with @var{oldfiledes} or @var{newfiledes},
+respectively.  Absolute paths are interpreted in the usual way.
+
+Compared to @code{rename}, some additional error conditions can occur.
+@xref{Descriptor-Relative Access}.
+@end deftypefun
+
 @node Creating Directories
 @section Creating Directories
 @cindex creating a directory
@@ -1873,6 +2001,17 @@ file system and cannot be modified.
 To use this function, your program should include the header file
 @file{sys/stat.h}.
 @pindex sys/stat.h
+@end deftypefun
+
+@deftypefun int mkdirat (int @var{filedes}, const char *@var{filename}, mode_t @var{mode})
+@standards{POSIX.1-2008, sys/stat.h}
+@comment Unaudited and therefore marked AC-Unsafe and AS-Unsafe by default
+@safety{@mtsafe{}@asunsafe{@asucorrupt{}}@acunsafe{@acucorrupt{}}}
+This function is a descriptor-relative version of the @code{mkdir}
+function above.  @xref{Descriptor-Relative Access}.
+
+Compared to @code{mkdir}, some additional error conditions can occur.
+@xref{Descriptor-Relative Access}.
 @end deftypefun
 
 @node File Attributes
@@ -2259,6 +2398,11 @@ The @var{flags} argument is not valid for this function.
 @item ENOTDIR
 The descriptor @var{filedes} is not associated with a directory, and
 @var{filename} is a relative file name.
+
+@item ENOENT
+The file named by @var{filename} does not exist, it's a dangling symbolic link
+and @var{flags} does not contain @code{AT_SYMLINK_NOFOLLOW}, or @var{filename}
+is an empty string and @var{flags} does not contain @code{AT_EMPTY_PATH}.
 @end table
 
 When the sources are compiled with @code{_FILE_OFFSET_BITS == 64} this
@@ -2980,6 +3124,29 @@ Flag meaning test for execute/search permission.
 Flag meaning test for existence of the file.
 @end deftypevr
 
+@deftypefun int faccessat (int @var{filedes}, const char *@var{filename}, int @var{how}, int @var{flags})
+@standards{POSIX.1-2008, unistd.h}
+@comment Unaudited and therefore marked AC-Unsafe and AS-Unsafe by default
+@safety{@mtsafe{}@asunsafe{@asucorrupt{}}@acunsafe{@acucorrupt{}}}
+This function is a descriptor-relative version of the @code{access}
+function above.  @xref{Descriptor-Relative Access}.  The @var{flags}
+argument can contain a combination of the flags @code{AT_EACCESS} described
+below, @code{AT_EMPTY_PATH}, and @code{AT_SYMLINK_NOFOLLOW}.
+
+@vtable @code
+@item AT_EACCESS
+This flag when passed to the @code{faccessat} function causes it to perform
+access checks using effective user and group IDs instead of real IDs, which
+is the default and matches the @code{access} function.
+@end vtable
+
+Compared to @code{access}, some additional error conditions can occur.
+@xref{Descriptor-Relative Access}.
+
+This function may not work correctly on older kernels missing the
+@code{faccessat2} system call.
+@end deftypefun
+
 @node File Times
 @subsection File Times
 
@@ -3148,12 +3315,74 @@ permission for the file, or be a privileged user.
 @item EBADF
 The @var{filedes} argument is not a valid file descriptor.
 
+@item EINVAL
+At least one of the fields in the @code{tvp} array passed has an invalid
+value.
+
 @item EPERM
 If the @var{times} argument is not a null pointer, you must either be
 the owner of the file or be a privileged user.
 
 @item EROFS
 The file lives on a read-only file system.
+@end table
+@end deftypefun
+
+@deftypefun int futimens (int @var{filedes}, const struct timespec @var{tsp}@t{[2]})
+@standards{POSIX.1-2008, sys/stat.h}
+@comment Unaudited and therefore marked AC-Unsafe and AS-Unsafe by default
+@safety{@mtsafe{}@asunsafe{@asucorrupt{}}@acunsafe{@acucorrupt{}}}
+This function is like @code{futimes}, except that it sets the file access
+and modification timestamps with nanosecond precision.  The argument
+@code{tsp} is used similarly to @code{futimes}' @code{tvp}, but has a
+@code{const struct timespec} type that can express calendar time with
+nanosecond precision.  @xref{Time Types}.
+@end deftypefun
+
+@deftypefun int utimensat (int @var{filedes}, const char *@var{filename}, const struct timespec @var{tsp}@t{[2]}, int @var{flags})
+@standards{POSIX.1-2008, sys/stat.h}
+@comment Unaudited and therefore marked AC-Unsafe and AS-Unsafe by default
+@safety{@mtsafe{}@asunsafe{@asucorrupt{}}@acunsafe{@acucorrupt{}}}
+This function is a descriptor-relative version of the @code{futimens}
+function above.  @xref{Descriptor-Relative Access}.  The @var{flags}
+argument can contain a combination of the flags @code{AT_EMPTY_PATH}, and
+@code{AT_SYMLINK_NOFOLLOW}.  The call:
+
+@smallexample
+futimens (@var{filedes}, @var{tsp})
+@end smallexample
+
+is equivalent to:
+
+@smallexample
+utimensat (@var{filedes}, @code{NULL}, @var{tsp}, 0)
+@end smallexample
+
+Compared to @code{futimens}, some additional error conditions can occur due
+to descriptor-relative access.  @xref{Descriptor-Relative Access}.  In
+addition to this, the following other errors can also occur:
+
+@table @code
+@item EINVAL
+The @var{filename} argument is NULL, @var{filedes} is not @code{AT_FDCWD},
+and @var{flags} is not @code{0}.
+
+@item ELOOP
+There are too many levels of indirection.  This can be the result of
+circular symbolic links to directories.
+
+@item ENAMETOOLONG
+The resulting path is too long.  This error only occurs on systems which
+have a limit on the file name length.
+
+@item ENOENT
+The @var{filename} argument is an empty string and @var{flags} does not
+contain @code{AT_EMPTY_PATH}, or @var{filename} does not refer to an
+existing file.
+
+@item ESRCH
+Search permission was denied for one of the prefix components of the the
+@var{filename} argument.
 @end table
 @end deftypefun
 
@@ -3760,22 +3989,17 @@ creation always works like @code{open} with @code{O_EXCL}.
 The @code{mkdtemp} function comes from OpenBSD.
 
 @c FIXME these are undocumented:
-@c faccessat
 @c fchmodat
 @c fchownat
 @c futimesat
 @c fstatat (there's a commented-out safety assessment for this one)
 @c statx
-@c mkdirat
 @c mkfifoat
 @c name_to_handle_at
 @c openat
 @c open_by_handle_at
 @c readlinkat
-@c renameat
 @c renameat2
 @c scandirat
 @c symlinkat
-@c unlinkat
-@c utimensat
 @c mknodat

@@ -1,5 +1,5 @@
 /* Bit values & structures for resource limits.  4.4 BSD/generic GNU version.
-   Copyright (C) 1994-2025 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ enum __rlimit_resource
 
 /* Value to indicate that there is no limit.  */
 #ifndef __USE_FILE_OFFSET64
-# define RLIM_INFINITY 0x7fffffff
+# define RLIM_INFINITY ((__rlim_t) -1)
 #else
 # define RLIM_INFINITY 0x7fffffffffffffffLL
 #endif

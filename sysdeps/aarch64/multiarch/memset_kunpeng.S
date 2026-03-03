@@ -1,5 +1,5 @@
 /* Optimized memset for Huawei Kunpeng processor.
-   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+   Copyright (C) 2012-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -32,9 +32,6 @@
 #define dstend	x4
 
 ENTRY (__memset_kunpeng)
-
-	PTR_ARG (0)
-	SIZE_ARG (2)
 
 	dup	v0.16B, valw
 	add	dstend, dstin, count

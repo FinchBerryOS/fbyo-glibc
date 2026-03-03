@@ -13,7 +13,7 @@ LIBC_TRY_CC_AND_TEST_CC_OPTION([for -mprefer-vector-width=128],
 LIBC_CONFIG_VAR([config-cflags-mprefer-vector-width],
 		[$libc_cv_cc_mprefer_vector_width])
 
-LIBC_LINKER_FEATURE([-z mark-plt], [-Wl,-z,mark-plt],
+LIBC_LINKER_FEATURE([-z mark-plt], [-Wl,-z,mark-plt -Wl,--fatal-warnings],
                     [libc_cv_z_mark_plt=yes], [libc_cv_z_mark_plt=no])
 LIBC_CONFIG_VAR([have-z-mark-plt], [$libc_cv_z_mark_plt])
 
@@ -103,6 +103,8 @@ if test $libc_cv_x86_have_apx = yes; then
   AC_DEFINE(HAVE_X86_APX)
 fi
 LIBC_CONFIG_VAR([have-x86-apx], [$libc_cv_x86_have_apx])
+
+libc_cv_support_sframe=yes
 
 test -n "$critic_missing" && AC_MSG_ERROR([
 *** $critic_missing])

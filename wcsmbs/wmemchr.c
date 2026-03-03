@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -60,5 +60,5 @@ __wmemchr (const wchar_t *s, wchar_t c, size_t n)
   return NULL;
 }
 libc_hidden_def (__wmemchr)
-weak_alias (__wmemchr, wmemchr)
+static_weak_alias (__wmemchr, wmemchr)
 libc_hidden_weak (wmemchr)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Copyright The GNU Toolchain Authors.
    This file is part of the GNU C Library.
 
@@ -611,6 +611,7 @@ _IO_no_init (FILE *fp, int flags, int orientation,
        stream.  */
     fp->_wide_data = (struct _IO_wide_data *) -1L;
   fp->_freeres_list = NULL;
+  fp->_total_written = 0;
 }
 
 int
@@ -729,6 +730,13 @@ _IO_flush_all (void)
 				    > fp->_wide_data->_IO_write_base))
 	   )
 	  && _IO_OVERFLOW (fp, EOF) == EOF)
+	result = EOF;
+      if (_IO_fileno (fp) >= 0
+	  && ((fp->_mode <= 0 && fp->_IO_read_ptr < fp->_IO_read_end)
+	      || (_IO_vtable_offset (fp) == 0
+		  && fp->_mode > 0 && (fp->_wide_data->_IO_read_ptr
+				       < fp->_wide_data->_IO_read_end)))
+	  && _IO_SYNC (fp) != 0)
 	result = EOF;
 
       _IO_funlockfile (fp);

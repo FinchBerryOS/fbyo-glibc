@@ -1,5 +1,5 @@
 /* low level locking for pthread library.  Generic futex-using version.
-   Copyright (C) 2003-2025 Free Software Foundation, Inc.
+   Copyright (C) 2003-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -64,8 +64,3 @@ __lll_lock_wake (int *futex, int private)
   lll_futex_wake (futex, 1, private);
 }
 libc_hidden_def (__lll_lock_wake)
-
-#if ENABLE_ELISION_SUPPORT
-int __pthread_force_elision;
-libc_hidden_data_def (__pthread_force_elision)
-#endif

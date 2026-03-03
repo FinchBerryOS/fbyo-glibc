@@ -1,6 +1,6 @@
 /* Initialize CPU feature data.  AArch64 version.
    This file is part of the GNU C Library.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@
 #include <sys/prctl.h>
 #include <sys/utsname.h>
 #include <dl-tunables-parse.h>
+#include <dl-symbol-redir-ifunc.h>
 
 #define DCZID_DZP_MASK (1 << 4)
 #define DCZID_BS_MASK (0xf)
@@ -136,6 +137,8 @@ init_cpu_features (struct cpu_features *cpu_features)
 
   /* Check if BTI is supported.  */
   cpu_features->bti = GLRO (dl_hwcap2) & HWCAP2_BTI;
+  if (cpu_features->bti)
+    GLRO (dl_aarch64_bti) = TUNABLE_GET (glibc, cpu, aarch64_bti, uint64_t, 0);
 
   /* Setup memory tagging support if the HW and kernel support it, and if
      the user has requested it.  */

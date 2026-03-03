@@ -1,5 +1,5 @@
 # sysdeps makefile fragment for all pthread-supporting configurations.
-# Copyright (C) 2014-2025 Free Software Foundation, Inc.
+# Copyright (C) 2014-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -26,14 +26,6 @@ headers += \
   # headers
 
 routines += \
-  pthread_atfork \
-  thrd_current \
-  thrd_equal \
-  thrd_sleep \
-  thrd_yield \
-  # routines
-
-$(libpthread-routines-var) += \
   call_once \
   cnd_broadcast \
   cnd_destroy \
@@ -47,22 +39,26 @@ $(libpthread-routines-var) += \
   mtx_timedlock \
   mtx_trylock \
   mtx_unlock \
+  pthread_atfork \
   pthread_atfork_compat \
   thrd_create \
+  thrd_current \
   thrd_detach \
+  thrd_equal \
   thrd_exit \
   thrd_join \
+  thrd_sleep \
+  thrd_yield \
   tss_create \
   tss_delete \
   tss_get \
   tss_set \
-  # $(libpthread-routines-var)
+  # routines
 
 tests += \
   tst-abstime \
   tst-atfork1 \
   tst-attr1 \
-  tst-backtrace1 \
   tst-bad-schedattr \
   tst-barrier1 \
   tst-barrier2 \
@@ -106,6 +102,7 @@ tests += \
   tst-cancel28 \
   tst-cancel29 \
   tst-cancel30 \
+  tst-cancel32 \
   tst-cleanup0 \
   tst-cleanup1 \
   tst-cleanup2 \
@@ -154,6 +151,7 @@ tests += \
   tst-exit3 \
   tst-flock1 \
   tst-flock2 \
+  tst-fopen-threaded \
   tst-fork1 \
   tst-fork2 \
   tst-fork3 \
@@ -200,7 +198,6 @@ tests += \
   tst-mutex6 \
   tst-mutex7 \
   tst-mutex9 \
-  tst-mutex10 \
   tst-mutex11 \
   tst-once1 \
   tst-once2 \
@@ -215,6 +212,7 @@ tests += \
   tst-pt-vfork1 \
   tst-pt-vfork2 \
   tst-pthread-exit-signal \
+  tst-pthread-exited \
   tst-pthread-mutexattr \
   tst-pthread-mutexattr-2 \
   tst-pthread-raise-blocked-self \
@@ -271,6 +269,7 @@ tests += \
   tst-spin4 \
   tst-spin5 \
   tst-stack1 \
+  tst-stack2 \
   tst-stdio1 \
   tst-stdio2 \
   tst-thrd-detach \
@@ -303,7 +302,7 @@ tests-time64 += \
   tst-thrd-sleep-time64 \
   # tests-time64
 
-static-only-routines = pthread_atfork
+static-only-routines += pthread_atfork
 
 # Files which must not be linked with libpthread.
 tests-nolibpthread += \
@@ -366,6 +365,7 @@ modules-names += \
   tst-atfork4mod \
   tst-create1mod \
   tst-fini1mod \
+  tst-stack2-mod \
   tst-tls4moda \
   tst-tls4modb \
   # modules-names
@@ -538,5 +538,13 @@ CFLAGS-tst-unwind-thread.c += -funwind-tables
 LDFLAGS-tst-create1 = -Wl,-export-dynamic
 $(objpfx)tst-create1: $(shared-thread-library)
 $(objpfx)tst-create1.out: $(objpfx)tst-create1mod.so
+
+$(objpfx)tst-stack2.out: $(objpfx)tst-stack2-mod.so
+$(objpfx)tst-stack2-mod.so: $(shared-thread-library)
+LDFLAGS-tst-stack2-mod.so = -Wl,-z,execstack
+ifeq ($(have-no-error-execstack),yes)
+LDFLAGS-tst-stack2-mod.so += -Wl,--no-error-execstack
+endif
+tst-stack2-ENV = GLIBC_TUNABLES=glibc.rtld.execstack=2
 
 endif

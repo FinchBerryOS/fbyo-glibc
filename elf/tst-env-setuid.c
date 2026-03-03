@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -40,6 +40,12 @@ static char SETGID_CHILD[] = "setgid-child";
 # define PROFILE_LIB      "tst-sonamemove-runmod2.so"
 #endif
 
+/* Computed path for LD_DEBUG_OUTPUT.  */
+static char *debugoutputpath;
+
+/* Expected file name for erroneous LD_PROFILE output.  */
+static char *profilepath;
+
 struct envvar_t
 {
   const char *env;
@@ -55,13 +61,14 @@ static const struct envvar_t filtered_envvars[] =
   { "LD_LIBRARY_PATH",         FILTERED_VALUE },
   { "LD_PRELOAD",              FILTERED_VALUE },
   { "LD_PROFILE",              PROFILE_LIB },
+  { "LD_PROFILE_OUTPUT",       "/var/tmp" },      /* Not actually used.  */
   { "MALLOC_ARENA_MAX",        FILTERED_VALUE },
   { "MALLOC_PERTURB_",         FILTERED_VALUE },
   { "MALLOC_TRACE",            FILTERED_VALUE },
   { "MALLOC_TRIM_THRESHOLD_",  FILTERED_VALUE },
   { "RES_OPTIONS",             FILTERED_VALUE },
   { "LD_DEBUG",                "all" },
-  { "LD_DEBUG_OUTPUT",         "/tmp/some-file" },
+  { "LD_DEBUG_OUTPUT",         "overwritten" },   /* Not actually used.  */
   { "LD_WARN",                 FILTERED_VALUE },
   { "LD_VERBOSE",              FILTERED_VALUE },
   { "LD_BIND_NOW",             "0" },
@@ -73,6 +80,14 @@ static const struct envvar_t unfiltered_envvars[] =
   /* Non longer supported option.  */
   { "LD_ASSUME_KERNEL",        UNFILTERED_VALUE },
 };
+
+static void
+unlink_ld_debug_output (pid_t pid)
+{
+  char *output = xasprintf ("%s.%d", debugoutputpath, pid);
+  unlink (output);
+  free (output);
+}
 
 static int
 test_child (void)
@@ -111,18 +126,12 @@ test_child (void)
     }
 
   /* Also check if no profile file was created.
-     The parent sets LD_DEBUG_OUTPUT="/tmp/some-file"
-     which should be filtered.  Then it falls back to "/var/tmp".
      Note: LD_PROFILE is not supported for static binaries.  */
-  {
-    char *profilepath = xasprintf ("/var/tmp/%s.profile", PROFILE_LIB);
-    if (!access (profilepath, R_OK))
-      {
-	printf ("FAIL: LD_PROFILE file at %s was created!\n", profilepath);
-	ret = 1;
-      }
-    free (profilepath);
-  }
+  if (!access (profilepath, R_OK))
+    {
+      printf ("FAIL: LD_PROFILE file at %s was created!\n", profilepath);
+      ret = 1;
+    }
 
   return ret;
 }
@@ -135,22 +144,31 @@ do_test (int argc, char **argv)
   if (argc >= 2 && strstr (argv[1], LD_SO) != 0)
     FAIL_UNSUPPORTED ("dynamic test requires --enable-hardcoded-path-in-tests");
 
+  profilepath = xasprintf ("%s/%s.profile",
+			   support_objdir_root, PROFILE_LIB);
+  debugoutputpath = xasprintf ("%s/tst-env-setuid-file",
+			       support_objdir_root);
+
   /* Setgid child process.  */
   if (argc == 2 && strcmp (argv[1], SETGID_CHILD) == 0)
     {
+      pid_t ppid = getppid ();
+
       if (getgid () == getegid ())
-	/* This can happen if the file system is mounted nosuid.  */
-	FAIL_UNSUPPORTED ("SGID failed: GID and EGID match (%jd)\n",
-			  (intmax_t) getgid ());
+	{
+	  /* This can happen if the file system is mounted nosuid.  */
+	  unlink_ld_debug_output (ppid);
+
+	  FAIL_UNSUPPORTED ("SGID failed: GID and EGID match (%jd)\n",
+			    (intmax_t) getgid ());
+	}
 
       int ret = test_child ();
 
+      unlink_ld_debug_output (ppid);
+
       if (ret != 0)
 	exit (1);
-
-      /* Special return code to make sure that the child executed all the way
-	 through.  */
-      exit (42);
     }
   else
     {
@@ -164,30 +182,25 @@ do_test (int argc, char **argv)
 	   e++)
 	setenv (e->env, e->value, 1);
 
+      /* Dynamically computed values.  */
+      setenv ("LD_DEBUG_OUTPUT", debugoutputpath, 1);
+      setenv ("LD_PROFILE_OUTPUT", support_objdir_root, 1);
+
       /* Ensure that the profile output does not exist from a previous run
 	 (e.g. if test_dir, which defaults to /tmp, is mounted nosuid.)
 	 Note: support_capture_subprogram_self_sgid creates the SGID binary
 	 in test_dir.  */
-      {
-	char *profilepath = xasprintf ("/var/tmp/%s.profile", PROFILE_LIB);
-	unlink (profilepath);
-	free (profilepath);
-      }
+      unlink (profilepath);
 
-      int status = support_capture_subprogram_self_sgid (SETGID_CHILD);
+      support_capture_subprogram_self_sgid (SETGID_CHILD);
 
-      if (WEXITSTATUS (status) == EXIT_UNSUPPORTED)
-	exit (EXIT_UNSUPPORTED);
-
-      if (WEXITSTATUS (status) != 42)
-	{
-	  printf ("    child failed with status %d\n",
-		  WEXITSTATUS (status));
-	  support_record_failure ();
-	}
-
-      return 0;
+      /* And clean up afterwards if necessary.  */
+      unlink (profilepath);
     }
+
+  free (profilepath);
+  free (debugoutputpath);
+  return 0;
 }
 
 #define TEST_FUNCTION_ARGV do_test

@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,9 +23,9 @@
 
 #include <elf.h>
 
-/* Default to an executable stack.  PF_X can be overridden if PT_GNU_STACK is
- * present, but it is presumed absent.  */
-#define DEFAULT_STACK_PERMS (PF_R|PF_W|PF_X)
+/* Default to an executable stack.  PROT_EXEC can be overridden if PT_GNU_STACK
+ * is present, but it is presumed absent.  */
+#define DEFAULT_STACK_PROT_PERMS (PROT_READ|PROT_WRITE|PROT_EXEC)
 
 /* On PA the stack grows up.  */
 #define _STACK_GROWS_UP	1

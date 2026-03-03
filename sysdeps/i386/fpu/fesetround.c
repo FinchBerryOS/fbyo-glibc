@@ -1,5 +1,5 @@
 /* Set current rounding direction.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
 #include <fenv.h>
 #include <unistd.h>
 #include <ldsodefs.h>
-#include <dl-procinfo.h>
+#include <math-inline-asm.h>
 
 int
 __fesetround (int round)
@@ -30,20 +30,19 @@ __fesetround (int round)
     /* ROUND is no valid rounding mode.  */
     return 1;
 
-  __asm__ ("fnstcw %0" : "=m" (*&cw));
+  __asm__ ("fnstcw %0" : "=m" (cw));
   cw &= ~0xc00;
   cw |= round;
-  __asm__ ("fldcw %0" : : "m" (*&cw));
+  __asm__ ("fldcw %0" : : "m" (cw));
 
   /* If the CPU supports SSE we set the MXCSR as well.  */
   if (CPU_FEATURE_USABLE (SSE))
     {
       unsigned int xcw;
-
-      __asm__ ("stmxcsr %0" : "=m" (*&xcw));
+      stmxcsr_inline_asm (&xcw);
       xcw &= ~0x6000;
       xcw |= round << 3;
-      __asm__ ("ldmxcsr %0" : : "m" (*&xcw));
+      ldmxcsr_inline_asm (&xcw);
     }
 
   return 0;

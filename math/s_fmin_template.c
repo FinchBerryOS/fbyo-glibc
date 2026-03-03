@@ -1,5 +1,5 @@
 /* Return minimum numeric value of X and Y.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,8 +17,6 @@
    <https://www.gnu.org/licenses/>.  */
 
 #include <math.h>
-#include <math-use-builtins.h>
-
 
 FLOAT
 M_DECL_FUNC (__fmin) (FLOAT x, FLOAT y)

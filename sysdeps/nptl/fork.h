@@ -1,5 +1,5 @@
 /* System specific fork hooks.  Linux version.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -155,7 +155,8 @@ reclaim_stacks (void)
   INIT_LIST_HEAD (&GL (dl_stack_used));
   INIT_LIST_HEAD (&GL (dl_stack_user));
 
-  if (__glibc_unlikely (THREAD_GETMEM (self, user_stack)))
+  if (__glibc_unlikely (THREAD_GETMEM (self, stack_mode)
+			== ALLOCATE_GUARD_USER))
     list_add (&self->list, &GL (dl_stack_user));
   else
     list_add (&self->list, &GL (dl_stack_used));

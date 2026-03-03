@@ -1,5 +1,5 @@
 /* Error-checking wrappers for stdio functions.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@ __BEGIN_DECLS
 FILE *xfopen (const char *path, const char *mode);
 void xfclose (FILE *);
 FILE *xfreopen (const char *path, const char *mode, FILE *stream);
+FILE *xfmemopen (void *mem, size_t len, const char *mode);
 void xfread (void *ptr, size_t size, size_t nmemb, FILE *stream);
 char *xfgets (char *s, int size, FILE *stream);
 

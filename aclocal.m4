@@ -145,6 +145,10 @@ if test -z "$NM"; then
     NM=`$CC -print-prog-name=nm`
 fi
 AC_SUBST(NM)
+if test -z "$STRIP"; then
+    STRIP=`$CC -print-prog-name=strip`
+fi
+AC_SUBST(STRIP)
 ])
 
 dnl Run a static link test with -nostdlib -nostartfiles.
@@ -264,6 +268,38 @@ else
 fi
 AC_MSG_RESULT($libc_linker_feature)])
 
+dnl Check linker option support.
+dnl LIBC_TEST_LINKER_FEATURE([ld_option], [cc_option], [action-if-true], [action-if-false])
+AC_DEFUN([LIBC_TEST_LINKER_FEATURE],
+[AC_MSG_CHECKING([for linker that supports $1])
+libc_linker_feature=no
+cat > conftest.c <<EOF
+int _start (void) { return 42; }
+EOF
+saved_CC="$CC"
+CC="$TEST_CC"
+if AC_TRY_COMMAND([${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS $no_ssp
+		  $2 -nostdlib -nostartfiles
+		  -fPIC -shared -o conftest.so conftest.c
+		  1>&AS_MESSAGE_LOG_FD])
+then
+  if ${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS $no_ssp $2 -nostdlib \
+      -nostartfiles -fPIC -shared -o conftest.so conftest.c 2>&1 \
+      | grep "warning: $1 ignored" > /dev/null 2>&1; then
+    true
+  else
+    libc_linker_feature=yes
+  fi
+fi
+rm -f conftest*
+if test $libc_linker_feature = yes; then
+  $3
+else
+  $4
+fi
+CC="$saved_CC"
+AC_MSG_RESULT($libc_linker_feature)])
+
 dnl Add a makefile variable, with value set from a shell string
 dnl (expanded by the shell inside double quotes), to config.make.
 dnl LIBC_CONFIG_VAR(make-variable, shell-value)
@@ -321,6 +357,23 @@ case "$prefix" in
   fi
   ;;
 esac])
+
+dnl Test a CC compiler option or options with an input file.
+dnl LIBC_TRY_CC_COMMAND([message], [code], [options],
+dnl   [CC-cache-id], [CC-action-if-true], [CC-action-if-false])
+AC_DEFUN([LIBC_TRY_CC_COMMAND],
+[
+cat > conftest.c <<EOF
+$2
+EOF
+AC_CACHE_CHECK([$1], $4, [dnl
+  if AC_TRY_COMMAND([${CC-cc} $CFLAGS $CPPFLAGS $3 conftest.c -o conftest 1>&AS_MESSAGE_LOG_FD])
+  then
+    [$5]
+  else
+    [$6]
+  fi])
+rm -f conftest*])
 
 dnl Run a test with TEST_CC.
 dnl LIBC_CHECK_TEST_CC([commands])
@@ -476,3 +529,31 @@ LIBC_CHECK_TEST_CXX(
     [LIBC_TRY_CXX_OPTION([$2], [$4], [$5])])
   )
 ])
+
+dnl Check if toolchain supports generating binaries with the required
+dnl ELF marking as checked by readelf.
+dnl LIBC_CHECK_ELF_PROPERTY([message], [pattern], [action-if-true], [action-if-false])
+AC_DEFUN([LIBC_CHECK_ELF_PROPERTY],
+[AC_MSG_CHECKING([$1])
+libc_elf_property=no
+cat > conftest.c <<EOF
+int foo (void) { return 42; }
+EOF
+if AC_TRY_COMMAND([${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS
+		  -fPIC -shared -o conftest.so conftest.c
+		  1>&AS_MESSAGE_LOG_FD])
+then
+  if AC_TRY_COMMAND([LC_ALL=C $READELF -n --wide conftest.so | grep "$2" 1>&AS_MESSAGE_LOG_FD])
+  then
+    libc_elf_property=yes
+  else
+    libc_elf_property=no
+  fi
+fi
+rm -f conftest*
+if test $libc_elf_property = yes; then
+  $3
+else
+  $4
+fi
+AC_MSG_RESULT($libc_elf_property)])

@@ -1,5 +1,5 @@
 /* Thread-local storage handling in the ELF dynamic linker.  x86_64 version.
-   Copyright (C) 2004-2025 Free Software Foundation, Inc.
+   Copyright (C) 2004-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@
 #include <features-offsets.h>
 #include <isa-level.h>
 #include "tlsdesc.h"
-#include "dl-trampoline-save.h"
 
 /* Area on stack to save and restore registers used for parameter
    passing when calling _dl_tlsdesc_dynamic.  */

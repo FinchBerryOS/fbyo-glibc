@@ -1,5 +1,5 @@
 /* Set given exception flags.  x86_64 version.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,15 +17,15 @@
    <https://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
+#include <math-inline-asm.h>
 
 int
 fesetexcept (int excepts)
 {
   unsigned int mxcsr;
-
-  __asm__ ("stmxcsr %0" : "=m" (*&mxcsr));
+  stmxcsr_inline_asm (&mxcsr);
   mxcsr |= excepts & FE_ALL_EXCEPT;
-  __asm__ ("ldmxcsr %0" : : "m" (*&mxcsr));
+  ldmxcsr_inline_asm (&mxcsr);
 
   return 0;
 }

@@ -497,7 +497,20 @@ interface name, including its terminating zero byte.
 @c takes a lock, which makes all callers AS- and AC-Unsafe.
 @c  opensock @asulock @aculock @acsfd
 This function yields the interface index corresponding to a particular
-name.  If no interface exists with the name given, it returns 0.
+name specified with @var{ifname}.
+
+The return value is the interface index on success.  On failure, the
+function's return value is zero and @code{errno} is set accordingly.
+The following @code{errno} values are specific to this function:
+
+@table @code
+@item ENODEV
+There is no interface by the name requested.
+@end table
+
+Additionally, since @code{if_nametoindex} invokes @code{socket}
+internally, @code{errno} may also be set to a value listed for the
+@code{socket} function (@pxref{Creating a Socket}).
 @end deftypefun
 
 @deftypefun {char *} if_indextoname (unsigned int @var{ifindex}, char *@var{ifname})
@@ -505,11 +518,22 @@ name.  If no interface exists with the name given, it returns 0.
 @safety{@prelim{}@mtsafe{}@asunsafe{@asulock{}}@acunsafe{@aculock{} @acsfd{}}}
 @c It opens a socket with opensock to use ioctl on the fd to get the
 @c name from the index.
-This function maps an interface index to its corresponding name.  The
-returned name is placed in the buffer pointed to by @code{ifname}, which
-must be at least @code{IFNAMSIZ} bytes in length.  If the index was
-invalid, the function's return value is a null pointer, otherwise it is
-@code{ifname}.
+This function maps an interface index @var{ifindex} to its corresponding
+name.  The returned name is placed in the buffer pointed to by @var{ifname},
+which must be at least @code{IFNAMSIZ} bytes in length.
+
+The return value is @var{ifname} on success.  On failure, the function's
+return value is a null pointer and @code{errno} is set accordingly.  The
+following @code{errno} values are specific to this function:
+
+@table @code
+@item ENXIO
+There is no interface at the index requested.
+@end table
+
+Additionally, since @code{if_indextoname} invokes @code{socket}
+internally, @code{errno} may also be set to a value listed for the
+@code{socket} function (@pxref{Creating a Socket}).
 @end deftypefun
 
 @deftp {Data Type} {struct if_nameindex}
@@ -1192,6 +1216,17 @@ either @code{AF_INET} or @code{AF_INET6}, as appropriate for the type of
 address being converted.  @var{cp} is a pointer to the input string, and
 @var{buf} is a pointer to a buffer for the result.  It is the caller's
 responsibility to make sure the buffer is large enough.
+
+The return value is @code{1} on success and @code{0} if @var{cp} does not
+point to a valid address string for the address family @var{af} requested.
+On failure, the function's return value is @code{-1} and @code{errno} is
+set accordingly.  The following @code{errno} values are specific to this
+function:
+
+@table @code
+@item EAFNOSUPPORT
+The address family requested is neither @code{AF_INET} nor @code{AF_INET6}.
+@end table
 @end deftypefun
 
 @deftypefun {const char *} inet_ntop (int @var{af}, const void *@var{cp}, char *@var{buf}, socklen_t @var{len})
@@ -1211,7 +1246,19 @@ network (binary) to presentation (textual) form.  @var{af} should be
 either @code{AF_INET} or @code{AF_INET6}, as appropriate.  @var{cp} is a
 pointer to the address to be converted.  @var{buf} should be a pointer
 to a buffer to hold the result, and @var{len} is the length of this
-buffer.  The return value from the function will be this buffer address.
+buffer.
+
+The return value is @var{buf} on success.  On failure, the function's
+return value is a null pointer and @code{errno} is set accordingly.
+The following @code{errno} values are specific to this function:
+
+@table @code
+@item EAFNOSUPPORT
+The address family requested is neither @code{AF_INET} nor @code{AF_INET6}.
+
+@item ENOSPC
+Insufficient space available for the result in the buffer provided.
+@end table
 @end deftypefun
 
 @node Host Names
@@ -2205,9 +2252,19 @@ socket, or @code{-1} in case of error.  The following @code{errno} error
 conditions are defined for this function:
 
 @table @code
+@item EAFNOSUPPORT
+The @var{namespace} requested is not supported.
+
+@item ESOCKTNOSUPPORT
+@itemx EPROTONOSUPPORT
+@itemx EPROTOTYPE
+The @var{style} is not supported by the @var{namespace} specified.
+
 @item EPROTONOSUPPORT
-The @var{protocol} or @var{style} is not supported by the
-@var{namespace} specified.
+The @var{protocol} is not supported by the @var{namespace} specified.
+
+@item EINVAL
+The @var{style} or @var{protocol} requested is not valid.
 
 @item EMFILE
 The process already has too many file descriptors open.
@@ -2216,11 +2273,13 @@ The process already has too many file descriptors open.
 The system already has too many file descriptors open.
 
 @item EACCES
+@itemx EPERM
 The process does not have the privilege to create a socket of the specified
 @var{style} or @var{protocol}.
 
 @item ENOBUFS
-The system ran out of internal buffer space.
+@itemx ENOMEM
+Insufficient memory was available.
 @end table
 
 The file descriptor returned by the @code{socket} function supports both
@@ -2258,22 +2317,23 @@ The @code{shutdown} function shuts down the connection of socket
 @var{socket}.  The argument @var{how} specifies what action to
 perform:
 
-@table @code
-@item 0
-Stop receiving data for this socket.  If further data arrives,
-reject it.
+@vtable @code
+@item SHUT_RD
+Stop receiving data on the socket.
 
-@item 1
-Stop trying to transmit data from this socket.  Discard any data
-waiting to be sent.  Stop looking for acknowledgement of data already
-sent; don't retransmit it if it is lost.
+@item SHUT_WR
+Indicate to the peer that no further data will be transmitted on the
+socket.  This indication is ordered with regard to past send
+operations on the socket, and data pending at the time of the call is
+still delivered.
 
-@item 2
-Stop both reception and transmission.
-@end table
+@item SHUT_RDWR
+Combine the actions of @code{SHUT_RD} and @code{SHUT_WR}.
+@end vtable
 
 The return value is @code{0} on success and @code{-1} on failure.  The
-following @code{errno} error conditions are defined for this function:
+following generic @code{errno} error conditions are defined for this
+function:
 
 @table @code
 @item EBADF
@@ -2286,6 +2346,27 @@ following @code{errno} error conditions are defined for this function:
 @var{socket} is not connected.
 @end table
 @end deftypefun
+
+Additional errors can be reported for specific socket types.
+
+The exact impact of the @code{shutdown} function depends on the socket
+protocol and its implementation.  In portable code, the @code{shutdown}
+function cannot be used on its own to gracefully terminate a connection
+which is operated in full-duplex mode (with both peers sending data).
+
+On Linux, when @code{SHUT_RD} is used to shut down a TCP socket, any
+pending data in the incoming socket buffer and any data that arrives
+subsequently is discarded, without reporting an error or generating a
+TCP RST segment.  Attempts to read data from this socket using
+@code{recv} and similar functions (@pxref{Receiving Data}) return zero.
+(Other systems may treat @code{SHUT_RD} with pending data as a data loss
+event and generate RST segments.  Linux @code{AF_LOCAL}/@code{AF_UNIX}
+sockets also report errors to peers.)
+
+Similarly, when @code{SHUT_WR} is used on a Linux TCP socket, a FIN
+segment is sent to the peer, ordered after any data written previously
+to the socket.  After encountering the FIN segment, the peer will
+recognize this as an end-of-stream condition.
 
 @node Socket Pairs
 @subsection Socket Pairs
@@ -2918,7 +2999,7 @@ discard_until_mark (int socket)
       success = ioctl (socket, SIOCATMARK, &atmark);
       if (success < 0)
         perror ("ioctl");
-      if (result)
+      if (atmark)
         return;
 
       /* @r{Otherwise, read a bunch of ordinary data and discard it.}

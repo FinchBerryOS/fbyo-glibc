@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,3 +35,4 @@ __vasprintf_chk (char **result_ptr, int flag, const char *format, va_list ap)
 
   return __vasprintf_internal (result_ptr, format, ap, mode);
 }
+libc_hidden_def (__vasprintf_chk)

@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2025 Free Software Foundation, Inc.
+# Copyright (C) 1991-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -141,7 +141,6 @@ CFLAGS-tzset.c += $(tz-cflags)
 CFLAGS-getdate.c += -fexceptions
 CFLAGS-clock_nanosleep.c += -fexceptions -fasynchronous-unwind-tables
 CFLAGS-nanosleep.c += -fexceptions -fasynchronous-unwind-tables
-CFLAGS-mktime.c += $(config-cflags-wno-ignored-attributes)
 
 # Don't warn about Y2k problem in strftime format string.
 CFLAGS-test_time.c += -Wno-format

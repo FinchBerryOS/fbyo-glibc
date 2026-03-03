@@ -1,5 +1,5 @@
 /* Libc internal support routine for SME.
-   Copyright (C) 2023-2025 Free Software Foundation, Inc.
+   Copyright (C) 2023-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -88,10 +88,8 @@ L(save_loop):
 L(end):
 	ret
 L(fail):
-#if HAVE_AARCH64_PAC_RET
-	PACIASP
-	cfi_window_save
-#endif
+	paciasp
+	cfi_negate_ra_state
 	stp	x29, x30, [sp, -32]!
 	cfi_adjust_cfa_offset (32)
 	cfi_rel_offset (x29, 0)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2015-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,6 +30,6 @@ __libc_send (int fd, const void *buf, size_t len, int flags)
   return SOCKETCALL_CANCEL (send, fd, buf, len, flags);
 #endif
 }
-weak_alias (__libc_send, send)
-weak_alias (__libc_send, __send)
+static_weak_alias (__libc_send, send)
+static_weak_alias (__libc_send, __send)
 libc_hidden_def (__send)

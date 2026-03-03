@@ -1,5 +1,5 @@
 /* Multiple versions of exp10m1.
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,6 +18,7 @@
 
 #include <sysdeps/x86/isa-level.h>
 #if MINIMUM_X86_ISA_LEVEL < AVX2_X86_ISA_LEVEL
+# include <math.h>
 # include <libm-alias-float.h>
 
 extern float __redirect_exp10m1f (float);

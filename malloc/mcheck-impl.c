@@ -1,5 +1,5 @@
 /* mcheck debugging hooks for malloc.
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -389,7 +389,7 @@ __mcheck_initialize (void (*func) (enum mcheck_status), bool in_pedantic)
     case -1:
       /* Called before the first malloc was called.  */
       __debug_free (__debug_malloc (0));
-      /* FALLTHROUGH */
+      [[fallthrough]];
     case 0:
       /* Called through the initializer hook.  */
       __malloc_debug_enable (MALLOC_MCHECK_HOOK);

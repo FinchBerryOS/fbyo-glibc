@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2025 Free Software Foundation, Inc.
+# Copyright (C) 1991-2026 Free Software Foundation, Inc.
 # Copyright The GNU Toolchain Authors.
 # This file is part of the GNU C Library.
 
@@ -442,7 +442,8 @@ ifndef +link-pie
 	     $(filter-out $(addprefix $(csu-objpfx),start.o \
 						    S$(start-installed-name))\
 			  $(+preinit) $(link-extra-libs) \
-			  $(common-objpfx)libc% $(+postinit),$^) \
+			  $(common-objpfx)libc% $(+postinit) \
+			  $(+nolink-deps),$^) \
 	     $(link-extra-libs)
 +link-pie-after-libc = $(+postctorS) $(+postinit)
 define +link-pie
@@ -473,7 +474,8 @@ ifndef +link-static
 	      $(filter-out $(addprefix $(csu-objpfx),start.o \
 						     $(start-installed-name))\
 			   $(+preinit) $(link-extra-libs-static) \
-			   $(common-objpfx)libc% $(+postinit),$^) \
+			   $(common-objpfx)libc% $(+postinit) \
+			   $(+nolink-deps), $^) \
 	      $(link-extra-libs-static)
 +link-static-after-libc = $(+postctorT) $(+postinit)
 define +link-static
@@ -509,7 +511,8 @@ else  # not build-pie-default
 	      $(filter-out $(addprefix $(csu-objpfx),start.o \
 						     $(start-installed-name))\
 			   $(+preinit) $(link-extra-libs) \
-			   $(common-objpfx)libc% $(+postinit),$^) \
+			   $(common-objpfx)libc% $(+postinit) \
+			   $(+nolink-deps),$^) \
 	      $(link-extra-libs)
 +link-after-libc = $(+postctor) $(+postinit)
 define +link
@@ -549,7 +552,8 @@ endif  # +link
 	      $(filter-out $(addprefix $(csu-objpfx),start.o \
 						     $(start-name-2.0))\
 			   $(+preinit) $(link-extra-libs) \
-			   $(common-objpfx)libc% $(+postinit),$^) \
+			   $(common-objpfx)libc% $(+postinit) \
+			   $(+nolink-deps),$^) \
 	      $(link-extra-libs)
 +link-after-libc = $(+postctor) $(+postinit)
 define +link-2.0-tests
@@ -633,9 +637,9 @@ link-libc-printers-tests = $(link-libc-rpath) \
 			   $(link-libc-tests-after-rpath-link)
 
 # This is how to find at build-time things that will be installed there.
-rpath-dirs = math elf dlfcn nss nis rt resolv mathvec support
+rpath-dirs = math elf dlfcn nss nis rt resolv mathvec support misc debug
 rpath-link = \
-$(common-objdir):$(subst $(empty) ,:,$(patsubst ../$(subdir),.,$(rpath-dirs:%=$(common-objpfx)%)))
+$(common-objdir):$(subst $(empty) ,:,$(patsubst ../$(subdir),.,$(rpath-dirs:%=$(common-objpfx)%))):$(gnulib-extralibdir)
 else  # build-static
 link-libc = $(common-objpfx)libc.a $(otherlibs) $(gnulib) $(common-objpfx)libc.a $(gnulib)
 link-libc-tests = $(common-objpfx)libc.a $(otherlibs) $(gnulib-tests) $(common-objpfx)libc.a $(gnulib-tests)
@@ -692,6 +696,11 @@ link-libc-static-tests = -Wl,--start-group $(common-objpfx)libc.a $(static-gnuli
 # some cases and it is preferable to link with libgcc_eh or libgcc_s
 # so that the testing is as similar as possible to how programs will
 # be built with the installed glibc.
+# This leads to moderate difficulties, also since distributions may
+# install libgcc_s.so in directories only found via ld.so.conf, e.g.
+# to be able to switch between gcc versions. We need to add the
+# corresponding directory to the library search path to make sure
+# our test programs can find it.
 #
 # Some architectures have architecture-specific systems for exception
 # handling that may involve undefined references to
@@ -709,6 +718,7 @@ libgcc_eh := -Wl,--as-needed -lgcc_s $(libunwind) -Wl,--no-as-needed
 gnulib-arch =
 gnulib = -lgcc $(gnulib-arch)
 gnulib-tests := -lgcc $(libgcc_eh)
+gnulib-extralibdir = $(dir $(shell $(CC) -print-file-name=libgcc_s.so$(libgcc_s.so-version)))
 static-gnulib-arch =
 # By default, elf/static-stubs.o, instead of -lgcc_eh, is used to
 # statically link programs.  When --disable-shared is used, we use
@@ -781,10 +791,12 @@ endif
 
 # How to run a program we just linked with our library.
 # The program binary is assumed to be $(word 2,$^).
+# We may require additional libraries from gcc (e.g. libgcc_s.so for exception
+# handling), which unfortunately somewhat breaks the isolation.
 built-program-file = $(dir $(word 2,$^))$(notdir $(word 2,$^))
 rtld-prefix = $(elf-objpfx)$(rtld-installed-name)			      \
 	      --library-path						      \
-	      $(rpath-link)$(patsubst %,:%,$(sysdep-library-path))
+	      $(rpath-link)$(patsubst %,:%,$(sysdep-library-path)):$(gnulib-extralibdir)
 ifeq (yes,$(build-shared))
 comma = ,
 sysdep-library-path = \
@@ -892,7 +904,8 @@ endif
 ifeq ($(enable-werror),yes)
 +gccwarn += -Werror
 endif
-+gccwarn-c = -Wstrict-prototypes -Wold-style-definition
++gccwarn-c = -Wstrict-prototypes -Wold-style-definition \
+  $(cc-option-wfree-labels) $(cc-option-wmissing-parameter-name)
 
 # We do not depend on the address of constants in different files to be
 # actually different, so allow the compiler to merge them all.
@@ -902,6 +915,9 @@ endif
 # mode and also change the rounding mode in a few functions. So,
 # disable any optimization that assume default rounding mode.
 +math-flags = -frounding-math
+
+# We have to assume that glibc functions might generate user-visible traps.
++math-flags += -ftrapping-math
 
 # Logically only "libnldbl", "nonlib" and "testsuite" should be using
 # -fno-math-errno. However due to GCC bug #88576, only "libm" and
@@ -1016,6 +1032,12 @@ endif
 
 # Filter out 64 bit time_t flags if compiler defines it by default.
 +cflags += $(no-time-bits-source)
+
+# Enable SFrame while compiling for stack backtracing.
+ifeq ($(enable-gsframe),yes)
+as-sframe = -Wa,--gsframe
+endif
++cflags += $(as-sframe)
 
 # Each sysdeps directory can contain header files that both will be
 # used to compile and will be installed.  Each can also contain an
@@ -1163,9 +1185,9 @@ endif
 
 # The assembler can generate debug information too.
 ifndef ASFLAGS
-ASFLAGS := $(filter -g% -fdebug-prefix-map=%,$(CFLAGS))
+ASFLAGS := $(filter -g% -fdebug-prefix-map=% -m%,$(CFLAGS))
 endif
-override ASFLAGS += -Werror=undef $(ASFLAGS-config) $(asflags-cpu)
+override ASFLAGS += -Werror=undef $(ASFLAGS-config) $(asflags-cpu) $(as-sframe)
 
 move-if-change = $(SHELL) $(..)scripts/move-if-change
 

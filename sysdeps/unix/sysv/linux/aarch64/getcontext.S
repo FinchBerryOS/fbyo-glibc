@@ -1,6 +1,6 @@
 /* Save current context.
 
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -30,7 +30,6 @@
 	.text
 
 ENTRY(__getcontext)
-	PTR_ARG (0)
 	/* The saved context will return to the getcontext() call point
 	   with a return value of 0 */
 	str	xzr,	  [x0, oX0 +  0 * SZREG]
@@ -106,7 +105,7 @@ L(gcs_done):
 
 	/* Grab the signal mask */
 	/* rt_sigprocmask (SIG_BLOCK, NULL, &ucp->uc_sigmask, _NSIG8) */
-	add	PTR_REG (2), PTR_REG (0), #UCONTEXT_SIGMASK
+	add	x2, x0, UCONTEXT_SIGMASK
 	mov	x0, SIG_BLOCK
 	mov	x1, 0
 	mov	x3, _NSIG8

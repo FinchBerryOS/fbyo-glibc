@@ -1,5 +1,5 @@
 /* Test exception in current environment.
-   Copyright (C) 2020-2025 Free Software Foundation, Inc.
+   Copyright (C) 2020-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 int
-fetestexcept (int excepts)
+__fetestexcept (int excepts)
 {
   unsigned int fpsr;
 
@@ -30,4 +30,6 @@ fetestexcept (int excepts)
 
   return fpsr & excepts;
 }
+libm_hidden_def (__fetestexcept)
+weak_alias (__fetestexcept, fetestexcept)
 libm_hidden_def (fetestexcept)

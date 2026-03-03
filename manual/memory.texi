@@ -354,7 +354,7 @@ this function is in @file{stdlib.h}.
 @c that's protected by list_lock; next_free is only modified while
 @c list_lock is held too.  All other data members of an arena, as well
 @c as the metadata of the memory areas assigned to it, are only modified
-@c while holding the arena's mutex (fastbin pointers use catomic ops
+@c while holding the arena's mutex (fastbin pointers use atomic ops
 @c because they may be modified by free without taking the arena's
 @c lock).  Some reassurance was needed for fastbins, for it wasn't clear
 @c how they were initialized.  It turns out they are always
@@ -383,7 +383,7 @@ this function is in @file{stdlib.h}.
 @c     mutex_lock (arena lock) dup @asulock @aculock [returns locked]
 @c    __get_nprocs ext ok @acsfd
 @c    NARENAS_FROM_NCORES ok
-@c    catomic_compare_and_exchange_bool_acq ok
+@c    atomic_compare_and_exchange_bool_acq ok
 @c    _int_new_arena ok @asulock @aculock @acsmem
 @c     new_heap ok @acsmem
 @c      mmap ok @acsmem
@@ -397,7 +397,7 @@ this function is in @file{stdlib.h}.
 @c     mutex_lock (list_lock) dup @asulock @aculock
 @c     atomic_write_barrier ok
 @c     mutex_unlock (list_lock) @aculock
-@c    catomic_decrement ok
+@c    atomic_fetch_add ok
 @c    reused_arena @asulock @aculock
 @c      reads&writes next_to_use and iterates over arena next without guards
 @c      those are harmless as long as we don't drop arenas from the
@@ -414,7 +414,7 @@ this function is in @file{stdlib.h}.
 @c   get_max_fast ok
 @c   fastbin_index ok
 @c   fastbin ok
-@c   catomic_compare_and_exhange_val_acq ok
+@c   atomic_compare_and_exhange_val_acq ok
 @c   malloc_printerr dup @mtsenv
 @c     if we get to it, we're toast already, undefined behavior must have
 @c     been invoked before
@@ -521,10 +521,9 @@ this function is in @file{stdlib.h}.
 @c     chunk2mem dup ok
 @c     free_perturb ok
 @c     set_fastchunks ok
-@c      catomic_and ok
 @c     fastbin_index dup ok
 @c     fastbin dup ok
-@c     catomic_compare_and_exchange_val_rel ok
+@c     atomic_compare_and_exchange_val_rel ok
 @c     chunk_is_mmapped ok
 @c     contiguous dup ok
 @c     prev_inuse ok
@@ -706,7 +705,7 @@ The prototype for this function is in @file{stdlib.h}.
 @safety{@prelim{}@mtsafe{}@asunsafe{@asulock{}}@acunsafe{@aculock{} @acsfd{} @acsmem{}}}
 @c __libc_free @asulock @aculock @acsfd @acsmem
 @c   releasing memory into fastbins modifies the arena without taking
-@c   its mutex, but catomic operations ensure safety.  If two (or more)
+@c   its mutex, but atomic operations ensure safety.  If two (or more)
 @c   threads are running malloc and have their own arenas locked when
 @c   each gets a signal whose handler free()s large (non-fastbin-able)
 @c   blocks from each other's arena, we deadlock; this is a more general
@@ -763,6 +762,34 @@ version of POSIX is planned to require it.
 There is no point in freeing blocks at the end of a program, because all
 of the program's space is given back to the system when the process
 terminates.
+
+@deftypefun void free_sized (void *@var{ptr}, size_t @var{size})
+@standards{ISO, stdlib.h}
+@safety{@prelim{}@mtsafe{}@asunsafe{@asulock{}}@acunsafe{@aculock{} @acsfd{} @acsmem{}}}
+The @code{free_sized} function deallocates the block of memory pointed at
+by @var{ptr} that was previously allocated by @code{malloc}, @code{calloc}
+or @code{realloc}.  The size @var{size} must match the previously requested
+total size provided to @code{malloc}, @code{calloc} or @code{realloc}.
+Attempting to deallocated memory allocated by @code{aligned_alloc},
+@code{memalign}, @code{posix_memalign}, @code{valloc} or @code{pvalloc} is
+undefined behavior.  For @code{aligned_alloc}, @code{memalign} or
+@code{posix_memalign} use @code{free_aligned_sized} instead.  Additionally
+it is also undefined behavior to call @code{free_sized} for allocations
+which the caller did not directly allocate but must still deallocate, such
+as the result of @code{strdup} or @code{strndup}.  Instead continue using
+@code{free} for these cases.
+@end deftypefun
+
+@deftypefun void free_aligned_sized (void *@var{ptr}, size_t @var{alignment}, size_t @var{size})
+@standards{ISO, stdlib.h}
+@safety{@prelim{}@mtsafe{}@asunsafe{@asulock{}}@acunsafe{@aculock{} @acsfd{} @acsmem{}}}
+The @code{free_aligned_sized} function deallocates the block of memory
+pointed at by @var{ptr} that was previously allocated by
+@code{aligned_alloc}, @code{memalign} or @code{posix_memalign}.
+The size @var{size} and alignment @var{alignment} must match the
+previously requested size and alignment provided to
+@code{aligned_alloc}, @code{memalign} or @code{posix_memalign}.
+@end deftypefun
 
 @node Changing Block Size
 @subsubsection Changing the Size of a Block
@@ -842,8 +869,8 @@ is left undisturbed.
 @end deftypefun
 
 @deftypefun {void *} reallocarray (void *@var{ptr}, size_t @var{nmemb}, size_t @var{size})
-@standards{BSD, malloc.h}
-@standards{BSD, stdlib.h}
+@standards{POSIX.1-2024, malloc.h}
+@standards{POSIX.1-2024, stdlib.h}
 @safety{@prelim{}@mtsafe{}@asunsafe{@asulock{}}@acunsafe{@aculock{} @acsfd{} @acsmem{}}}
 
 The @code{reallocarray} function changes the size of the block whose address
@@ -856,8 +883,8 @@ returning a null pointer, and leaving the original block unchanged.
 @code{reallocarray} should be used instead of @code{realloc} when the new size
 of the allocated block is the result of a multiplication that might overflow.
 
-@strong{Portability Note:} This function is not part of any standard.  It was
-first introduced in OpenBSD 5.6.
+This function was originally derived from OpenBSD 5.6, but was added in
+POSIX.1-2024.
 @end deftypefun
 
 Like @code{malloc}, @code{realloc} and @code{reallocarray} may return a null
@@ -1134,6 +1161,61 @@ subsystem.
 
 The @code{valloc} function is obsolete and @code{aligned_alloc} or
 @code{posix_memalign} should be used instead.
+@end deftypefun
+
+You can determine the alignment of a pointer with the
+@code{memalignment} function.
+
+@deftypefun size_t memalignment (void *@var{p})
+@standards{C23, stdlib.h}
+@safety{@prelim{}@mtsafe{}@assafe{}@acsafe{}}
+
+This function, defined in C23, returns the alignment of @var{p}, as a
+power of two.  If @var{p} is a null pointer, it returns zero.  C23
+requires @var{p} to be a valid pointer to an object or a null pointer;
+as a GNU extension, @theglibc{} supports this function on arbitrary
+bit patterns of pointer type.
+
+This function was added to the C23 standard to support unconventional
+platforms where a pointer's low-order bits are unrelated to alignment.
+For conventional platforms, one can instead cast the pointer to
+@code{uintptr_t} and then test the low order bits:
+this is portable to pre-C23 and is typically a bit faster.
+
+For example, if you want to read an @code{int}
+addressed by possibly-misaligned pointer @code{p},
+the following pre-C23 code works on all conventional platforms:
+
+@smallexample
+int i;
+if (((uintptr_t) p & (alignof (int) - 1)) != 0)
+  memcpy (&i, p, sizeof i);
+else
+  i = *p;
+@end smallexample
+
+However, it might not work on unconventional platforms, where one
+would need something like the following C23 code:
+
+@smallexample
+int i;
+if (memalignment (p) < alignof (int))
+  memcpy (&i, p, sizeof i);
+else
+  i = *p;
+@end smallexample
+
+However, for this particular case, performance does not improve if
+different code is used for aligned and unaligned pointers,
+and the following code is preferable:
+
+@smallexample
+int i;
+memcpy (&i, p, sizeof i);
+@end smallexample
+
+The compiler will generate the most efficient way to access unaligned
+data for the architecture, optimizing away the @code{memcpy} call.
 @end deftypefun
 
 @node Malloc Tunable Parameters
@@ -1854,6 +1936,8 @@ functions, too.  Their names are listed in the following table.
 
 @table @code
 @item aligned_alloc
+@item free_aligned_sized
+@item free_sized
 @item malloc_usable_size
 @item memalign
 @item posix_memalign
@@ -3072,6 +3156,75 @@ process memory, no matter how it was allocated.  However, portable use
 of the function requires that it is only used with memory regions
 returned by @code{mmap} or @code{mmap64}.
 
+@deftypefun int mseal (void *@var{address}, size_t @var{length}, unsigned long @var{flags})
+@standards{Linux, sys/mman.h}
+@safety{@prelim{}@mtsafe{}@assafe{}@acsafe{}}
+
+A successful call to the @code {mseal} function protects the memory
+range @var{address} of @var{length} bytes, previously allocated with
+@code{mmap} or @code{mremap}, against further metadata changes, such
+as:
+
+@itemize @bullet
+@item
+Unmapping, moving to another location, extending or shrinking the size,
+via @code{munmap} and @code{mremap}.
+
+@item
+Moving or expanding a different VMA into the current location, via
+@code{mremap}.
+
+@item
+Modifying the memory range with @code{mmap} along with the flag @code{MAP_FIXED}.
+
+@item
+Change the protection flags with @code{mprotect} or @code{pkey_mprotect}.  Also
+for certain destructive @code{madvise} behaviours (@code{MADV_DONTNEED},
+@code{MADV_FREE}, @code{MADV_DONTNEED_LOCKED}, and @code{MADV_WIPEONFORK}),
+@code{mseal} only blocks the operation if the protection key associated with
+the memory denies write.
+
+@item
+Destructive behaviors on anonymous memory, such as @code{madvise} with
+@code{MADV_DONTNEED}.
+@end itemize
+
+The @var{address} must be an allocated virtual memory done by @code{mmap}
+or @code{mremap}, and it must be page-aligned.  The end address (@var{address}
+plus @var{length}) must be within an allocated virtual memory range.  There
+should be no unallocated memory between the start and end of the address range.
+
+The @var{flags} is currently unused.
+
+The @code{mseal} function returns @math{0} on success and @math{-1} on
+failure.
+
+The following @code{errno} error conditions are defined for this
+function:
+
+@table @code
+@item EPERM
+The system blocked the operation, and the given address range is unmodified
+without a partial update.  This error is also returned when @code{mseal} is
+issued on a 32-bit CPU (sealing is currently supported only on 64-bit CPUs,
+although 32-bit binaries running on a 64-bit kernel are supported).
+
+@item ENOMEM
+Either the @var{address} is not allocated, or the end address is not within the
+allocation, or there is unallocated memory between the start and end address.
+
+@item ENOSYS
+The kernel does not support the @code{mseal} syscall.
+
+@end table
+@end deftypefun
+
+@strong{NB:} The memory sealing changes the lifetime of a mapping, where the
+sealing memory could not be unmapped until the process terminates or replaces
+the process image through @code{execve} function.  The sealed mappings are
+inherited through @code{fork}.
+
+
 @subsection Memory Protection Keys
 
 @cindex memory protection key
@@ -3139,7 +3292,7 @@ used to temporarily acquire access to the memory region and relinquish
 it again:
 
 @smallexample
-  if (key >= 0 && pkey_set (key, 0) < 0)
+  if (key >= 0 && pkey_set (key, PKEY_UNRESTRICTED) < 0)
     ...; /* Perform error checking (generally fatal).  */
   /* At this point, the current thread has read-write access to the
      memory region.  */
@@ -3256,9 +3409,9 @@ not @math{-1}.
 @safety{@prelim{}@mtsafe{}@assafe{}@acsafe{}}
 Change the access restrictions of the current thread for memory pages with
 the protection key @var{key} to @var{access_restrictions}.  If
-@var{access_restrictions} is zero, no additional access restrictions on top of
-the page protection flags are applied.  Otherwise, @var{access_restrictions} is
-a combination of the following flags:
+@var{access_restrictions} is @code{PKEY_UNRESTRICTED} (zero), no additional
+access restrictions on top of the page protection flags are applied.  Otherwise,
+@var{access_restrictions} is a combination of the following flags:
 
 @vtable @code
 @item PKEY_DISABLE_READ

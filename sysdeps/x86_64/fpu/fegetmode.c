@@ -1,5 +1,5 @@
 /* Store current floating-point control modes.  x86_64 version.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,11 +18,12 @@
 
 #include <fenv.h>
 #include <fpu_control.h>
+#include <math-inline-asm.h>
 
 int
 fegetmode (femode_t *modep)
 {
   _FPU_GETCW (modep->__control_word);
-  __asm__ ("stmxcsr %0" : "=m" (modep->__mxcsr));
+  stmxcsr_inline_asm (&modep->__mxcsr);
   return 0;
 }

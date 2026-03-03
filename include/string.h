@@ -128,10 +128,19 @@ void __explicit_bzero_chk_internal (void *, size_t, size_t)
   __THROW __nonnull ((1)) attribute_hidden;
 # define explicit_bzero(buf, len) \
   __explicit_bzero_chk_internal (buf, len, __glibc_objsize0 (buf))
+/* Avoid hidden reference to IFUNC symbol __memset_explicit_chk.  */
+void *__memset_explicit_chk_internal (void *, int, size_t, size_t)
+  __THROW __nonnull ((1)) attribute_hidden;
+# define memset_explicit(buf, c, len)					\
+  __memset_explicit_chk_internal (buf, c, len, __glibc_objsize0 (buf))
 #elif !IS_IN (nonlib)
 void __explicit_bzero_chk (void *, size_t, size_t) __THROW __nonnull ((1));
 # define explicit_bzero(buf, len) __explicit_bzero_chk (buf, len,	      \
 							__glibc_objsize0 (buf))
+void *__memset_explicit_chk (void *, int, size_t, size_t)
+  __THROW __nonnull ((1));
+# define memset_explicit(buf, c, len)				\
+  __memset_explicit_chk (buf, c, len, __glibc_objsize0 (buf))
 #endif
 
 libc_hidden_builtin_proto (memchr)
@@ -179,8 +188,13 @@ extern __typeof (strsep) strsep attribute_hidden;
   && !defined NO_MEMPCPY_STPCPY_REDIRECT
 /* Redirect calls to __builtin_mempcpy and __builtin_stpcpy to call
    __mempcpy and __stpcpy if not inlined.  */
+# ifdef ATTR_AFTER_FUNC_DECL
 extern __typeof (mempcpy) mempcpy __asm__ ("__mempcpy");
 extern __typeof (stpcpy) stpcpy __asm__ ("__stpcpy");
+# else
+__asm__ ("mempcpy = __mempcpy");
+__asm__ ("stpcpy = __stpcpy");
+# endif
 #endif
 
 extern void *__memcpy_chk (void *__restrict __dest,

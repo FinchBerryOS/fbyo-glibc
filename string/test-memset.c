@@ -1,5 +1,5 @@
 /* Test memset functions.
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,11 @@
 # endif
 #else
 # ifndef WIDE
-#  define TEST_NAME "memset"
+#  ifdef TEST_MEMSET_EXPLICIT
+#   define TEST_NAME "memset_explicit"
+#  else
+#   define TEST_NAME "memset"
+#  endif
 # else
 #  define TEST_NAME "wmemset"
 # endif /* WIDE */
@@ -34,7 +38,11 @@
 #include "test-string.h"
 
 #ifndef WIDE
-# define MEMSET memset
+# ifdef TEST_MEMSET_EXPLICIT
+#  define MEMSET memset_explicit
+# else
+#  define MEMSET memset
+# endif
 # define CHAR char
 # define UCHAR unsigned char
 # define SIMPLE_MEMSET simple_memset

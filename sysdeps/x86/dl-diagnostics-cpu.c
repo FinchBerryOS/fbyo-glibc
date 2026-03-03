@@ -1,5 +1,5 @@
 /* Print CPU diagnostics data in ld.so.  x86 version.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -89,6 +89,8 @@ _dl_diagnostics_cpu (void)
                             cpu_features->xsave_state_size);
   print_cpu_features_value ("xsave_state_full_size",
                             cpu_features->xsave_state_full_size);
+  print_cpu_features_value ("tlsdesc_state_full_size",
+                            _dl_x86_features_tlsdesc_state_size);
   print_cpu_features_value ("data_cache_size", cpu_features->data_cache_size);
   print_cpu_features_value ("shared_cache_size",
                             cpu_features->shared_cache_size);

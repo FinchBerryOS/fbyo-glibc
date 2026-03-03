@@ -1,6 +1,6 @@
 /* Initialize CPU feature data.  AArch64 version.
    This file is part of the GNU C Library.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    Copyright The GNU Toolchain Authors.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -53,6 +53,11 @@
 		         && (MIDR_PARTNUM(midr) == 0x001		\
 			     || (MIDR_PARTNUM(midr) == 0x002		\
 			         && MIDR_VARIANT(midr) == 0)))
+
+enum {
+  BTI_CHECK_PERMISSIVE = 0,
+  BTI_CHECK_ENFORCED = 1,
+};
 
 struct cpu_features
 {

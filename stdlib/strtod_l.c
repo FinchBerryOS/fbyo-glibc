@@ -1,5 +1,5 @@
 /* Convert string representing a number to float value, using given locale.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -72,6 +72,7 @@ extern double ____strtod_l_internal (const char *, char **, int, locale_t);
 #include <stdint.h>
 #include <rounding-mode.h>
 #include <tininess.h>
+#include <stdbit.h>
 
 /* The gmp headers need some configuration frobs.  */
 #define HAVE_ALLOCA 1
@@ -81,7 +82,6 @@ extern double ____strtod_l_internal (const char *, char **, int, locale_t);
 #include <gmp-mparam.h>
 #include <gmp.h>
 #include "gmp-impl.h"
-#include "longlong.h"
 #include "fpioconst.h"
 
 #include <assert.h>
@@ -1247,7 +1247,7 @@ ____STRTOF_INTERNAL (const STRING_TYPE *nptr, STRING_TYPE **endptr, int group,
 	}
 
       /* Determine how many bits of the result we already have.  */
-      count_leading_zeros (bits, num[numsize - 1]);
+      bits = stdc_leading_zeros (num[numsize - 1]);
       bits = numsize * BITS_PER_MP_LIMB - bits;
 
       /* Now we know the exponent of the number in base two.
@@ -1465,7 +1465,8 @@ ____STRTOF_INTERNAL (const STRING_TYPE *nptr, STRING_TYPE **endptr, int group,
 				       |--- n ---|
      */
 
-    count_leading_zeros (cnt, den[densize - 1]);
+    cnt = stdc_leading_zeros (den[densize - 1]);
+
 
     if (cnt > 0)
       {
@@ -1504,11 +1505,7 @@ ____STRTOF_INTERNAL (const STRING_TYPE *nptr, STRING_TYPE **endptr, int group,
 #define got_limb							      \
 	      if (bits == 0)						      \
 		{							      \
-		  int cnt;						      \
-		  if (quot == 0)					      \
-		    cnt = BITS_PER_MP_LIMB;				      \
-		  else							      \
-		    count_leading_zeros (cnt, quot);			      \
+		  int cnt = stdc_leading_zeros (quot);			      \
 		  exponent -= cnt;					      \
 		  if (BITS_PER_MP_LIMB - cnt > MANT_DIG)		      \
 		    {							      \
@@ -1788,7 +1785,7 @@ __STRTOF (const STRING_TYPE *nptr, STRING_TYPE **endptr, locale_t loc)
 libc_hidden_def (__STRTOF)
 libc_hidden_ver (__STRTOF, STRTOF)
 #endif
-weak_alias (__STRTOF, STRTOF)
+static_weak_alias (__STRTOF, STRTOF)
 
 #ifdef LONG_DOUBLE_COMPAT
 # if LONG_DOUBLE_COMPAT(libc, GLIBC_2_1)
@@ -1812,18 +1809,18 @@ compat_symbol (libc, strtod_l, strtold_l, GLIBC_2_3);
 #  undef strtof64_l
 #  undef wcstof64_l
 #  ifdef USE_WIDE_CHAR
-weak_alias (wcstod_l, wcstof64_l)
+weak_alias (__wcstod_l, wcstof64_l)
 #  else
-weak_alias (strtod_l, strtof64_l)
+weak_alias (__strtod_l, strtof64_l)
 #  endif
 # endif
 # if __HAVE_FLOAT32X && !__HAVE_DISTINCT_FLOAT32X
 #  undef strtof32x_l
 #  undef wcstof32x_l
 #  ifdef USE_WIDE_CHAR
-weak_alias (wcstod_l, wcstof32x_l)
+weak_alias (__wcstod_l, wcstof32x_l)
 #  else
-weak_alias (strtod_l, strtof32x_l)
+weak_alias (__strtod_l, strtof32x_l)
 #  endif
 # endif
 #endif

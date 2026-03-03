@@ -1,5 +1,5 @@
 /* Signal Handlers that Return
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,6 +18,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 /* This flag controls termination of the main loop. */
 volatile sig_atomic_t keep_going = 1;

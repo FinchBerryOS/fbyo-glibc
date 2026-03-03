@@ -1,5 +1,5 @@
 /* Private function declarations for libm.
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -36,7 +36,9 @@ extern _Mdouble_ __MSUF (__ieee754_exp10) (_Mdouble_);
 extern _Mdouble_ __MSUF (__ieee754_exp2) (_Mdouble_);
 extern _Mdouble_ __MSUF (__ieee754_fmod) (_Mdouble_, _Mdouble_);
 extern _Mdouble_ __MSUF (__ieee754_gamma) (_Mdouble_);
+#if !defined __MATH_DECLARING_FLOAT
 extern _Mdouble_ __MSUF_R (__ieee754_gamma) (_Mdouble_, int *);
+#endif
 extern _Mdouble_ __MSUF (__ieee754_hypot) (_Mdouble_, _Mdouble_);
 extern _Mdouble_ __MSUF (__ieee754_j0) (_Mdouble_);
 extern _Mdouble_ __MSUF (__ieee754_j1) (_Mdouble_);

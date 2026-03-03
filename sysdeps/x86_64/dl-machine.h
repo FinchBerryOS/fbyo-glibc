@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  x86-64 version.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -313,7 +313,7 @@ and creates an unsatisfiable circular dependency.\n",
 	{
 	case R_X86_64_JUMP_SLOT:
 	  map->l_has_jump_slot_reloc = true;
-	  /* fallthrough */
+	  [[fallthrough]];
 	case R_X86_64_GLOB_DAT:
 	  *reloc_addr = value;
 	  break;
@@ -422,7 +422,7 @@ and creates an unsatisfiable circular dependency.\n",
 	  /* Set to symbol size plus addend.  */
 	  value = sym->st_size;
 #  endif
-	  /* Fall through.  */
+	  [[fallthrough]];
 	case R_X86_64_32:
 	  value += reloc->r_addend;
 	  *(unsigned int *) reloc_addr = value;

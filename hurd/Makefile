@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2025 Free Software Foundation, Inc.
+# Copyright (C) 1991-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -18,6 +18,11 @@
 subdir := hurd
 
 include ../Makeconfig
+
+tests := test-sig-xstate \
+	test-sig-rpc-interrupted
+$(objpfx)test-sig-xstate: $(shared-thread-library)
+$(objpfx)test-sig-rpc-interrupted: $(shared-thread-library) $(objdir)/hurd/libhurduser.so
 
 headers = \
   $(interface-headers) \
@@ -131,6 +136,7 @@ sig = \
   longjmp-ts \
   preempt-sig \
   siginfo \
+  sigthreadmask \
   sigunwind \
   thread-cancel \
   thread-self \

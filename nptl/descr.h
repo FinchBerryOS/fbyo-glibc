@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -125,6 +125,24 @@ struct priority_protection_data
   unsigned int priomap[];
 };
 
+enum allocate_stack_mode_t
+{
+  ALLOCATE_GUARD_MADV_GUARD = 0,
+  ALLOCATE_GUARD_PROT_NONE = 1,
+  ALLOCATE_GUARD_USER = 2,
+};
+
+/* Possible values for the 'joinstate' field.  The field will be cleared
+   (set to THREAD_STATE_EXITED) atomically by the kernel when thread
+   terminated.  */
+enum
+{
+  THREAD_STATE_EXITED = 0,
+  THREAD_STATE_EXITING,
+  THREAD_STATE_JOINABLE,
+  THREAD_STATE_DETACHED,
+};
+
 
 /* Thread descriptor data structure.  */
 struct pthread
@@ -168,8 +186,7 @@ struct pthread
      GL (dl_stack_user) list.  */
   list_t list;
 
-  /* Thread ID - which is also a 'is this thread descriptor (and
-     therefore stack) used' flag.  */
+  /* Thread ID set by the kernel with CLONE_PARENT_SETTID.  */
   pid_t tid;
 
   /* List of robust mutexes the thread is holding.  */
@@ -324,7 +341,7 @@ struct pthread
   bool report_events;
 
   /* True if the user provided the stack.  */
-  bool user_stack;
+  enum allocate_stack_mode_t stack_mode;
 
   /* True if thread must stop at startup time.  */
   bool stopped_start;
@@ -339,15 +356,8 @@ struct pthread
   /* Lock for synchronizing setxid calls.  */
   unsigned int setxid_futex;
 
-  /* If the thread waits to join another one the ID of the latter is
-     stored here.
-
-     In case a thread is detached this field contains a pointer of the
-     TCB if the thread itself.  This is something which cannot happen
-     in normal operation.  */
-  struct pthread *joinid;
-  /* Check whether a thread is detached.  */
-#define IS_DETACHED(pd) ((pd)->joinid == (pd))
+  /* The current thread state defined by the THREAD_STATE_* enumeration.  */
+  unsigned int joinstate;
 
   /* The result of the thread function.  */
   void *result;

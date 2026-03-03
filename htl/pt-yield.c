@@ -1,5 +1,5 @@
 /* Yield the processor to another thread or process.
-   Copyright (C) 2010-2025 Free Software Foundation, Inc.
+   Copyright (C) 2010-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,9 +18,16 @@
 
 #include <pthread.h>
 #include <sched.h>
+#include <shlib-compat.h>
+
 
 int
-pthread_yield (void)
+__pthread_yield (void)
 {
   return __sched_yield ();
 }
+versioned_symbol (libc, __pthread_yield, pthread_yield, GLIBC_2_43);
+
+#if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_12, GLIBC_2_43)
+compat_symbol (libpthread, __pthread_yield, pthread_yield, GLIBC_2_12);
+#endif

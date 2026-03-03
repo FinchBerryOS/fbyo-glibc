@@ -1,5 +1,5 @@
 /* Benchmark utility functions.
-   Copyright (C) 2015-2025 Free Software Foundation, Inc.
+   Copyright (C) 2015-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,6 +23,12 @@
     asm volatile ("" : : "r,m" (__v) : "memory"); \
     __v;					  \
   })
+
+#if __GNUC_PREREQ (4, 4) || __glibc_has_attribute (__optimize__)
+# define attribute_optimize(level) __attribute__ ((optimize (level)))
+#else
+# define attribute_optimize(level)
+#endif
 
 #ifndef START_ITER
 # define START_ITER (100000000)

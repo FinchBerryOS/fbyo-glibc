@@ -1,5 +1,5 @@
 /* Linux read syscall implementation.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,6 +28,6 @@ __libc_read (int fd, void *buf, size_t nbytes)
 libc_hidden_def (__libc_read)
 
 libc_hidden_def (__read)
-weak_alias (__libc_read, __read)
+strong_alias (__libc_read, __read)
 libc_hidden_def (read)
-weak_alias (__libc_read, read)
+static_weak_alias (__libc_read, read)

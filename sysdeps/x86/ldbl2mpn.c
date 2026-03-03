@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,10 +17,10 @@
 
 #include "gmp.h"
 #include "gmp-impl.h"
-#include "longlong.h"
 #include <ieee754.h>
 #include <float.h>
 #include <stdlib.h>
+#include <stdbit.h>
 
 /* Convert a `long double' in IEEE854 standard double-precision format to a
    multi-precision integer representing the significand scaled up by its
@@ -73,7 +73,7 @@ __mpn_extract_long_double (mp_ptr res_ptr, mp_size_t size,
 
 	  if (res_ptr[N - 1] != 0)
 	    {
-	      count_leading_zeros (cnt, res_ptr[N - 1]);
+	      cnt = stdc_leading_zeros (res_ptr[N - 1]);
 	      if (cnt != 0)
 		{
 #if N == 2
@@ -88,7 +88,7 @@ __mpn_extract_long_double (mp_ptr res_ptr, mp_size_t size,
 	    }
 	  else if (res_ptr[0] != 0)
 	    {
-	      count_leading_zeros (cnt, res_ptr[0]);
+	      cnt = stdc_leading_zeros (res_ptr[0]);
 	      res_ptr[N - 1] = res_ptr[0] << cnt;
 	      res_ptr[0] = 0;
 	      *expt = LDBL_MIN_EXP - 1 - BITS_PER_MP_LIMB - cnt;

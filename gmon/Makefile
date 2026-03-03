@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2025 Free Software Foundation, Inc.
+# Copyright (C) 1995-2026 Free Software Foundation, Inc.
 # Copyright The GNU Toolchain Authors.
 # This file is part of the GNU C Library.
 
@@ -62,8 +62,12 @@ tests-static += tst-gmon-static-pie
 endif
 endif
 
-# The mcount code won't work without a frame pointer.
+# The mcount code won't work without a frame pointer nor when memcpy or
+# memset are called.
 CFLAGS-mcount.c := -fno-omit-frame-pointer
+ifeq (yes,$(config-cflags-cc-loop-to-function))
+CFLAGS-mcount.c += -fno-tree-loop-distribute-patterns
+endif
 
 CFLAGS-tst-gmon.c := -fno-omit-frame-pointer -pg
 tst-gmon-no-pie = yes

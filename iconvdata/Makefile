@@ -1,4 +1,4 @@
-# Copyright (C) 1997-2025 Free Software Foundation, Inc.
+# Copyright (C) 1997-2026 Free Software Foundation, Inc.
 # Copyright The GNU Toolchain Authors.
 # This file is part of the GNU C Library.
 
@@ -340,7 +340,7 @@ $(objpfx)iconv-test.out: run-iconv-test.sh \
 			 $(common-objdir)/iconv/iconv_prog TESTS
 	iconv_modules="$(modules)" \
 	$(SHELL) $< $(common-objdir) '$(test-wrapper-env)' \
-		 '$(run-program-env)' > $@; \
+		 '$(run-program-env)' '$(rpath-link)' > $@; \
 	$(evaluate-test)
 
 $(objpfx)tst-tables.out: tst-tables.sh \

@@ -1,5 +1,5 @@
 /* _Float128 overrides for float128 in ppc64le multiarch env.
-   Copyright (C) 2020-2025 Free Software Foundation, Inc.
+   Copyright (C) 2020-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -78,6 +78,7 @@ F128_REDIR (__ldexpf128);
 F128_REDIR (__cargf128);
 F128_REDIR (__cimagf128);
 F128_REDIR (__crealf128);
+F128_REDIR (__compoundnf128);
 F128_REDIR (__conjf128);
 F128_REDIR (__cprojf128);
 F128_REDIR (__cabsf128);

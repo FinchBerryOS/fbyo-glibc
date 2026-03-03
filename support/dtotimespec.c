@@ -1,5 +1,5 @@
 /* Convert double to timespec.
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library and is also part of gnulib.
    Patches to this file should be submitted to both projects.
 
@@ -28,7 +28,7 @@ dtotimespec (double sec)
 {
   if (sec <= TYPE_MINIMUM (time_t))
     return make_timespec (TYPE_MINIMUM (time_t), 0);
-  else if (sec >= 1.0 + TYPE_MAXIMUM (time_t))
+  else if (sec >= 1.0 + (double) TYPE_MAXIMUM (time_t))
     return make_timespec (TYPE_MAXIMUM (time_t), TIMESPEC_HZ - 1);
   else
     {

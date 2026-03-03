@@ -1,5 +1,5 @@
 /* Optimized memset for AmpereComputing emag processor.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -33,9 +33,6 @@
 #define dstend	x4
 
 ENTRY (__memset_emag)
-
-	PTR_ARG (0)
-	SIZE_ARG (2)
 
 	bfi	valw, valw, 8, 8
 	bfi	valw, valw, 16, 16

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -168,6 +168,7 @@ _hurd_sigstate_delete (thread_t thread)
       free (ss);
     }
 }
+libc_hidden_def (_hurd_sigstate_delete)
 
 /* Make SS a global receiver, with pthread signal semantics.  */
 void
@@ -178,42 +179,13 @@ _hurd_sigstate_set_global_rcv (struct hurd_sigstate *ss)
 }
 libc_hidden_def (_hurd_sigstate_set_global_rcv)
 
-/* Check whether SS is a global receiver.  */
-static int
-sigstate_is_global_rcv (const struct hurd_sigstate *ss)
-{
-  return (_hurd_global_sigstate != NULL)
-	 && (ss->actions[0].sa_handler == SIG_IGN);
-}
-libc_hidden_def (_hurd_sigstate_delete)
-
-/* Lock/unlock a hurd_sigstate structure.  If the accessors below require
-   it, the global sigstate will be locked as well.  */
-void
-_hurd_sigstate_lock (struct hurd_sigstate *ss)
-{
-  if (sigstate_is_global_rcv (ss))
-    __spin_lock (&_hurd_global_sigstate->lock);
-  __spin_lock (&ss->lock);
-}
-libc_hidden_def (_hurd_sigstate_lock)
-
-void
-_hurd_sigstate_unlock (struct hurd_sigstate *ss)
-{
-  __spin_unlock (&ss->lock);
-  if (sigstate_is_global_rcv (ss))
-    __spin_unlock (&_hurd_global_sigstate->lock);
-}
-libc_hidden_def (_hurd_sigstate_unlock)
-
 /* Retrieve a thread's full set of pending signals, including the global
    ones if appropriate.  SS must be locked.  */
 sigset_t
 _hurd_sigstate_pending (const struct hurd_sigstate *ss)
 {
   sigset_t pending = ss->pending;
-  if (sigstate_is_global_rcv (ss))
+  if (_hurd_sigstate_is_global_rcv (ss))
     __sigorset (&pending, &pending, &_hurd_global_sigstate->pending);
   return pending;
 }
@@ -225,7 +197,7 @@ libc_hidden_def (_hurd_sigstate_pending)
 static struct hurd_signal_detail
 sigstate_clear_pending (struct hurd_sigstate *ss, int signo)
 {
-  if (sigstate_is_global_rcv (ss)
+  if (_hurd_sigstate_is_global_rcv (ss)
       && __sigismember (&_hurd_global_sigstate->pending, signo))
     {
       __sigdelset (&_hurd_global_sigstate->pending, signo);
@@ -241,7 +213,7 @@ sigstate_clear_pending (struct hurd_sigstate *ss, int signo)
 struct sigaction *
 _hurd_sigstate_actions (struct hurd_sigstate *ss)
 {
-  if (sigstate_is_global_rcv (ss))
+  if (_hurd_sigstate_is_global_rcv (ss))
     return _hurd_global_sigstate->actions;
   else
     return ss->actions;
@@ -376,7 +348,7 @@ interrupted_reply_port_location (thread_t thread,
   /* GCC 6 and before seem to be confused by the setjmp call inside
      _hurdsig_catch_memory_fault and think that we may be returning a second
      time to here with portloc uninitialized (but we never do). */
-  DIAG_IGNORE_NEEDS_COMMENT (6, "-Wmaybe-uninitialized");
+  DIAG_IGNORE_NEEDS_COMMENT_GCC (6, "-Wmaybe-uninitialized");
   /* Fault now if this pointer is bogus.  */
   *(volatile mach_port_t *) portloc = *portloc;
   DIAG_POP_NEEDS_COMMENT;
@@ -746,7 +718,7 @@ post_signal (struct hurd_sigstate *ss,
     __mutex_lock (&_hurd_siglock);
     for (rss = _hurd_sigstates; rss != NULL; rss = rss->next)
       {
-	if (! sigstate_is_global_rcv (rss))
+	if (! _hurd_sigstate_is_global_rcv (rss))
 	  continue;
 
 	/* The global sigstate is already locked.  */
@@ -1519,8 +1491,8 @@ _hurdsig_init (const int *intarray, size_t intarraysize)
 
   /* Start the signal thread listening on the message port.  */
 
-#pragma weak __pthread_create
-  if (!__pthread_create)
+#pragma weak __libc_pthread_create
+  if (!__libc_pthread_create)
     {
       err = __thread_create (__mach_task_self (), &_hurd_msgport_thread);
       assert_perror (err);
@@ -1564,7 +1536,7 @@ _hurdsig_init (const int *intarray, size_t intarraysize)
 #pragma weak __pthread_detach
 #pragma weak __pthread_getattr_np
 #pragma weak __pthread_attr_getstack
-      __pthread_create(&thread, NULL, &_hurd_msgport_receive, NULL);
+      __libc_pthread_create (&thread, NULL, &_hurd_msgport_receive, NULL);
 
       /* Record signal thread stack layout for fork() */
       __pthread_getattr_np (thread, &attr);
@@ -1611,28 +1583,53 @@ _hurdsig_init (const int *intarray, size_t intarraysize)
 static void
 reauth_proc (mach_port_t new)
 {
-  mach_port_t ref, ignore;
+  error_t err;
+  mach_port_t ref, newproc;
 
   ref = __mach_reply_port ();
-  if (! HURD_PORT_USE (&_hurd_ports[INIT_PORT_PROC],
+  err = HURD_PORT_USE (&_hurd_ports[INIT_PORT_PROC],
 		       __proc_reauthenticate (port, ref,
-					      MACH_MSG_TYPE_MAKE_SEND)
-		       || __auth_user_authenticate (new, ref,
-						    MACH_MSG_TYPE_MAKE_SEND,
-						    &ignore))
-      && ignore != MACH_PORT_NULL)
-    __mach_port_deallocate (__mach_task_self (), ignore);
-  __mach_port_destroy (__mach_task_self (), ref);
+					      MACH_MSG_TYPE_MAKE_SEND));
+  if (err)
+    {
+      __mach_port_destroy (__mach_task_self (), ref);
+      return;
+    }
 
-  /* Set the owner of the process here too. */
-  __mutex_lock (&_hurd_id.lock);
-  if (!_hurd_check_ids ())
-    HURD_PORT_USE (&_hurd_ports[INIT_PORT_PROC],
-		   __proc_setowner (port,
-				    (_hurd_id.gen.nuids
-				     ? _hurd_id.gen.uids[0] : 0),
-				    !_hurd_id.gen.nuids));
-  __mutex_unlock (&_hurd_id.lock);
+  err = __auth_user_authenticate (new, ref,
+                                  MACH_MSG_TYPE_MAKE_SEND,
+                                  &newproc);
+  __mach_port_destroy (__mach_task_self (), ref);
+  if (err)
+    return;
+
+  if (newproc == MACH_PORT_NULL)
+    {
+      /* Old versions of the proc server did not recreate the process
+         port when reauthenticating, and passed MACH_PORT_NULL through
+         the auth server.  That must be what we're dealing with.  */
+
+      /* Set the owner of the process here too. */
+      __mutex_lock (&_hurd_id.lock);
+      if (!_hurd_check_ids ())
+	HURD_PORT_USE (&_hurd_ports[INIT_PORT_PROC],
+		       __proc_setowner (port,
+					(_hurd_id.gen.nuids
+					 ? _hurd_id.gen.uids[0] : 0),
+					!_hurd_id.gen.nuids));
+      __mutex_unlock (&_hurd_id.lock);
+
+      return;
+    }
+
+  err = __proc_reauthenticate_complete (newproc);
+  if (err)
+    {
+      __mach_port_deallocate (__mach_task_self (), newproc);
+      return;
+    }
+
+  _hurd_port_set (&_hurd_ports[INIT_PORT_PROC], newproc);
 
   (void) &reauth_proc;		/* Silence compiler warning.  */
 }

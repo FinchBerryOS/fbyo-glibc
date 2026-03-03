@@ -1,6 +1,6 @@
 /* Scalar wrappers for double-precision SVE vector math functions.
 
-   Copyright (C) 2023-2025 Free Software Foundation, Inc.
+   Copyright (C) 2023-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -44,11 +44,15 @@
 
 SVE_VECTOR_WRAPPER (acos_sve, _ZGVsMxv_acos)
 SVE_VECTOR_WRAPPER (acosh_sve, _ZGVsMxv_acosh)
+SVE_VECTOR_WRAPPER (acospi_sve, _ZGVsMxv_acospi)
 SVE_VECTOR_WRAPPER (asin_sve, _ZGVsMxv_asin)
 SVE_VECTOR_WRAPPER (asinh_sve, _ZGVsMxv_asinh)
+SVE_VECTOR_WRAPPER (asinpi_sve, _ZGVsMxv_asinpi)
 SVE_VECTOR_WRAPPER (atan_sve, _ZGVsMxv_atan)
 SVE_VECTOR_WRAPPER (atanh_sve, _ZGVsMxv_atanh)
+SVE_VECTOR_WRAPPER (atanpi_sve, _ZGVsMxv_atanpi)
 SVE_VECTOR_WRAPPER_ff (atan2_sve, _ZGVsMxvv_atan2)
+SVE_VECTOR_WRAPPER_ff (atan2pi_sve, _ZGVsMxvv_atan2pi)
 SVE_VECTOR_WRAPPER (cbrt_sve, _ZGVsMxv_cbrt)
 SVE_VECTOR_WRAPPER (cos_sve, _ZGVsMxv_cos)
 SVE_VECTOR_WRAPPER (cosh_sve, _ZGVsMxv_cosh)
@@ -59,12 +63,17 @@ SVE_VECTOR_WRAPPER (exp_sve, _ZGVsMxv_exp)
 SVE_VECTOR_WRAPPER (exp10_sve, _ZGVsMxv_exp10)
 SVE_VECTOR_WRAPPER (exp2_sve, _ZGVsMxv_exp2)
 SVE_VECTOR_WRAPPER (expm1_sve, _ZGVsMxv_expm1)
+SVE_VECTOR_WRAPPER (exp2m1_sve, _ZGVsMxv_exp2m1)
+SVE_VECTOR_WRAPPER (exp10m1_sve, _ZGVsMxv_exp10m1)
 SVE_VECTOR_WRAPPER_ff (hypot_sve, _ZGVsMxvv_hypot)
 SVE_VECTOR_WRAPPER (log_sve, _ZGVsMxv_log)
 SVE_VECTOR_WRAPPER (log10_sve, _ZGVsMxv_log10)
+SVE_VECTOR_WRAPPER (log10p1_sve, _ZGVsMxv_log10p1)
 SVE_VECTOR_WRAPPER (log1p_sve, _ZGVsMxv_log1p)
 SVE_VECTOR_WRAPPER (log2_sve, _ZGVsMxv_log2)
+SVE_VECTOR_WRAPPER (log2p1_sve, _ZGVsMxv_log2p1)
 SVE_VECTOR_WRAPPER_ff (pow_sve, _ZGVsMxvv_pow)
+SVE_VECTOR_WRAPPER (rsqrt_sve, _ZGVsMxv_rsqrt)
 SVE_VECTOR_WRAPPER (sin_sve, _ZGVsMxv_sin)
 SVE_VECTOR_WRAPPER (sinh_sve, _ZGVsMxv_sinh)
 SVE_VECTOR_WRAPPER (sinpi_sve, _ZGVsMxv_sinpi)

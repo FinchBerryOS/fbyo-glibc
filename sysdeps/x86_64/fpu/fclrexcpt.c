@@ -1,5 +1,5 @@
 /* Clear given exceptions in current floating-point environment.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,9 +17,10 @@
    <https://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
+#include <math-inline-asm.h>
 
 int
-feclearexcept (int excepts)
+__feclearexcept (int excepts)
 {
   fenv_t temp;
   unsigned int mxcsr;
@@ -29,24 +30,26 @@ feclearexcept (int excepts)
 
   /* Bah, we have to clear selected exceptions.  Since there is no
      `fldsw' instruction we have to do it the hard way.  */
-  __asm__ ("fnstenv %0" : "=m" (*&temp));
+  __asm__ ("fnstenv %0" : "=m" (temp));
 
   /* Clear the relevant bits.  */
   temp.__status_word &= excepts ^ FE_ALL_EXCEPT;
 
   /* Put the new data in effect.  */
-  __asm__ ("fldenv %0" : : "m" (*&temp));
+  __asm__ ("fldenv %0" : : "m" (temp));
 
   /* And the same procedure for SSE.  */
-  __asm__ ("stmxcsr %0" : "=m" (*&mxcsr));
+  stmxcsr_inline_asm (&mxcsr);
 
   /* Clear the relevant bits.  */
   mxcsr &= ~excepts;
 
   /* And put them into effect.  */
-  __asm__ ("ldmxcsr %0" : : "m" (*&mxcsr));
+  ldmxcsr_inline_asm (&mxcsr);
 
   /* Success.  */
   return 0;
 }
+libm_hidden_def (__feclearexcept)
+static_weak_alias (__feclearexcept, feclearexcept)
 libm_hidden_def (feclearexcept)

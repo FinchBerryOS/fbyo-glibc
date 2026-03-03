@@ -1,5 +1,5 @@
 /* pthread_getname_np.
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,6 +23,9 @@
 #include <string.h>
 
 #include <pt-internal.h>
+#include <string.h>
+#include <shlib-compat.h>
+#include <ldsodefs.h>
 
 int
 __pthread_getname_np (pthread_t thread, char *buf, size_t len)
@@ -64,4 +67,9 @@ __pthread_getname_np (pthread_t thread, char *buf, size_t len)
 #endif
 }
 
-weak_alias (__pthread_getname_np, pthread_getname_np)
+libc_hidden_def (__pthread_getname_np)
+versioned_symbol (libc, __pthread_getname_np, pthread_getname_np, GLIBC_2_43);
+
+#if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_40, GLIBC_2_43)
+compat_symbol (libc, __pthread_getname_np, pthread_getname_np, GLIBC_2_40);
+#endif

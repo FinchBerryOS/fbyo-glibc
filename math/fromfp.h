@@ -1,5 +1,5 @@
-/* Round to integer type.  Common helper functions.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+/* Round to integer type (C23 version).  Common helper functions.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,15 +26,32 @@
 
 /* The including file should have defined UNSIGNED to 0 (signed return
    type) or 1 (unsigned return type), INEXACT to 0 (no inexact
-   exceptions) or 1 (raise inexact exceptions) and RET_TYPE to the
-   return type (intmax_t or uintmax_t).  */
+   exceptions) or 1 (raise inexact exceptions), FLOAT to the floating
+   type for the function being defined, PREFIX to the prefix of
+   <float.h> macros for that type and SUFFIX to the suffix of <math.h>
+   functions for that type.  */
 
-/* Return the maximum unbiased exponent for an argument (negative if
-   NEGATIVE is set) that might be in range for a call to a fromfp
+#define M_CONCATX(X, Y) X ## Y
+#define M_CONCAT(X, Y) M_CONCATX (X, Y)
+#define M_SUF(F) M_CONCAT (F, SUFFIX)
+#define M_MAX_EXP M_CONCAT (PREFIX, MAX_EXP)
+
+/* Adjust WIDTH into a range sufficient to cover all possible finite
+   results from calls to this function.  */
+
+static unsigned int
+fromfp_adjust_width (unsigned int width)
+{
+  if (width > (UNSIGNED ? M_MAX_EXP : M_MAX_EXP + 1))
+    return UNSIGNED ? M_MAX_EXP : M_MAX_EXP + 1;
+  return width;
+}
+
+/* Return the maximum unbiased exponent for a rounded result (negative
+   if NEGATIVE is set) that might be in range for a call to a fromfp
    function with width WIDTH (greater than 0, and not exceeding that
-   of intmax_t).  The truncated argument may still be out of range in
-   the case of negative arguments, and if not out of range it may
-   become out of range as a result of rounding.  */
+   returned by fromfp_adjust_width).  The result may still be out of
+   range in the case of negative arguments.  */
 
 static int
 fromfp_max_exponent (bool negative, int width)
@@ -45,130 +62,56 @@ fromfp_max_exponent (bool negative, int width)
     return negative ? width - 1 : width - 2;
 }
 
-/* Return the result of rounding an integer value X (passed as the
-   absolute value; NEGATIVE is true if the value is negative), where
-   HALF_BIT is true if the bit with value 0.5 is set and MORE_BITS is
-   true if any lower bits are set, in the rounding direction
-   ROUND.  */
+/* Return the result of rounding an argument X in the rounding
+   direction ROUND.  */
 
-static uintmax_t
-fromfp_round (bool negative, uintmax_t x, bool half_bit, bool more_bits,
-	      int round)
+static FLOAT
+fromfp_round (FLOAT x, int rm)
 {
-  switch (round)
+  switch (rm)
     {
     case FP_INT_UPWARD:
-      return x + (!negative && (half_bit || more_bits));
+      return M_SUF (ceil) (x);
 
     case FP_INT_DOWNWARD:
-      return x + (negative && (half_bit || more_bits));
+      return M_SUF (floor) (x);
 
     case FP_INT_TOWARDZERO:
     default:
       /* Unknown rounding directions are defined to mean unspecified
 	 rounding; treat this as truncation.  */
-      return x;
+      return M_SUF (trunc) (x);
 
     case FP_INT_TONEARESTFROMZERO:
-      return x + half_bit;
+      return M_SUF (round) (x);
 
     case FP_INT_TONEAREST:
-      return x + (half_bit && ((x & 1) || more_bits));
+      return M_SUF (roundeven) (x);
     }
 }
 
-/* Integer rounding, of a value whose exponent EXPONENT did not exceed
-   the maximum exponent MAX_EXPONENT and so did not necessarily
-   overflow, has produced X (possibly wrapping to 0); the sign is
-   negative if NEGATIVE is true.  Return whether this overflowed the
-   allowed width.  */
+/* Handle a domain error for a call to a fromfp function.  */
 
-static bool
-fromfp_overflowed (bool negative, uintmax_t x, int exponent, int max_exponent)
+static FLOAT
+fromfp_domain_error (void)
 {
-  if (UNSIGNED)
-    {
-      if (negative)
-	return x != 0;
-      else if (max_exponent == INTMAX_WIDTH - 1)
-	return exponent == INTMAX_WIDTH - 1 && x == 0;
-      else
-	return x == (1ULL << (max_exponent + 1));
-    }
-  else
-    {
-      if (negative)
-	return exponent == max_exponent && x != (1ULL << max_exponent);
-      else
-	return x == (1ULL << (max_exponent + 1));
-    }
-}
-
-/* Handle a domain error for a call to a fromfp function with an
-   argument which is negative if NEGATIVE is set, and specified width
-   (not exceeding that of intmax_t) WIDTH.  The return value is
-   unspecified (with it being unclear if the result needs to fit
-   within WIDTH bits in this case); we choose to saturate to the given
-   number of bits (treating NaNs like any other value).  */
-
-static RET_TYPE
-fromfp_domain_error (bool negative, unsigned int width)
-{
-  feraiseexcept (FE_INVALID);
   __set_errno (EDOM);
-  /* The return value is unspecified; we choose to saturate to the
-     given number of bits (treating NaNs like any other value).  */
-  if (UNSIGNED)
-    {
-      if (negative)
-	return 0;
-      else if (width == INTMAX_WIDTH)
-	return -1;
-      else
-	return (1ULL << width) - 1;
-    }
-  else
-    {
-      if (width == 0)
-	return 0;
-      else if (negative)
-	return -(1ULL << (width - 1));
-      else
-	return (1ULL << (width - 1)) - 1;
-    }
+  return (FLOAT) 0 / (FLOAT) 0;
 }
 
-/* Given X, the absolute value of a floating-point number (negative if
-   NEGATIVE is set) truncated towards zero, where HALF_BIT is true if
-   the bit with value 0.5 is set and MORE_BITS is true if any lower
-   bits are set, round it in the rounding direction ROUND, handle
-   errors and exceptions and return the appropriate return value for a
-   fromfp function.  X originally had floating-point exponent
-   EXPONENT, which does not exceed MAX_EXPONENT, the return value from
-   fromfp_max_exponent with width WIDTH.  */
+/* X has rounded to RX, which is within range.  Return RX, with
+   "inexact" raised if appropriate.  */
 
-static RET_TYPE
-fromfp_round_and_return (bool negative, uintmax_t x, bool half_bit,
-			 bool more_bits, int round, int exponent,
-			 int max_exponent, unsigned int width)
+static FLOAT
+fromfp_return (FLOAT x, FLOAT rx)
 {
-  uintmax_t uret = fromfp_round (negative, x, half_bit, more_bits, round);
-  if (fromfp_overflowed (negative, uret, exponent, max_exponent))
-    return fromfp_domain_error (negative, width);
-
-  if (INEXACT && (half_bit || more_bits))
+  if (INEXACT && rx != x)
     {
       /* There is no need for this to use the specific floating-point
-	 type for which this header is included, and there is no need
-	 for this header to know that type at all, so just use float
-	 here.  */
+	 type for which this header is included (and indeed 1 +
+	 LDBL_MIN may not raise "inexact" for IBM long double).  */
       float force_inexact = 1.0f + FLT_MIN;
       math_force_eval (force_inexact);
     }
-  if (UNSIGNED)
-    /* A negative argument not rounding to zero will already have
-       produced a domain error.  */
-    return uret;
-  else
-    return negative ? -uret : uret;
+  return rx;
 }

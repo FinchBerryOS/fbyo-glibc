@@ -1,5 +1,5 @@
 /* Support for dynamic linking code in static libc.
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,7 +35,6 @@
 #include <dl-machine.h>
 #include <libc-lock.h>
 #include <dl-cache.h>
-#include <dl-procinfo.h>
 #include <unsecvars.h>
 #include <hp-timing.h>
 #include <stackinfo.h>
@@ -167,18 +166,18 @@ enum dso_sort_algorithm _dl_dso_sort_algo;
 /* The value of the FPU control word the kernel will preset in hardware.  */
 fpu_control_t _dl_fpu_control = _FPU_DEFAULT;
 
-/* Prevailing state of the stack.  Generally this includes PF_X, indicating it's
- * executable but this isn't true for all platforms.  */
-ElfW(Word) _dl_stack_flags = DEFAULT_STACK_PERMS;
+/* Required flags used for stack allocation.  */
+int _dl_stack_prot_flags = DEFAULT_STACK_PROT_PERMS;
 
-#if PTHREAD_IN_LIBC
+#if !defined (__PTHREAD_HTL)
 list_t _dl_stack_used;
 list_t _dl_stack_user;
 list_t _dl_stack_cache;
 size_t _dl_stack_cache_actsize;
 uintptr_t _dl_in_flight_stack;
 int _dl_stack_cache_lock;
-#else
+#endif
+#if !PTHREAD_IN_LIBC
 void (*_dl_init_static_tls) (struct link_map *) = &_dl_nothread_init_static_tls;
 #endif
 struct dl_scope_free_list *_dl_scope_free_list;
@@ -323,7 +322,7 @@ _dl_non_dynamic_init (void)
       {
       /* Check if the stack is nonexecutable.  */
       case PT_GNU_STACK:
-	_dl_stack_flags = ph->p_flags;
+	_dl_stack_prot_flags = pf_to_prot (ph->p_flags);
 	break;
 
       case PT_GNU_RELRO:
@@ -332,9 +331,7 @@ _dl_non_dynamic_init (void)
 	break;
       }
 
-  if ((__glibc_unlikely (GL(dl_stack_flags)) & PF_X)
-      && TUNABLE_GET (glibc, rtld, execstack, int32_t, NULL) == 0)
-    _dl_fatal_printf ("Fatal glibc error: executable stack is not allowed\n");
+  _dl_handle_execstack_tunable ();
 
   call_function_static_weak (_dl_find_object_init);
 

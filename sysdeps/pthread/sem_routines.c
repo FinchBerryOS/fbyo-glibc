@@ -1,5 +1,5 @@
 /* Helper code for POSIX semaphore implementation.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 #include <semaphoreP.h>
 #include <sys/mman.h>
 #include <sem_routines.h>
+#include <string.h>
 
 /* Keeping track of currently used mappings.  */
 struct inuse_sem

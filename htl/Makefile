@@ -1,5 +1,5 @@
 #
-#   Copyright (C) 1994-2025 Free Software Foundation, Inc.
+#   Copyright (C) 1994-2026 Free Software Foundation, Inc.
 #
 #   The GNU C Library is free software; you can redistribute it and/or
 #   modify it under the terms of the GNU Lesser General Public
@@ -20,102 +20,11 @@ subdir := htl
 srcdir = .
 
 MICROKERNEL := mach
-SYSDEPS := lockfile
+SYSDEPS :=
 
 LCLHDRS :=
 
-libpthread-routines := \
-  pt-barrier-destroy \
-  pt-barrier-init \
-  pt-barrier-wait \
-  pt-barrier \
-  pt-barrierattr-destroy \
-  pt-barrierattr-init \
-  pt-barrierattr-getpshared \
-  pt-barrierattr-setpshared \
-  pt-destroy-specific \
-  pt-init-specific \
-  pt-key-create \
-  pt-key-delete \
-  pt-getspecific \
-  pt-setspecific \
-  pt-once \
-  pt-alloc \
-  pt-create \
-  pt-getattr \
-  pt-dealloc \
-  pt-detach \
-  pt-exit \
-  pt-initialize \
-  pt-join \
-  pt-spin-inlines \
-  pt-cleanup \
-  pt-setcancelstate \
-  pt-setcanceltype \
-  pt-testcancel \
-  pt-cancel \
-  pt-mutex-init \
-  pt-mutex-destroy \
-  pt-mutex-lock \
-  pt-mutex-trylock \
-  pt-mutex-timedlock \
-  pt-mutex-unlock \
-  pt-mutex-transfer-np \
-  pt-mutex-getprioceiling \
-  pt-mutex-setprioceiling \
-  pt-mutex-consistent \
-  pt-rwlock-attr \
-  pt-rwlockattr-init \
-  pt-rwlockattr-destroy \
-  pt-rwlockattr-getpshared \
-  pt-rwlockattr-setpshared \
-  pt-rwlock-init \
-  pt-rwlock-destroy \
-  pt-rwlock-rdlock \
-  pt-rwlock-tryrdlock \
-  pt-rwlock-trywrlock \
-  pt-rwlock-wrlock \
-  pt-rwlock-timedrdlock \
-  pt-rwlock-timedwrlock \
-  pt-rwlock-unlock \
-  pt-hurd-cond-wait \
-  pt-hurd-cond-timedwait \
-  pt-stack-alloc \
-  pt-thread-alloc \
-  pt-thread-start \
-  pt-thread-terminate \
-  pt-startup \
-  pt-getconcurrency \
-  pt-setconcurrency \
-  pt-docancel \
-  pt-sysdep \
-  pt-setup \
-  pt-machdep \
-  pt-spin \
-  pt-sigstate-init \
-  pt-kill \
-  pt-getcpuclockid \
-  pt-setschedprio \
-  pt-yield \
-  pt-getname-np \
-  pt-setname-np \
-  sem_close \
-  sem-destroy \
-  sem-getvalue \
-  sem-init \
-  sem_open \
-  sem-post \
-  sem-timedwait \
-  sem-trywait \
-  sem_unlink \
-  sem-wait \
-  sem-waitfast \
-  sem_routines \
-  cancellation \
-  cthreads-compat \
-  herrno \
-  $(SYSDEPS) \
-  # libpthread-routine
+libpthread-routines :=
 
 headers := \
   bits/cancelation.h \
@@ -124,7 +33,6 @@ headers := \
   bits/pthreadtypes-arch.h \
   bits/pthreadtypes.h \
   bits/semaphore.h \
-  bits/spin-lock-inline.h \
   bits/thread-shared-types.h \
   bits/types/__pthread_key.h \
   bits/types/__pthread_spinlock_t.h \
@@ -148,9 +56,9 @@ distribute :=
 
 routines := \
   alloca_cutoff \
-  forward \
+  cancellation \
   htlfreeres \
-  libc_pthread_init \
+  pt-alloc \
   pt-attr \
   pt-attr-destroy \
   pt-attr-getdetachstate \
@@ -172,8 +80,18 @@ routines := \
   pt-attr-setstack \
   pt-attr-setstackaddr \
   pt-attr-setstacksize \
+  pt-barrier \
+  pt-barrier-destroy \
+  pt-barrier-init \
+  pt-barrier-wait \
+  pt-barrierattr-destroy \
+  pt-barrierattr-getpshared \
+  pt-barrierattr-init \
+  pt-barrierattr-setpshared \
   pt-block \
   pt-block-intr \
+  pt-cancel \
+  pt-cleanup \
   pt-cond \
   pt-cond-brdcast \
   pt-cond-destroy \
@@ -187,8 +105,37 @@ routines := \
   pt-condattr-init \
   pt-condattr-setclock \
   pt-condattr-setpshared \
+  pt-create \
+  pt-dealloc \
+  pt-destroy-specific \
+  pt-detach \
+  pt-docancel \
+  pt-exit \
+  pt-getattr \
+  pt-getconcurrency \
+  pt-getcpuclockid \
+  pt-getname-np \
   pt-getschedparam \
+  pt-getspecific \
+  pt-hurd-cond-timedwait \
+  pt-hurd-cond-wait \
+  pt-init-specific \
+  pt-join \
+  pt-key-create \
+  pt-key-delete \
+  pt-kill \
+  pt-machdep \
   pt-mutex-checklocked \
+  pt-mutex-consistent \
+  pt-mutex-destroy \
+  pt-mutex-getprioceiling \
+  pt-mutex-init \
+  pt-mutex-lock \
+  pt-mutex-setprioceiling \
+  pt-mutex-timedlock \
+  pt-mutex-transfer-np \
+  pt-mutex-trylock \
+  pt-mutex-unlock \
   pt-mutexattr-destroy \
   pt-mutexattr-getprioceiling \
   pt-mutexattr-getprotocol \
@@ -202,17 +149,60 @@ routines := \
   pt-mutexattr-setrobust \
   pt-mutexattr-settype \
   pt-nthreads \
+  pt-once \
   pt-pthread_self \
+  pt-rwlock-attr \
+  pt-rwlock-destroy \
+  pt-rwlock-init \
+  pt-rwlock-rdlock \
+  pt-rwlock-timedrdlock \
+  pt-rwlock-timedwrlock \
+  pt-rwlock-tryrdlock \
+  pt-rwlock-trywrlock \
+  pt-rwlock-unlock \
+  pt-rwlock-wrlock \
+  pt-rwlockattr-destroy \
+  pt-rwlockattr-getpshared \
+  pt-rwlockattr-init \
+  pt-rwlockattr-setpshared \
   pt-self pt-equal \
+  pt-setcancelstate \
+  pt-setcanceltype \
+  pt-setconcurrency \
+  pt-setname-np \
   pt-setschedparam \
+  pt-setschedprio \
+  pt-setspecific \
+  pt-setup \
   pt-sigmask \
   pt-sigstate \
   pt-sigstate-destroy \
+  pt-sigstate-init \
+  pt-spin-inlines \
+  pt-stack-alloc \
+  pt-startup \
+  pt-sysdep \
+  pt-testcancel \
+  pt-thread-alloc \
+  pt-thread-start \
+  pt-thread-terminate \
   pt-timedblock \
   pt-timedblock-intr \
   pt-wakeup \
+  pt-yield \
+  sem-destroy \
+  sem-getvalue \
+  sem-init \
+  sem-post \
+  sem-timedwait \
+  sem-trywait \
+  sem-wait \
+  sem-waitfast \
+  sem_close \
+  sem_open \
+  sem_routines \
+  sem_unlink \
   # routines
-shared-only-routines = forward
 
 extra-libs := libpthread
 extra-libs-others := $(extra-libs)
@@ -220,8 +210,6 @@ install-lib := libpthread.so
 install-lib-ldscripts := libpthread_syms.a
 
 include ../Makeconfig
-
-CFLAGS-lockfile.c = -D_IO_MTSAFE_IO
 
 all: # Make this the default target; it will be defined in Rules.
 

@@ -1,5 +1,5 @@
 /* Convert text in given files from the specified from-set to the to-set.
-   Copyright (C) 1998-2025 Free Software Foundation, Inc.
+   Copyright (C) 1998-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This program is free software; you can redistribute it and/or modify
@@ -436,7 +436,7 @@ input_error (const char *path)
 static void
 open_output_direct (void)
 {
-  output_fd = open64 (output_file, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+  output_fd = open64 (output_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
   if (output_fd < 0)
     output_error ();
 }
@@ -457,7 +457,7 @@ prepare_output_file (char **argv)
   else
     {
       /* If iconv creates the output file, no overlap is possible.  */
-      output_fd = open64 (output_file, O_WRONLY | O_CREAT | O_EXCL, 0777);
+      output_fd = open64 (output_file, O_WRONLY | O_CREAT | O_EXCL, 0666);
       if (output_fd >= 0)
 	output_buffer_size = copy_buffer_size;
       else

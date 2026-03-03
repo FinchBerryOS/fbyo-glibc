@@ -1,5 +1,5 @@
 /* Thread termination.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@
 #include <pthreadP.h>
 
 #include <atomic.h>
-
+#include <shlib-compat.h>
+#include <libc-internal.h>
 
 /* Terminate the current thread and make STATUS available to any
    thread that might join it.  */
@@ -48,6 +49,9 @@ __pthread_exit (void *status)
 
   /* Call destructors for the thread_local TLS variables.  */
   call_function_static_weak (__call_tls_dtors);
+
+  /* Clean up any state libc stored in thread-local variables.  */
+  __libc_thread_freeres ();
 
   __pthread_setcancelstate (oldstate, &oldstate);
 
@@ -112,4 +116,9 @@ __pthread_exit (void *status)
   abort ();
 }
 
-weak_alias (__pthread_exit, pthread_exit);
+libc_hidden_def (__pthread_exit)
+versioned_symbol (libc, __pthread_exit, pthread_exit, GLIBC_2_21);
+
+#if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_12, GLIBC_2_21)
+compat_symbol (libpthread, __pthread_exit, pthread_exit, GLIBC_2_12);
+#endif

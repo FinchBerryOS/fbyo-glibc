@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ _IO_fputs (const char *str, FILE *fp)
 }
 libc_hidden_def (_IO_fputs)
 
-weak_alias (_IO_fputs, fputs)
+static_weak_alias (_IO_fputs, fputs)
 libc_hidden_weak (fputs)
 
 # ifndef _IO_MTSAFE_IO

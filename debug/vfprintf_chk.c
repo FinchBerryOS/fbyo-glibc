@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,3 +29,4 @@ ___vfprintf_chk (FILE *fp, int flag, const char *format, va_list ap)
   return __vfprintf_internal (fp, format, ap, mode);
 }
 ldbl_strong_alias (___vfprintf_chk, __vfprintf_chk)
+ldbl_hidden_def (___vfprintf_chk, __vfprintf_chk)

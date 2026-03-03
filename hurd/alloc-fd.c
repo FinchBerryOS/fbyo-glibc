@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ _hurd_alloc_fd (int *fd, int first_fd)
 {
   int i;
   void *crit;
-  long int rlimit;
+  rlim_t rlimit;
 
   if (first_fd < 0)
     return __hurd_fail (EINVAL), NULL;

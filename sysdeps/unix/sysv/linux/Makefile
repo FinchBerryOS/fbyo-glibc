@@ -135,6 +135,7 @@ sysdep_headers += \
   bits/mman-linux.h \
   bits/mman-map-flags-generic.h \
   bits/mman-shared.h \
+  bits/openat2.h \
   bits/procfs-extra.h \
   bits/procfs-id.h \
   bits/procfs-prregset.h \
@@ -151,15 +152,6 @@ sysdep_headers += \
   bits/struct_stat.h \
   bits/struct_stat_time64_helper.h \
   bits/syscall.h \
-  bits/termios-baud.h \
-  bits/termios-c_cc.h \
-  bits/termios-c_cflag.h \
-  bits/termios-c_iflag.h \
-  bits/termios-c_lflag.h \
-  bits/termios-c_oflag.h \
-  bits/termios-misc.h \
-  bits/termios-struct.h \
-  bits/termios-tcflow.h \
   bits/timerfd.h \
   bits/types/struct_msqid64_ds.h \
   bits/types/struct_msqid64_ds_helper.h \
@@ -201,6 +193,7 @@ tests += \
   tst-clone \
   tst-clone2 \
   tst-clone3 \
+  tst-copy_file_range-large \
   tst-epoll \
   tst-epoll-ioctls \
   tst-fanotify \
@@ -213,12 +206,15 @@ tests += \
   tst-misalign-clone \
   tst-mlock2 \
   tst-mount \
+  tst-mseal \
+  tst-mseal-pkey \
   tst-ntp_adjtime \
   tst-ntp_gettime \
   tst-ntp_gettimex \
   tst-ofdlocks \
   tst-personality \
   tst-pidfd \
+  tst-pidfd_getinfo \
   tst-pidfd_getpid \
   tst-pkey \
   tst-ppoll \
@@ -228,6 +224,7 @@ tests += \
   tst-rlimit-infinity \
   tst-sched-affinity-inheritance \
   tst-sched_setattr \
+  tst-sched_setattr-thread \
   tst-scm_rights \
   tst-sigtimedwait \
   tst-sync_file_range \
@@ -317,7 +314,7 @@ $(objpfx)bits/syscall.h: \
 before-compile += $(objpfx)bits/syscall.h
 
 # All macros defined by <sys/syscall.h>.  Include <bits/syscall.h>
-# explicitly because <sys/sycall.h> skips it if _LIBC is defined.
+# explicitly because <sys/syscall.h> skips it if _LIBC is defined.
 $(objpfx)tst-syscall-list-macros.list: \
   $(objpfx)bits/syscall.h ../sysdeps/unix/sysv/linux/sys/syscall.h
 	printf '#include <linux/version.h>\n\
@@ -420,6 +417,24 @@ tst-rseq-disable-static-ENV = GLIBC_TUNABLES=glibc.pthread.rseq=0
 
 endif # $(subdir) == misc
 
+ifeq ($(subdir),termios)
+sysdep_headers += \
+  bits/termios-c_cc.h \
+  bits/termios-c_cflag.h \
+  bits/termios-c_iflag.h \
+  bits/termios-c_lflag.h \
+  bits/termios-c_oflag.h \
+  bits/termios-cbaud.h \
+  bits/termios-misc.h \
+  bits/termios-struct.h \
+  bits/termios-tcflow.h \
+  # sysdep_headers
+
+tests += \
+  tst-termios-linux \
+  # tests
+endif
+
 ifeq ($(subdir),time)
 sysdep_headers += \
   bits/timex.h \
@@ -502,12 +517,6 @@ endif # $(subdir) == socket
 ifeq ($(subdir),sunrpc)
 sysdep_headers += \
   nfs/nfs.h \
-  # sysdep_headers
-endif
-
-ifeq ($(subdir),termios)
-sysdep_headers += \
-  termio.h \
   # sysdep_headers
 endif
 
@@ -608,12 +617,14 @@ endif
 ifeq ($(subdir),io)
 sysdep_routines += \
   close_nocancel \
+  close_nocancel_nostatus \
   fallocate \
   fallocate64 \
   fcntl_nocancel \
   internal_statvfs \
   open64_nocancel \
   open_nocancel \
+  openat2 \
   openat64_nocancel \
   openat_nocancel \
   pread64_nocancel \
@@ -625,7 +636,12 @@ sysdep_routines += \
   xstatconv \
   # sysdep_routines
 
+routines_no_fortify += \
+  openat2 \
+  # routines_no_fortify
+
 sysdep_headers += \
+  bits/fcntl-linux-fortify.h \
   bits/fcntl-linux.h \
   # sysdep_headers
 
@@ -634,7 +650,24 @@ tests += \
   tst-fallocate64 \
   tst-getcwd-smallbuff \
   tst-o_path-locks \
+  tst-openat2 \
+  tst-openat2-lfs \
   # tests
+
+tests-special += \
+  $(objpfx)tst-openat2-consts.out \
+  # tests-special
+$(objpfx)tst-openat2-consts.out: ../sysdeps/unix/sysv/linux/tst-openat2-consts.py
+	$(sysdeps-linux-python) \
+	  ../sysdeps/unix/sysv/linux/tst-openat2-consts.py \
+	    $(sysdeps-linux-python-cc) \
+	  < /dev/null > $@ 2>&1; $(evaluate-test)
+$(objpfx)tst-openat2-consts.out: $(sysdeps-linux-python-deps)
+
+# openat2 only provides LFS support, the tests check if the interface is correctly
+# provided regardless of the flags.
+CFLAGS-tst-openat2-lfs.c += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
+
 endif
 
 ifeq ($(subdir),elf)
@@ -710,3 +743,21 @@ tests-static += \
   tst-rseq-nptl-static \
   # tests-static
 endif
+
+ifeq ($(subdir),string)
+modules-names += \
+  tst-xsi-strerror_r-mod \
+  # modules-names
+
+tests += \
+  tst-sigabbrev_np-strings \
+  tst-strerror-strings \
+  tst-strerror_l-strings \
+  tst-strerror_r-strings \
+  tst-strerrordesc_np-strings \
+  tst-strsignal-strings \
+  tst-xsi-strerror_r-strings \
+  # tests
+
+$(objpfx)tst-xsi-strerror_r-strings: $(objpfx)tst-xsi-strerror_r-mod.so
+endif # $(subdir) == string

@@ -1,5 +1,5 @@
 /* Basic tests for pldd program.
-   Copyright (C) 2019-2025 Free Software Foundation, Inc.
+   Copyright (C) 2019-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <support/check.h>
 #include <support/support.h>
 #include <support/xptrace.h>
+#include <support/xstdio.h>
 #include <support/xunistd.h>
 #include <sys/mman.h>
 #include <errno.h>
@@ -113,8 +114,7 @@ do_test (void)
 #define STRINPUT(size)  XSTRINPUT(size)
 #define XSTRINPUT(size) "%" # size "s"
 
-    FILE *out = fmemopen (pldd.out.buffer, pldd.out.length, "r");
-    TEST_VERIFY (out != NULL);
+    FILE *out = xfmemopen (pldd.out.buffer, pldd.out.length, "r");
 
     /* First line is in the form of <pid>: <full path of executable>  */
     TEST_COMPARE (fscanf (out, "%u: " STRINPUT (BUFFERLEN), &pid, buffer), 2);
@@ -158,7 +158,7 @@ do_test (void)
     TEST_COMPARE (interpreter_found, true);
     TEST_COMPARE (libc_found, true);
 
-    fclose (out);
+    xfclose (out);
   }
 
   support_capture_subprocess_free (&pldd);

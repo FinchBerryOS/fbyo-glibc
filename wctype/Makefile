@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2025 Free Software Foundation, Inc.
+# Copyright (C) 1996-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -29,5 +29,3 @@ routines	:= wcfuncs wctype iswctype wctrans towctrans \
 tests	:= test_wctype test_wcfuncs bug-wctypeh
 
 include ../Rules
-
-CFLAGS-wcfuncs.c += $(config-cflags-wno-ignored-attributes)

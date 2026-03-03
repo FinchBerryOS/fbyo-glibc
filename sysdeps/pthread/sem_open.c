@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,14 +23,9 @@
 #include "semaphoreP.h"
 #include <shm-directory.h>
 #include <sem_routines.h>
-#include <futex-internal.h>
 #include <libc-lock.h>
-
-#if !PTHREAD_IN_LIBC
-/* The private names are not exported from libc.  */
-# define __link link
-# define __unlink unlink
-#endif
+#include <string.h>
+#include <shlib-compat.h>
 
 #define SEM_OPEN_FLAGS (O_RDWR | O_NOFOLLOW | O_CLOEXEC)
 
@@ -39,14 +34,6 @@ __sem_open (const char *name, int oflag, ...)
 {
   int fd;
   sem_t *result;
-
-  /* Check that shared futexes are supported.  */
-  int err = futex_supports_pshared (PTHREAD_PROCESS_SHARED);
-  if (err != 0)
-    {
-      __set_errno (err);
-      return SEM_FAILED;
-    }
 
   struct shmdir_name dirname;
   int ret = __shm_get_name (&dirname, name, true);
@@ -57,11 +44,7 @@ __sem_open (const char *name, int oflag, ...)
     }
 
   /* Disable asynchronous cancellation.  */
-#ifdef __libc_ptf_call
-  int state;
-  __libc_ptf_call (__pthread_setcancelstate,
-                   (PTHREAD_CANCEL_DISABLE, &state), 0);
-#endif
+  int state = __pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &state);
 
   /* If the semaphore object has to exist simply open it.  */
   if ((oflag & O_CREAT) == 0 || (oflag & O_EXCL) == 0)
@@ -214,17 +197,18 @@ __sem_open (const char *name, int oflag, ...)
     }
 
 out:
-#ifdef __libc_ptf_call
-  __libc_ptf_call (__pthread_setcancelstate, (state, NULL), 0);
-#endif
+  __pthread_setcancelstate (state, NULL);
 
   return result;
 }
-#if PTHREAD_IN_LIBC
+#ifndef __PTHREAD_HTL
 versioned_symbol (libc, __sem_open, sem_open, GLIBC_2_34);
 # if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_1_1, GLIBC_2_34)
 compat_symbol (libpthread, __sem_open, sem_open, GLIBC_2_1_1);
 # endif
-#else /* !PTHREAD_IN_LIBC */
-strong_alias (__sem_open, sem_open)
+#else /* __PTHREAD_HTL */
+versioned_symbol (libc, __sem_open, sem_open, GLIBC_2_43);
+# if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_12, GLIBC_2_43)
+compat_symbol (libpthread, __sem_open, sem_open, GLIBC_2_12);
+#endif
 #endif

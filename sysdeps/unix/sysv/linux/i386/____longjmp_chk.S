@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ ENTRY (____longjmp_chk)
 	/* Without working sigaltstack we cannot perform the test.  */
 	test	%eax, %eax
 	jne	.Lok2
-	testl	$1, 4(%esp)
+	testb	$1, 4(%esp)
 	jz	.Lfail
 
 	movl	(%esp), %eax

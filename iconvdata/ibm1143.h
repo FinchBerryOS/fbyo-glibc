@@ -1,5 +1,5 @@
 /* Tables for conversion from and to IBM1143.
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -88,10 +88,10 @@ static const uint32_t to_ucs4[256] =
 
 static const struct gap from_idx[] =
 {
-  { start: 0x0000, end: 0x00ff, idx:     0 },
-  { start: 0x203e, end: 0x203e, idx: -7998 },
-  { start: 0x20ac, end: 0x20ac, idx: -8107 },
-  { start: 0xffff, end: 0xffff, idx:     0 }
+  { .start = 0x0000, .end = 0x00ff, .idx =     0 },
+  { .start = 0x203e, .end = 0x203e, .idx = -7998 },
+  { .start = 0x20ac, .end = 0x20ac, .idx = -8107 },
+  { .start = 0xffff, .end = 0xffff, .idx =     0 }
 };
 
 static const char from_ucs4[] =

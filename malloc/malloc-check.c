@@ -1,5 +1,5 @@
 /* glibc.malloc.check implementation.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -111,7 +111,7 @@ mem2chunk_check (void *mem, unsigned char **magic_p)
   INTERNAL_SIZE_T sz, c;
   unsigned char magic;
 
-  if (!aligned_OK (mem))
+  if (misaligned_mem (mem))
     return NULL;
 
   p = mem2chunk (mem);
@@ -151,8 +151,8 @@ mem2chunk_check (void *mem, unsigned char **magic_p)
            offset != 0x200 && offset != 0x400 && offset != 0x800 && offset != 0x1000 &&
            offset < 0x2000) ||
           !chunk_is_mmapped (p) || prev_inuse (p) ||
-          ((((unsigned long) p - prev_size (p)) & page_mask) != 0) ||
-          ((prev_size (p) + sz) & page_mask) != 0)
+          (((mmap_base (p)) & page_mask) != 0) ||
+          (mmap_size (p) & page_mask) != 0)
         return NULL;
 
       for (sz = CHUNK_HDR_SZ + memsize (p) - 1;
@@ -235,7 +235,7 @@ free_check (void *mem)
     {
       /* Mark the chunk as belonging to the library again.  */
       (void)tag_region (chunk2mem (p), memsize (p));
-      _int_free (&main_arena, p, 1);
+      _int_free_chunk (&main_arena, p, chunksize (p), 1);
       __libc_lock_unlock (main_arena.mutex);
     }
   __set_errno (err);
@@ -273,14 +273,13 @@ realloc_check (void *oldmem, size_t bytes)
   __libc_lock_unlock (main_arena.mutex);
   if (!oldp)
     malloc_printerr ("realloc(): invalid pointer");
-  const INTERNAL_SIZE_T oldsize = chunksize (oldp);
 
-  chnb = checked_request2size (rb);
-  if (chnb == 0)
+  if (rb > PTRDIFF_MAX)
     {
       __set_errno (ENOMEM);
       goto invert;
     }
+  chnb = checked_request2size (rb);
 
   __libc_lock_lock (main_arena.mutex);
 
@@ -293,8 +292,8 @@ realloc_check (void *oldmem, size_t bytes)
       else
 #endif
       {
-	/* Note the extra SIZE_SZ overhead. */
-        if (oldsize - SIZE_SZ >= chnb)
+	size_t oldsize = memsize (oldp);
+        if (oldsize >= rb)
           newmem = oldmem; /* do nothing */
         else
           {
@@ -303,7 +302,7 @@ realloc_check (void *oldmem, size_t bytes)
 	    newmem = _int_malloc (&main_arena, rb);
             if (newmem)
               {
-                memcpy (newmem, oldmem, oldsize - CHUNK_HDR_SZ);
+                memcpy (newmem, oldmem, oldsize);
                 munmap_chunk (oldp);
               }
           }
@@ -312,14 +311,14 @@ realloc_check (void *oldmem, size_t bytes)
   else
     {
       top_check ();
-      newmem = _int_realloc (&main_arena, oldp, oldsize, chnb);
+      newmem = _int_realloc (&main_arena, oldp, chunksize (oldp), chnb);
     }
 
   DIAG_PUSH_NEEDS_COMMENT;
 #if __GNUC_PREREQ (7, 0)
   /* GCC 7 warns about magic_p may be used uninitialized.  But we never
      reach here if magic_p is uninitialized.  */
-  DIAG_IGNORE_NEEDS_COMMENT (7, "-Wmaybe-uninitialized");
+  DIAG_IGNORE_NEEDS_COMMENT_GCC (7, "-Wmaybe-uninitialized");
 #endif
   /* mem2chunk_check changed the magic byte in the old chunk.
      If newmem is NULL, then the old chunk will still be used though,
@@ -389,7 +388,7 @@ initialize_malloc_check (void)
 {
   /* This is the copy of the malloc initializer that we pulled in along with
      malloc-check.  This does not affect any of the libc malloc structures.  */
-  ptmalloc_init ();
+  __ptmalloc_init ();
   TUNABLE_GET (check, int32_t, TUNABLE_CALLBACK (set_mallopt_check));
   return __is_malloc_debug_enabled (MALLOC_CHECK_HOOK);
 }

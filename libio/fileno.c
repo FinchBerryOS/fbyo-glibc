@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ __fileno (FILE *fp)
   return _IO_fileno (fp);
 }
 libc_hidden_def (__fileno)
-weak_alias (__fileno, fileno)
+static_weak_alias (__fileno, fileno)
 libc_hidden_weak (fileno)
 
 /* The fileno implementation for libio does not require locking because

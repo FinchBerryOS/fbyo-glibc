@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -74,5 +74,5 @@ __fesetenv (const fenv_t *envp)
   return 0;
 }
 libm_hidden_def (__fesetenv)
-weak_alias (__fesetenv, fesetenv)
+static_weak_alias (__fesetenv, fesetenv)
 libm_hidden_weak (fesetenv)

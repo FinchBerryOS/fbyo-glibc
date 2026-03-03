@@ -1231,17 +1231,18 @@ convenient to have functions to read a line of text from a stream.
 
 Standard C has functions to do this, but they aren't very safe: null
 characters and even (for @code{gets}) long lines can confuse them.  So
-@theglibc{} provides the nonstandard @code{getline} function that
-makes it easy to read lines reliably.
+@theglibc{} provides the @code{getline} function that makes it easy to
+read lines reliably.
 
-Another GNU extension, @code{getdelim}, generalizes @code{getline}.  It
-reads a delimited record, defined as everything through the next
-occurrence of a specified delimiter character.
+The @code{getdelim} function is a generalized version of @code{getline}.
+It reads a delimited record, defined as everything through the next
+occurrence of a specified delimiter character.  These functions were
+both GNU extensions until standardized by POSIX.1-2008.
 
 All these functions are declared in @file{stdio.h}.
 
-@deftypefun ssize_t getline (char **@var{lineptr}, size_t *@var{n}, FILE *@var{stream})
-@standards{GNU, stdio.h}
+@deftypefun ssize_t getline (char **restrict @var{lineptr}, size_t *restrict @var{n}, FILE *restrict @var{stream})
+@standards{POSIX.1-2008, stdio.h}
 @safety{@prelim{}@mtsafe{}@asunsafe{@asucorrupt{} @ascuheap{}}@acunsafe{@aculock{} @acucorrupt{} @acsmem{}}}
 @c Besides the usual possibility of getting an inconsistent stream in a
 @c signal handler or leaving it inconsistent in case of cancellation,
@@ -1274,15 +1275,20 @@ read (including the newline, but not including the terminating null).
 This value enables you to distinguish null characters that are part of
 the line from the null character inserted as a terminator.
 
-This function is a GNU extension, but it is the recommended way to read
-lines from a stream.  The alternative standard functions are unreliable.
+This function was originally a GNU extension, but was added in
+POSIX.1-2008.
 
 If an error occurs or end of file is reached without any bytes read,
-@code{getline} returns @code{-1}.
+@code{getline} returns @code{-1}.  POSIX leaves the contents of
+@code{*@var{lineptr}} undefined when @code{getline} returns @code{-1}.
+If the @glibcadj{} implementation of @code{getline} allocates the
+initial buffer it will null terminate it to prevent the caller from
+reading uninitialized memory if no characters can be read from
+@code{stream}.
 @end deftypefun
 
-@deftypefun ssize_t getdelim (char **@var{lineptr}, size_t *@var{n}, int @var{delimiter}, FILE *@var{stream})
-@standards{GNU, stdio.h}
+@deftypefun ssize_t getdelim (char **restrict @var{lineptr}, size_t *restrict @var{n}, int @var{delimiter}, FILE *restrict @var{stream})
+@standards{POSIX.1-2008, stdio.h}
 @safety{@prelim{}@mtsafe{}@asunsafe{@asucorrupt{} @ascuheap{}}@acunsafe{@aculock{} @acucorrupt{} @acsmem{}}}
 @c See the getline @acucorrupt note.
 This function is like @code{getline} except that the character which
@@ -1293,6 +1299,9 @@ reading until it sees that character (or end of file).
 The text is stored in @var{lineptr}, including the delimiter character
 and a terminating null.  Like @code{getline}, @code{getdelim} makes
 @var{lineptr} bigger if it isn't big enough.
+
+This function was originally a GNU extension, but was added in
+POSIX.1-2008.
 
 @code{getline} is in fact implemented in terms of @code{getdelim}, just
 like this:
@@ -3514,8 +3523,8 @@ If you are trying to read input that doesn't match a single, fixed
 pattern, you may be better off using a tool such as Flex to generate a
 lexical scanner, or Bison to generate a parser, rather than using
 @code{scanf}.  For more information about these tools, see @ref{Top, , ,
-flex.info, Flex: The Lexical Scanner Generator}, and @ref{Top, , ,
-bison.info, The Bison Reference Manual}.
+flex, Flex: The Lexical Scanner Generator}, and @ref{Top, , , bison, The
+Bison Reference Manual}.
 
 @node Input Conversion Syntax
 @subsection Input Conversion Syntax
@@ -4347,6 +4356,18 @@ terminating newline character).
 @cindex lines (in a text file)
 
 @item
+If the system does not use POSIX-style in-band signalling to indicate
+line termination, it can be impossibe to write anything to a text stream
+without adding a line terminator.  As a result, flushing a text stream
+(by calling @code{fflush}, for example) may produce a logical line
+terminator even if no @code{'\n'} character was written by the program.
+
+@item
+Text files may contain lines that embed @code{'\n'} characters that are
+not treated as line terminators by the system.  C programs cannot read
+such text files reliably using the @file{stdio.h} facilities.
+
+@item
 On some systems, text files can contain only printing characters,
 horizontal tab characters, and newlines, and so text streams may not
 support other characters.  However, binary streams can handle any
@@ -4838,12 +4859,6 @@ currently opened.
 This function is declared in the @file{stdio_ext.h} header.
 @end deftypefun
 
-@strong{Compatibility Note:} Some brain-damaged operating systems have
-been known to be so thoroughly fixated on line-oriented input and output
-that flushing a line buffered stream causes a newline to be written!
-Fortunately, this ``feature'' seems to be becoming less common.  You do
-not need to worry about this with @theglibc{}.
-
 In some situations it might be useful to not flush the output pending
 for a stream but instead simply forget it.  If transmission is costly
 and the output is not needed anymore this is valid reasoning.  In this
@@ -5125,13 +5140,21 @@ remain valid only as long as no further output on the stream takes
 place.  If you do more output, you must flush the stream again to store
 new values before you use them again.
 
-A null character is written at the end of the buffer.  This null character
-is @emph{not} included in the size value stored at @var{sizeloc}.
+A null character is written at the end of the buffer when the stream
+is flushed, and at the current location when closed (these locations
+may be different if @code{fseek} is used).  This null character is
+@emph{not} included in the size value stored at @var{sizeloc}.
 
 You can move the stream's file position with @code{fseek} or
-@code{fseeko} (@pxref{File Positioning}).  Moving the file position past
-the end of the data already written fills the intervening space with
-zeroes.
+@code{fseeko} (@pxref{File Positioning}).  Moving the file position
+past the end of the data already written fills the intervening space
+with zeroes.  Note that seeking backwards into existing written data
+will change the effective ``end of file'' used by @code{fflush} and
+@code{SEEK_END} (and where the trailing null character is written,
+when closed).  Thus, if you wish to do ``random-access'' I/O in a
+memstream, it's important to use @code{fseek} to move the file
+position to the desired data end (using @code{SEEK_POS}) before
+closing it.
 @end deftypefun
 
 Here is an example of using @code{open_memstream}:

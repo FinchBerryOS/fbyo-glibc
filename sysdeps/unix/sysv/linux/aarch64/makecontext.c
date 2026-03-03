@@ -1,5 +1,5 @@
 /* Create new context.
-   Copyright (C) 2002-2025 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -36,9 +36,7 @@ static struct _aarch64_ctx *extension (void *p)
 static void *
 alloc_makecontext_gcs (size_t stack_size)
 {
-  void *base;
-  size_t size;
-  void *gcsp = __alloc_gcs (stack_size, &base, &size);
+  void *gcsp = __alloc_gcs (stack_size, NULL);
   if (gcsp == NULL)
     /* ENOSYS, bad size or OOM.  */
     abort ();

@@ -153,6 +153,19 @@ libm {
     __sinpiieee128;
     __tanpiieee128;
   }
+  GLIBC_2.42 {
+    __compoundnieee128;
+    __pownieee128;
+    __powrieee128;
+    __rootnieee128;
+    __rsqrtieee128;
+  }
+  GLIBC_2.43 {
+    __fromfpieee128;
+    __fromfpxieee128;
+    __ufromfpieee128;
+    __ufromfpxieee128;
+  }
 }
 libc {
   LDBL_IBM128_VERSION {

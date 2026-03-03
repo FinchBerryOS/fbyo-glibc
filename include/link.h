@@ -1,6 +1,6 @@
 /* Data structure for communication from the run-time dynamic linker for
    loaded ELF shared objects.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -200,7 +200,7 @@ struct link_map
     unsigned int l_auditing:1;	/* Nonzero if the DSO is used in auditing.  */
     unsigned int l_audit_any_plt:1; /* Nonzero if at least one audit module
 				       is interested in the PLT interception.*/
-    unsigned int l_removed:1;	/* Nozero if the object cannot be used anymore
+    unsigned int l_removed:1;	/* Non-zero if the object cannot be used anymore
 				   since it is removed.  */
     unsigned int l_contiguous:1; /* Nonzero if inter-segment holes are
 				    mprotected or if no holes are present at
@@ -346,6 +346,11 @@ struct link_map
     size_t l_relro_size;
 
     unsigned long long int l_serial;
+
+    /* FBOS Bundle Extensions */
+    char *l_executable_path;    /* Der absolute Pfad zum Verzeichnis des Hauptprogramms */
+    char *l_bundle_root;        /* Pfad zum .app/Contents Ordner (falls vorhanden) */
+    int l_is_bundle;            /* 1, wenn das Programm in einer .app Struktur liegt */
   };
 
 #include <dl-relocate-ld.h>
@@ -364,6 +369,8 @@ struct auditstate
 /* This is the hidden instance of struct r_debug_extended used by the
    dynamic linker.  */
 extern struct r_debug_extended _r_debug_extended attribute_hidden;
+
+rtld_hidden_proto (_r_debug)
 
 #if __ELF_NATIVE_CLASS == 32
 # define symbind symbind32

@@ -1,5 +1,5 @@
 /* Test mntent interface with escaped sequences.
-   Copyright (C) 2020-2025 Free Software Foundation, Inc.
+   Copyright (C) 2020-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <support/check.h>
+#include <support/xstdio.h>
 
 struct const_mntent
 {
@@ -54,13 +55,7 @@ do_test (void)
     {
       char buf[128];
       struct mntent *ret, curtest;
-      FILE *fp = fmemopen (buf, sizeof (buf), "w+");
-
-      if (fp == NULL)
-	{
-	  printf ("Failed to open file\n");
-	  return 1;
-	}
+      FILE *fp = xfmemopen (buf, sizeof (buf), "w+");
 
       curtest.mnt_fsname = strdupa (tests[i].mnt_fsname);
       curtest.mnt_dir = strdupa (tests[i].mnt_dir);
@@ -92,7 +87,7 @@ do_test (void)
       TEST_COMPARE(tests[i].mnt_freq, ret->mnt_freq);
       TEST_COMPARE(tests[i].mnt_passno, ret->mnt_passno);
 
-      fclose (fp);
+      xfclose (fp);
     }
 
   return 0;

@@ -1,5 +1,5 @@
 /* Internal prototype declarations that don't fit anywhere else.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,11 +35,7 @@ extern void __libc_freeres (void);
 libc_hidden_proto (__libc_freeres)
 
 /* Free resources stored in thread-local variables on thread exit.  */
-extern void __libc_thread_freeres (void)
-#if PTHREAD_IN_LIBC
-  attribute_hidden
-#endif
-  ;
+extern void __libc_thread_freeres (void) attribute_hidden;
 
 /* Define and initialize `__progname' et. al.  */
 extern void __init_misc (int, char **, char **) attribute_hidden;

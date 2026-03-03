@@ -1,5 +1,5 @@
 /* Test STRCHR functions.
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -74,8 +74,8 @@ IMPL (STRCHR, 1)
 
 /* Also check the generic implementation.  */
 #undef STRCHR
-#undef weak_alias
-#define weak_alias(a, b)
+#undef static_weak_alias
+#define static_weak_alias(a, b)
 #undef libc_hidden_builtin_def
 #define libc_hidden_builtin_def(a)
 #undef libc_hidden_def

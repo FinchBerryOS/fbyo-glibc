@@ -1,5 +1,5 @@
 /* Global list of NSS service modules.
-   Copyright (c) 2020-2025 Free Software Foundation, Inc.
+   Copyright (c) 2020-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
    pointer manipulation.  The "-1" accounts for the trailing NUL
    included in the sizeof.  */
 static const char *const __nss_shlib_revision
-	= LIBNSS_FILES_SO + sizeof("libnss_files.so") - 1;
+	= &LIBNSS_FILES_SO[sizeof("libnss_files.so") - 1];
 
 /* A single-linked list used to implement a mapping from service names
    to NSS modules.  (Most systems only use five or so modules, so a

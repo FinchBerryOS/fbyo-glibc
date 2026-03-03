@@ -1,5 +1,5 @@
 /* Clear given exceptions in current floating-point environment.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
 #include <fenv.h>
 #include <unistd.h>
 #include <ldsodefs.h>
-#include <dl-procinfo.h>
+#include <math-inline-asm.h>
 
 int
 __feclearexcept (int excepts)
@@ -31,13 +31,13 @@ __feclearexcept (int excepts)
 
   /* Bah, we have to clear selected exceptions.  Since there is no
      `fldsw' instruction we have to do it the hard way.  */
-  __asm__ ("fnstenv %0" : "=m" (*&temp));
+  __asm__ ("fnstenv %0" : "=m" (temp));
 
   /* Clear the relevant bits.  */
   temp.__status_word &= excepts ^ FE_ALL_EXCEPT;
 
   /* Put the new data in effect.  */
-  __asm__ ("fldenv %0" : : "m" (*&temp));
+  __asm__ ("fldenv %0" : : "m" (temp));
 
   /* If the CPU supports SSE, we clear the MXCSR as well.  */
   if (CPU_FEATURE_USABLE (SSE))
@@ -45,18 +45,19 @@ __feclearexcept (int excepts)
       unsigned int xnew_exc;
 
       /* Get the current MXCSR.  */
-      __asm__ ("stmxcsr %0" : "=m" (*&xnew_exc));
+      stmxcsr_inline_asm (&xnew_exc);
 
       /* Clear the relevant bits.  */
       xnew_exc &= ~excepts;
 
       /* Put the new data in effect.  */
-      __asm__ ("ldmxcsr %0" : : "m" (*&xnew_exc));
+      ldmxcsr_inline_asm (&xnew_exc);
     }
 
   /* Success.  */
   return 0;
 }
+libm_hidden_def (__feclearexcept)
 
 #include <shlib-compat.h>
 #if SHLIB_COMPAT (libm, GLIBC_2_1, GLIBC_2_2)

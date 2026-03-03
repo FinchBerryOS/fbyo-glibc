@@ -1,5 +1,5 @@
 /* System dependent pthreads code.  Hurd version.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,6 +25,10 @@
 
 #include <pt-internal.h>
 #include <pthreadP.h>
+#include <stackinfo.h>
+#include <ldsodefs.h>
+#include <register-atfork.h>
+#include <dso_handle.h>
 
 static void
 reset_pthread_total (void)
@@ -46,9 +50,6 @@ _init_routine (void *stack)
   if (GL (dl_pthread_threads) != NULL)
     /* Already initialized */
     return;
-
-  /* Initialize the library.  */
-  ___pthread_init ();
 
   if (stack != NULL)
     {
@@ -120,7 +121,7 @@ _init_routine (void *stack)
      when we return from here) shouldn't be seen as a user thread.  */
   __pthread_total--;
 
-  __pthread_atfork (NULL, NULL, reset_pthread_total);
+  __register_atfork (NULL, NULL, reset_pthread_total, __dso_handle);
 
   GL(dl_init_static_tls) = &__pthread_init_static_tls;
 
@@ -133,12 +134,3 @@ __pthread_initialize_minimal (void)
 {
   _init_routine (__libc_stack_end);
 }
-
-#ifdef SHARED
-__attribute__ ((constructor))
-static void
-dynamic_init_routine (void)
-{
-  _init_routine (__libc_stack_end);
-}
-#endif

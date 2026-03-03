@@ -7,8 +7,7 @@ and describes problems you may experience with compilation and
 installation.
 
    You will need recent versions of several GNU tools: definitely GCC
-and GNU Make, and possibly others.  *Note Tools for Compilation::,
-below.
+and GNU Make, and possibly others.  See Tools for Compilation, below.
 
 Configuring and compiling the GNU C Library
 ===========================================
@@ -213,8 +212,8 @@ passed to 'configure'.  For example:
      slightly increased program load times.
 
 '--enable-pt_chown'
-     The file 'pt_chown' is a helper binary for 'grantpt' (*note
-     Pseudo-Terminals: Allocation.) that is installed setuid root to fix
+     The file 'pt_chown' is a helper binary for 'grantpt' (see
+     Pseudo-Terminals: Allocation) that is installed setuid root to fix
      up pseudo-terminal ownership on GNU/Hurd.  It is not required on
      GNU/Linux, and the GNU C Library will not use the installed
      'pt_chown' program when configured with '--enable-pt_chown'.
@@ -292,6 +291,14 @@ passed to 'configure'.  For example:
 
      Default is to disable fortification.
 
+'--enable-sframe'
+     Experimental option supported by some architectures, where the GNU
+     C Library is built with '-Wa,--gsframe' if 'binutils' supports it.
+     Currently this is only supported on x86_64 and aarch64.  The option
+     enables SFrame support on 'backtrace'.
+
+     Default is to disable SFrame support.
+
    To build the library and related programs, type 'make'.  This will
 produce a lot of output, some of which may look like errors from 'make'
 but aren't.  Look for error messages from 'make' containing '***'.
@@ -309,10 +316,10 @@ an appropriate numeric parameter to 'make'.  You need a recent GNU
    To build and run test programs which exercise some of the library
 facilities, type 'make check'.  If it does not complete successfully, do
 not use the built library, and report a bug after verifying that the
-problem is not already known.  *Note Reporting Bugs::, for instructions
-on reporting bugs.  Note that some of the tests assume they are not
-being run by 'root'.  We recommend you compile and test the GNU C
-Library as an unprivileged user.
+problem is not already known.  See Reporting Bugs, for instructions on
+reporting bugs.  Note that some of the tests assume they are not being
+run by 'root'.  We recommend you compile and test the GNU C Library as
+an unprivileged user.
 
    Before reporting bugs make sure there is no problem with your system.
 The tests (and later installation) use some pre-existing files of the
@@ -488,30 +495,13 @@ build the GNU C Library:
      As of release time, GNU 'make' 4.4.1 is the newest verified to work
      to build the GNU C Library.
 
-   * GCC 6.2 or newer
+   * GCC 12.1 or newer
 
-     GCC 6.2 or higher is required.  In general it is recommended to use
-     the newest version of the compiler that is known to work for
+     GCC 12.1 or higher is required.  In general it is recommended to
+     use the newest version of the compiler that is known to work for
      building the GNU C Library, as newer compilers usually produce
-     better code.  As of release time, GCC 14.2.1 is the newest compiler
+     better code.  As of release time, GCC 15.2.1 is the newest compiler
      verified to work to build the GNU C Library.
-
-     For PowerPC 64-bits little-endian (powerpc64le), a GCC version with
-     support for '-mno-gnu-attribute', '-mabi=ieeelongdouble', and
-     '-mabi=ibmlongdouble' is required.  Likewise, the compiler must
-     also support passing '-mlong-double-128' with the preceding
-     options.  As of release, this implies GCC 7.4 and newer (excepting
-     GCC 7.5.0, see GCC PR94200).  These additional features are
-     required for building the GNU C Library with support for IEEE long
-     double.
-
-     For ARC architecture builds, GCC 8.3 or higher is needed.
-
-     For s390x architecture builds, GCC 7.1 or higher is needed (See gcc
-     Bug 98269).
-
-     For AArch64 architecture builds with mathvec enabled, GCC 10 or
-     higher is needed due to dependency on arm_sve.h.
 
      For multi-arch support it is recommended to use a GCC which has
      been built with support for GNU indirect functions.  This ensures
@@ -528,19 +518,12 @@ build the GNU C Library:
      Check the FAQ for any special compiler issues on particular
      platforms.
 
-   * GNU 'binutils' 2.25 or later
+   * GNU 'binutils' 2.39 or later
 
      You must use GNU 'binutils' (as and ld) to build the GNU C Library.
      No other assembler or linker has the necessary functionality at the
-     moment.  As of release time, GNU 'binutils' 2.43.1 is the newest
+     moment.  As of release time, GNU 'binutils' 2.45.1 is the newest
      verified to work to build the GNU C Library.
-
-     For PowerPC 64-bits little-endian (powerpc64le), 'objcopy' is
-     required to support '--update-section'.  This option requires
-     binutils 2.26 or newer.
-
-     ARC architecture needs 'binutils' 2.32 or higher for TLS related
-     fixes.
 
    * GNU 'texinfo' 4.7 or later
 
@@ -556,7 +539,7 @@ build the GNU C Library:
      'awk' is used in several places to generate files.  Some 'gawk'
      extensions are used, including the 'asorti' function, which was
      introduced in version 3.1.2 of 'gawk'.  As of release time, 'gawk'
-     version 5.3.1 is the newest verified to work to build the GNU C
+     version 5.3.2 is the newest verified to work to build the GNU C
      Library.
 
      Testing the GNU C Library requires 'gawk' to be compiled with
@@ -573,7 +556,7 @@ build the GNU C Library:
 
      Perl is not required, but if present it is used in some tests and
      the 'mtrace' program, to build the GNU C Library manual.  As of
-     release time 'perl' version 5.40.0 is the newest verified to work
+     release time 'perl' version 5.42.0 is the newest verified to work
      to build the GNU C Library.
 
    * GNU 'sed' 3.02 or newer
@@ -585,7 +568,7 @@ build the GNU C Library:
    * Python 3.4 or later
 
      Python is required to build the GNU C Library.  As of release time,
-     Python 3.12.8 is the newest verified to work for building and
+     Python 3.14.0 is the newest verified to work for building and
      testing the GNU C Library.
 
    * PExpect 4.0
@@ -603,7 +586,7 @@ build the GNU C Library:
      A missing 'abnf' module does not reduce the test coverage of the
      library itself.
 
-   * GDB 7.8 or later with support for Python 2.7/3.4 or later
+   * GDB 7.8 or later with support for Python 3.4 or later
 
      GDB itself needs to be configured with Python support in order to
      use the pretty printers.  Notice that your system having Python
@@ -625,7 +608,7 @@ and if you change any of the message translation files you will need
 
    * GNU 'gettext' 0.10.36 or later
 
-     As of release time, GNU 'gettext' version 0.23 is the newest
+     As of release time, GNU 'gettext' version 0.23.2 is the newest
      version verified to work to build the GNU C Library.
 
 You may also need these packages if you upgrade your source tree using
@@ -699,8 +682,8 @@ Unix C libraries permit things that we don't, such as closing a file
 twice.
 
    If you think you have found some way in which the GNU C Library does
-not conform to the ISO and POSIX standards (*note Standards and
-Portability::), that is definitely a bug.  Report it!
+not conform to the ISO and POSIX standards (see Standards and
+Portability), that is definitely a bug.  Report it!
 
    Once you're sure you've found a bug, try to narrow it down to the
 smallest test case that reproduces the problem.  In the case of a C

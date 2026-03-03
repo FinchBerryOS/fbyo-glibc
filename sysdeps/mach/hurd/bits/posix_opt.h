@@ -1,5 +1,5 @@
 /* Define POSIX options for GNU/Hurd.
-   Copyright (C) 1998-2025 Free Software Foundation, Inc.
+   Copyright (C) 1998-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@
 
 /* Elements of the `c_cc' member of `struct termios' structure
    can be disabled by using the value _POSIX_VDISABLE.  */
-#define _POSIX_VDISABLE			'\0'
+#define _POSIX_VDISABLE			0
 
 
 /* Different Hurd filesystems might do these differently.

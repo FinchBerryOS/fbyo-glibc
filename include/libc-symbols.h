@@ -1,6 +1,6 @@
 /* Support macros for making weak and strong aliases for symbols,
    and for using symbol sets and linker warnings with GNU ld.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -86,6 +86,7 @@
 
 /* Obtain the definition of symbol_version_reference.  */
 #include <libc-symver.h>
+#include <libc-diag.h>
 
 /* When PIC is defined and SHARED isn't defined, we are building PIE
    by default.  */
@@ -155,6 +156,16 @@
   extern __typeof (name) aliasname __attribute__ ((weak, alias (#name))) \
     __attribute_copy__ (name);
 
+/* Define a strong_alias for SHARED, or weak_alias otherwise.  It is used to
+   avoid potential compiler warnings for weak alias indirection (when a weak
+   alias is always resolved to a symbol even if a weak definition also
+   exists).  */
+# ifdef SHARED
+#  define static_weak_alias(name, aliasname) strong_alias (name, aliasname)
+# else
+#  define static_weak_alias(name, aliasname) weak_alias (name, aliasname)
+# endif
+
 /* Declare SYMBOL as weak undefined symbol (resolved to 0 if not defined).  */
 # define weak_extern(symbol) _weak_extern (weak symbol)
 # define _weak_extern(expr) _Pragma (#expr)
@@ -208,7 +219,7 @@
 #define __make_section_unallocated(section_string)	\
   asm (".section " section_string "\n\t.previous");
 
-/* Tacking on "\n\t#" to the section name makes gcc put it's bogus
+/* Tacking on "\n\t#" to the section name makes gcc put its bogus
    section attributes on what looks like a comment to the assembler.  */
 #ifdef HAVE_SECTION_QUOTES
 # define __sec_comment "\"\n\t#\""
@@ -671,7 +682,10 @@ for linking")
 # define __ifunc_args(type_name, name, expr, init, ...)			\
   extern __typeof (type_name) name __attribute__			\
 			      ((ifunc (#name "_ifunc")));		\
-  __ifunc_resolver (type_name, name, expr, init, static, __VA_ARGS__)
+  DIAG_PUSH_NEEDS_COMMENT_CLANG;					\
+  DIAG_IGNORE_NEEDS_COMMENT_CLANG (13, "-Wunused-function");		\
+  __ifunc_resolver (type_name, name, expr, init, static, __VA_ARGS__);	\
+  DIAG_POP_NEEDS_COMMENT_CLANG;
 
 # define __ifunc_args_hidden(type_name, name, expr, init, ...)		\
   __ifunc_args (type_name, name, expr, init, __VA_ARGS__)

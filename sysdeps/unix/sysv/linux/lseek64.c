@@ -1,5 +1,5 @@
 /* Linux lseek implementation, 64 bits off_t.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ __lseek64 (int fd, off64_t offset, int whence)
 
 #ifdef  __OFF_T_MATCHES_OFF64_T
 weak_alias (__lseek64, lseek)
-weak_alias (__lseek64, __lseek)
+strong_alias (__lseek64, __lseek)
 strong_alias (__lseek64, __libc_lseek)
 libc_hidden_def (__lseek)
 #endif

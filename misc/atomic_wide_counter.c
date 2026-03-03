@@ -1,5 +1,5 @@
 /* Monotonically increasing wide counters (at least 62 bits).
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
 
 #include <atomic_wide_counter.h>
 
-#if !__HAVE_64B_ATOMICS
+#if !HAVE_64B_ATOMICS
 
 /* Values we add or xor are less than or equal to 1<<31, so we only
    have to make overflow-and-addition atomic wrt. to concurrent load
@@ -124,4 +124,4 @@ __atomic_wide_counter_load_relaxed (__atomic_wide_counter *c)
   return ((uint64_t) (h & ~((unsigned int) 1 << 31)) << 31) + l;
 }
 
-#endif /* !__HAVE_64B_ATOMICS */
+#endif /* !HAVE_64B_ATOMICS */

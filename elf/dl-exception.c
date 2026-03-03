@@ -1,5 +1,5 @@
 /* ld.so error exception allocation and deallocation.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -134,7 +134,7 @@ _dl_exception_create_format (struct dl_exception *exception, const char *objname
 		  ++p;
 		  break;
 		}
-	      /* Fall through.  */
+	      [[fallthrough]];
 	    case 'x':
 	      length += INT_WIDTH / 4;
 	      break;
@@ -219,7 +219,7 @@ _dl_exception_create_format (struct dl_exception *exception, const char *objname
 		  ++p;
 		  break;
 		}
-	       /* FALLTHROUGH */
+	      [[fallthrough]];
             default:
               _dl_fatal_printf ("Fatal error:"
                                 " invalid format in exception string\n");

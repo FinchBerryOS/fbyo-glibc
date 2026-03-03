@@ -1,5 +1,5 @@
 /* timespec_get -- get system time - Linux version supporting 64 bit time.
-   Copyright (C) 2020-2025 Free Software Foundation, Inc.
+   Copyright (C) 2020-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,12 +23,7 @@
 int
 __timespec_get64 (struct __timespec64 *ts, int base)
 {
-  if (base == TIME_UTC)
-    {
-      __clock_gettime64 (CLOCK_REALTIME, ts);
-      return base;
-    }
-  return 0;
+  return __clock_gettime64 (clock_from_timebase (base), ts) == 0 ? base : 0;
 }
 
 #if __TIMESIZE != 64
@@ -42,7 +37,7 @@ __timespec_get (struct timespec *ts, int base)
 
   ret = __timespec_get64 (&tp64, base);
 
-  if (ret == TIME_UTC)
+  if (ret != 0)
     {
       if (! in_time_t_range (tp64.tv_sec))
         {

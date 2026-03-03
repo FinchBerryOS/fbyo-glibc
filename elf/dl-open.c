@@ -1,5 +1,5 @@
 /* Load a shared object at runtime, relocate it, and run its initializer.
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -49,8 +49,7 @@ struct dl_open_args
 {
   const char *file;
   int mode;
-  /* This is the caller of the dlopen() function.  */
-  const void *caller_dlopen;
+  struct link_map *caller_map; /* Derived from the caller address.  */
   struct link_map *map;
   /* Namespace ID.  */
   Lmid_t nsid;
@@ -493,36 +492,29 @@ call_dl_init (void *closure)
   _dl_init (args->map, args->argc, args->argv, args->env);
 }
 
+/* Return true if the object does not need any processing beyond the
+   l_direct_opencount update.  Needs to be kept in sync with the logic
+   in dl_open_worker_begin after the l->l_searchlist.r_list != NULL check.
+   MODE is the dlopen mode argument.  */
+static bool
+is_already_fully_open (struct link_map *map, int mode)
+{
+  return (map != NULL		/* An existing map was found.  */
+	  /* dlopen completed initialization of this map.  Maps with
+	     l_type == lt_library start out as partially initialized.  */
+	  && map->l_searchlist.r_list != NULL
+	  /* The object is already in the global scope if requested.  */
+	  && (!(mode & RTLD_GLOBAL) || map->l_global)
+	  /* The object is already NODELETE if requested.  */
+	  && (!(mode & RTLD_NODELETE) || map->l_nodelete_active));
+}
+
 static void
 dl_open_worker_begin (void *a)
 {
   struct dl_open_args *args = a;
   const char *file = args->file;
   int mode = args->mode;
-  struct link_map *call_map = NULL;
-
-  /* Determine the caller's map if necessary.  This is needed in case
-     we have a DST, when we don't know the namespace ID we have to put
-     the new object in, or when the file name has no path in which
-     case we need to look along the RUNPATH/RPATH of the caller.  */
-  const char *dst = strchr (file, '$');
-  if (dst != NULL || args->nsid == __LM_ID_CALLER
-      || strchr (file, '/') == NULL)
-    {
-      const void *caller_dlopen = args->caller_dlopen;
-
-      /* We have to find out from which object the caller is calling.
-	 By default we assume this is the main application.  */
-      call_map = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
-
-      struct link_map *l = _dl_find_dso_for_object ((ElfW(Addr)) caller_dlopen);
-
-      if (l)
-	call_map = l;
-
-      if (args->nsid == __LM_ID_CALLER)
-	args->nsid = call_map->l_ns;
-    }
 
   /* The namespace ID is now known.  Keep track of whether libc.so was
      already loaded, to determine whether it is necessary to call the
@@ -538,9 +530,10 @@ dl_open_worker_begin (void *a)
   _dl_debug_initialize (0, args->nsid);
 
   /* Load the named object.  */
-  struct link_map *new;
-  args->map = new = _dl_map_object (call_map, file, lt_loaded, 0,
-				    mode | __RTLD_CALLMAP, args->nsid);
+  struct link_map *new = args->map;
+  if (new == NULL)
+    args->map = new = _dl_map_new_object (args->caller_map, file, lt_loaded, 0,
+					  mode | __RTLD_CALLMAP, args->nsid);
 
   /* If the pointer returned is NULL this means the RTLD_NOLOAD flag is
      set and the object is not already loaded.  */
@@ -557,7 +550,7 @@ dl_open_worker_begin (void *a)
   /* This object is directly loaded.  */
   ++new->l_direct_opencount;
 
-  /* It was already open.  */
+  /* It was already open.  See is_already_fully_open above.  */
   if (__glibc_unlikely (new->l_searchlist.r_list != NULL))
     {
       /* Let the user know about the opencount.  */
@@ -594,6 +587,16 @@ dl_open_worker_begin (void *a)
       if ((mode & RTLD_GLOBAL) && new->l_global == 0)
 	add_to_global_update (new);
 
+      /* It is not possible to run the ELF constructor for the new
+	 link map if it has not executed yet: If this dlopen call came
+	 from an ELF constructor that has not put that object into a
+	 consistent state, completing initialization for the entire
+	 scope will expose objects that have this partially
+	 constructed object among its dependencies to this
+	 inconsistent state.  This could happen even with a benign
+	 dlopen (NULL, RTLD_LAZY) call from a constructor of an
+	 initially loaded shared object.  */
+
       return;
     }
 
@@ -617,14 +620,12 @@ dl_open_worker_begin (void *a)
 	   Perform partial initialization in this case.  This must
 	   come after the symbol versioning initialization in
 	   _dl_check_map_versions.  */
-	if (map->l_info[DT_SONAME] != NULL
-	    && strcmp (((const char *) D_PTR (map, l_info[DT_STRTAB])
-			+ map->l_info[DT_SONAME]->d_un.d_val), LD_SO) == 0)
+	if (l_soname (map) != NULL && strcmp (l_soname (map), LD_SO) == 0)
 	  __rtld_static_init (map);
 #endif
       }
 
-  _dl_open_check (new);
+  _dl_open_check (new, mode);
 
   /* Print scope information.  */
   if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_SCOPES))
@@ -771,8 +772,7 @@ dl_open_worker (void *a)
 #ifdef SHARED
 	bool was_not_consistent  = r->r_state != RT_CONSISTENT;
 #endif
-	r->r_state = RT_CONSISTENT;
-	_dl_debug_state ();
+	_dl_debug_change_state (r, RT_CONSISTENT);
 	LIBC_PROBE (map_complete, 3, nsid, r, args->map);
 
 #ifdef SHARED
@@ -841,7 +841,7 @@ no more namespaces available for dlmopen()"));
 	}
 
       GL(dl_ns)[nsid].libc_map = NULL;
-      _dl_debug_update (nsid)->r_state = RT_CONSISTENT;
+      _dl_debug_change_state (_dl_debug_update (nsid), RT_CONSISTENT);
     }
   /* Never allow loading a DSO in a namespace which is empty.  Such
      direct placements is only causing problems.  Also don't allow
@@ -861,14 +861,40 @@ no more namespaces available for dlmopen()"));
   struct dl_open_args args;
   args.file = file;
   args.mode = mode;
-  args.caller_dlopen = caller_dlopen;
-  args.map = NULL;
   args.nsid = nsid;
   /* args.libc_already_loaded is always assigned by dl_open_worker
      (before any explicit/non-local returns).  */
   args.argc = argc;
   args.argv = argv;
   args.env = env;
+
+  /* Determine the caller's map if necessary.  This is needed when we
+     don't know the namespace ID in which we have to put the new object,
+     in case we have a DST, or when the file name has no path in
+     which case we need to look along the RUNPATH/RPATH of the caller.  */
+  if (nsid == __LM_ID_CALLER || strchr (file, '$') != NULL
+      || strchr (file, '/') == NULL)
+    {
+      struct dl_find_object dlfo;
+      if (_dl_find_object ((void *) caller_dlopen, &dlfo) == 0)
+	args.caller_map = dlfo.dlfo_link_map;
+      else
+	/* By default we assume this is the main application.  */
+	args.caller_map = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
+      if (args.nsid == __LM_ID_CALLER)
+	args.nsid = args.caller_map->l_ns;
+    }
+  else
+    args.caller_map = NULL;
+
+  args.map = _dl_lookup_map (args.nsid, file);
+  if (is_already_fully_open (args.map, mode))
+    {
+      /* We can use the fast path.  */
+      ++args.map->l_direct_opencount;
+      __rtld_lock_unlock_recursive (GL(dl_load_lock));
+      return args.map;
+    }
 
   struct dl_exception exception;
   int errcode = _dl_catch_exception (&exception, dl_open_worker, &args);

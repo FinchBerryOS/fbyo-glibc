@@ -1,6 +1,6 @@
 /* Multiple versions of wcschr.
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ weak_alias (__wcschr, wcschr);
 # ifdef SHARED
 __hidden_ver1 (__wcschr, __GI___wcschr, __redirect___wcschr)
   __attribute__((visibility ("hidden")));
-__hidden_ver1 (wcschr, __GI_wcschr, __redirect_wcschr)
+__hidden_ver1 (__wcschr, __GI_wcschr, __redirect_wcschr)
   __attribute__((weak, visibility ("hidden")));
 # endif
 #endif

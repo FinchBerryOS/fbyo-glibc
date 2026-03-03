@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Test that glibc's sys/pidfd.h constants match the kernel's.
-# Copyright (C) 2022-2025 Free Software Foundation, Inc.
+# Copyright (C) 2022-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 #
 # The GNU C Library is free software; you can redistribute it and/or
@@ -39,14 +39,20 @@ def main():
         sys.exit (77)
 
     linux_version_headers = glibcsyscalls.linux_kernel_version(args.cc)
-    linux_version_glibc = (6, 12)
+    linux_version_glibc = (6, 17)
     sys.exit(glibcextract.compare_macro_consts(
                 '#include <sys/pidfd.h>\n',
                 '#include <asm/fcntl.h>\n'
                 '#include <linux/pidfd.h>\n',
                 args.cc,
                 'PIDFD_.*',
-                None,
+                # Until at least Linux 6.17, the value of this
+                # constant depends on the size of struct pidfd_info,
+                # which is expected to get extended in future kernel
+                # versions.  As a result, the constant embedded in the
+                # glibc headers is expected not to match the UAPI
+                # constant.
+                '^PIDFD_GET_INFO$',
                 linux_version_glibc > linux_version_headers,
                 linux_version_headers > linux_version_glibc))
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@
 #endif
 
 #include <ctype.h>
+#include <errno.h>
 #include <sys/types.h>		/* Some systems define `time_t' here.  */
 
 #ifdef TIME_WITH_SYS_TIME
@@ -1092,7 +1093,7 @@ __strftime_internal (CHAR_T *s, size_t maxsize, const CHAR_T *format,
 #if !defined _NL_CURRENT && HAVE_STRFTIME
 	  format_char = L_('p');
 #endif
-	  /* FALLTHROUGH */
+	  [[fallthrough]];
 
 	case L_('p'):
 	  if (change_case)
@@ -1432,7 +1433,7 @@ __strftime_internal (CHAR_T *s, size_t maxsize, const CHAR_T *format,
 
 	case L_('\0'):		/* GNU extension: % at end of format.  */
 	    --f;
-	    /* Fall through.  */
+	    [[fallthrough]];
 	default:
 	  /* Unknown format; output the format, including the '%',
 	     since this is most likely the right thing to do if a

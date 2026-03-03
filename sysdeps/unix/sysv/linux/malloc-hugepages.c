@@ -1,5 +1,5 @@
 /* Huge Page support.  Linux implementation.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,6 +25,9 @@
 unsigned long int
 __malloc_default_thp_pagesize (void)
 {
+  if (DEFAULT_THP_PAGESIZE != 0)
+    return DEFAULT_THP_PAGESIZE;
+
   int fd = __open64_nocancel (
     "/sys/kernel/mm/transparent_hugepage/hpage_pmd_size", O_RDONLY);
   if (fd == -1)

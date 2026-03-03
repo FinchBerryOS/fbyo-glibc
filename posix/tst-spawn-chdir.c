@@ -1,5 +1,5 @@
 /* Test the posix_spawn_file_actions_addchdir_np function.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -156,13 +156,13 @@ do_test (void)
           TEST_COMPARE (posix_spawn_file_actions_addopen
                         (&actions, 3, /* Arbitrary unused descriptor.  */
                          "probe-file",
-                         O_WRONLY | O_CREAT | O_EXCL, 0777), 0);
+                         O_WRONLY | O_CREAT | O_EXCL, 0666), 0);
           TEST_COMPARE (posix_spawn_file_actions_addclose (&actions, 3), 0);
           /* Run the actual in iteration_directory.  */
           add_chdir (&actions, "..", do_fchdir, 5);
           TEST_COMPARE (posix_spawn_file_actions_addopen
                         (&actions, STDOUT_FILENO, "output-file",
-                         O_WRONLY | O_CREAT | O_EXCL, 0777), 0);
+                         O_WRONLY | O_CREAT | O_EXCL, 0666), 0);
 
           /* Check that posix_spawn_file_actions_addchdir_np made a copy
              of the path.  */

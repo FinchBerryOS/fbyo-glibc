@@ -1,5 +1,5 @@
 /* Single-precision log function.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -39,8 +39,7 @@ Relative error: 1.957 * 2^-26 (before rounding.)
 float
 __logf (float x)
 {
-  /* double_t for better performance on targets with FLT_EVAL_METHOD==2.  */
-  double_t z, r, r2, y, y0, invc, logc;
+  double z, r, r2, y, y0, invc, logc;
   uint32_t ix, iz, tmp;
   int k, i;
 
@@ -70,14 +69,14 @@ __logf (float x)
   tmp = ix - OFF;
   i = (tmp >> (23 - LOGF_TABLE_BITS)) % N;
   k = (int32_t) tmp >> 23; /* arithmetic shift */
-  iz = ix - (tmp & 0x1ff << 23);
+  iz = ix - (tmp & 0xff800000);
   invc = T[i].invc;
   logc = T[i].logc;
-  z = (double_t) asfloat (iz);
+  z = asfloat (iz);
 
   /* log(x) = log1p(z/c-1) + log(c) + k*Ln2 */
   r = z * invc - 1;
-  y0 = logc + (double_t) k * Ln2;
+  y0 = logc + (double) k * Ln2;
 
   /* Pipelined polynomial evaluation to approximate log1p(r).  */
   r2 = r * r;

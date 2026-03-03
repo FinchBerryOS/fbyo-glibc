@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,6 +18,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <support/xstdio.h>
+
 int
 main (void)
 {
@@ -27,11 +29,12 @@ main (void)
   double d;
   char s[] = "+.e";
 
-  f = fmemopen (s, strlen (s), "r");
+  f = xfmemopen (s, strlen (s), "r");
   /* This should fail to parse a floating-point number, and leave 'e' in the
      input.  */
   lost |= (fscanf (f, "%lf", &d) != 0);
   c = fgetc (f);
+  xfclose (f);
   lost |= c != 'e';
   puts (lost ? "Test FAILED!" : "Test succeeded.");
   return lost;

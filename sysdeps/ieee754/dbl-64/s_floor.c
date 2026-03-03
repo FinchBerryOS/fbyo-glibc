@@ -1,5 +1,5 @@
 /* Round double to integer away from zero.
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -34,7 +34,6 @@
 #include <math_private.h>
 #include <stdint.h>
 #include <libm-alias-double.h>
-#include <math-use-builtins.h>
 
 /*
  * floor(x)

@@ -91,8 +91,8 @@ gen-libm-f128-ifunc-routines = \
 	e_expf128 e_fmodf128 e_hypotf128 e_j0f128 e_j1f128 e_jnf128 \
 	e_lgammaf128_r e_logf128 e_log10f128 e_powf128 e_remainderf128 \
 	e_sinhf128 e_sqrtf128 e_gammaf128_r e_ilogbf128 k_tanf128 s_asinhf128 \
-	s_atanf128 s_cbrtf128 s_ceilf128 s_cosf128 s_erff128 s_exp10m1f128 \
-	s_exp2m1f128 s_expm1f128 \
+	s_atanf128 s_cbrtf128 s_ceilf128 s_compoundnf128 s_cosf128 s_erff128 \
+	s_exp10m1f128 s_exp2m1f128 s_expm1f128 \
 	s_fabsf128 s_floorf128 s_log1pf128 s_logbf128 \
 	s_rintf128 s_scalblnf128 s_sinf128 s_tanf128 \
 	s_tanhf128 s_truncf128 s_remquof128 e_log2f128 \
@@ -232,6 +232,7 @@ CFLAGS-s_cexpf128-ifunc.c += -fno-builtin-cexpf64x
 CFLAGS-s_cimagf128-ifunc.c += -fno-builtin-cimagf64x
 CFLAGS-s_clogf128-ifunc.c += -fno-builtin-clogf64x
 CFLAGS-s_clog10f128-ifunc.c += -fno-builtin-clog10f64x
+CFLAGS-s_compoundnf128-ifunc.c += -fno-builtin-compoundnf64x
 CFLAGS-s_conjf128-ifunc.c += -fno-builtin-conjf64x
 CFLAGS-s_copysignf128-ifunc.c += -fno-builtin-copysignf64x
 CFLAGS-s_cosf128-ifunc.c += -fno-builtin-cosf64x
@@ -280,6 +281,8 @@ CFLAGS-s_fminmagf128-ifunc.c += -fno-builtin-fminmagf64x
 CFLAGS-w_fmodf128-ifunc.c += -fno-builtin-fmodf64x
 CFLAGS-s_fmulf128-ifunc.c += -fno-builtin-f32mulf64x
 CFLAGS-s_frexpf128-ifunc.c += -fno-builtin-frexpf64x
+CFLAGS-s_compat_fromfpf128-ifunc.c += -fno-builtin-fromfpf64x
+CFLAGS-s_compat_fromfpxf128-ifunc.c += -fno-builtin-fromfpxf64x
 CFLAGS-s_fromfpf128-ifunc.c += -fno-builtin-fromfpf64x
 CFLAGS-s_fromfpxf128-ifunc.c += -fno-builtin-fromfpxf64x
 CFLAGS-s_fsqrtf128-ifunc.c += -fno-builtin-f32sqrtf64x
@@ -329,6 +332,8 @@ CFLAGS-w_tgammaf128-ifunc.c += -fno-builtin-tgammaf64x
 CFLAGS-s_totalorderf128-ifunc.c += -fno-builtin-totalorderf64x
 CFLAGS-s_totalordermagf128-ifunc.c += -fno-builtin-totalordermagf64x
 CFLAGS-s_truncf128-ifunc.c += -fno-builtin-truncf64x
+CFLAGS-s_compat_ufromfpf128-ifunc.c += -fno-builtin-ufromfpf64x
+CFLAGS-s_compat_ufromfpxf128-ifunc.c += -fno-builtin-ufromfpxf64x
 CFLAGS-s_ufromfpf128-ifunc.c += -fno-builtin-ufromfpf64x
 CFLAGS-s_ufromfpxf128-ifunc.c += -fno-builtin-ufromfpxf64x
 CFLAGS-s_y0f128-ifunc.c += -fno-builtin-y0f64x

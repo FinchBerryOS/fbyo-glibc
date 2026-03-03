@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2025 Free Software Foundation, Inc.
+# Copyright (C) 1995-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -34,7 +34,6 @@ routines = \
   dl-addr \
   dl-addr-obj \
   dl-early_allocate \
-  dl-find_object \
   dl-iteratephdr \
   dl-libc \
   dl-origin \
@@ -58,9 +57,12 @@ dl-routines = \
   dl-close \
   dl-debug \
   dl-debug-symbols \
+  dl-debug_state \
   dl-deps \
   dl-exception \
   dl-execstack \
+  dl-execstack-tunable \
+  dl-find_object \
   dl-fini \
   dl-init \
   dl-load \
@@ -72,6 +74,7 @@ dl-routines = \
   dl-open \
   dl-origin \
   dl-printf \
+  dl-readonly-area \
   dl-reloc \
   dl-runtime \
   dl-scope \
@@ -266,6 +269,7 @@ tests-static-normal := \
   tst-array1-static \
   tst-array5-static \
   tst-dl-iter-static \
+  tst-dlopen-sgid \
   tst-dst-static \
   tst-env-setuid-static \
   tst-getauxval-static \
@@ -379,6 +383,7 @@ tests += \
   tst-align3 \
   tst-audit-tlsdesc \
   tst-audit-tlsdesc-dlopen \
+  tst-audit-tlsdesc-dlopen2 \
   tst-audit1 \
   tst-audit2 \
   tst-audit8 \
@@ -415,7 +420,10 @@ tests += \
   tst-dlmopen1 \
   tst-dlmopen3 \
   tst-dlmopen4 \
+  tst-dlmopen4-nonpic \
+  tst-dlmopen4-pic \
   tst-dlopen-auditdup \
+  tst-dlopen-constructor-null \
   tst-dlopen-self \
   tst-dlopen-tlsmodid \
   tst-dlopen-tlsreinit1 \
@@ -454,6 +462,7 @@ tests += \
   tst-noload \
   tst-non-directory-path \
   tst-null-argv \
+  tst-origin \
   tst-p_align1 \
   tst-p_align2 \
   tst-p_align3 \
@@ -490,6 +499,7 @@ tests += \
   tst-tls21 \
   tst-tls22 \
   tst-tls22-gnu2 \
+  tst-tls23 \
   tst-tlsalign \
   tst-tlsalign-extern \
   tst-tlsgap \
@@ -497,6 +507,7 @@ tests += \
   tst-unique2 \
   tst-unwind-ctor \
   tst-unwind-main \
+  tst-version-hash-zero \
   unload3 \
   unload4 \
   unload5 \
@@ -532,6 +543,8 @@ tests-internal += \
   tst-dl_find_object-threads \
   tst-dlmopen2 \
   tst-hash-collision3 \
+  tst-link-map-contiguous-ldso \
+  tst-link-map-contiguous-libc \
   tst-ptrguard1 \
   tst-stackguard1 \
   tst-tls-surplus \
@@ -542,6 +555,10 @@ tests-internal += \
   unload \
   unload2 \
   # tests-internal
+
+ifeq ($(build-hardcoded-path-in-tests),yes)
+tests-internal += tst-link-map-contiguous-main
+endif
 
 tests-container += \
   tst-dlopen-self-container \
@@ -567,9 +584,11 @@ tests-execstack-yes = \
   tst-execstack \
   tst-execstack-needed \
   tst-execstack-prog \
+  tst-execstack-tunable \
   # tests-execstack-yes
 tests-execstack-static-yes = \
-  tst-execstack-prog-static
+  tst-execstack-prog-static \
+  tst-execstack-prog-static-tunable \
   # tests-execstack-static-yes
 ifeq (yes,$(run-built-tests))
 tests-execstack-special-yes = \
@@ -760,6 +779,13 @@ modules-names += \
   libmarkermod5-3 \
   libmarkermod5-4 \
   libmarkermod5-5 \
+  libmarkermod6-1 \
+  libmarkermod6-2 \
+  libmarkermod6-3 \
+  libmarkermod6-4 \
+  libmarkermod6-5 \
+  libmarkermod6-6 \
+  liborigin-mod \
   libtracemod1-1 \
   libtracemod2-1 \
   libtracemod3-1 \
@@ -863,6 +889,7 @@ modules-names += \
   tst-auditmanymod8 \
   tst-auditmanymod9 \
   tst-auditmod-tlsdesc  \
+  tst-auditmod-tlsdesc2 \
   tst-auditmod1 \
   tst-auditmod11 \
   tst-auditmod12 \
@@ -905,6 +932,9 @@ modules-names += \
   tst-dlmopen1mod \
   tst-dlopen-auditdup-auditmod \
   tst-dlopen-auditdupmod \
+  tst-dlopen-constructor-null-mod1 \
+  tst-dlopen-constructor-null-mod2 \
+  tst-dlopen-sgid-mod \
   tst-dlopen-tlsreinitmod1 \
   tst-dlopen-tlsreinitmod2 \
   tst-dlopen-tlsreinitmod3 \
@@ -1003,6 +1033,7 @@ modules-names += \
   tst-tls22-mod1-gnu2 \
   tst-tls22-mod2 \
   tst-tls22-mod2-gnu2 \
+  tst-tls23-mod \
   tst-tlsalign-lib \
   tst-tlsgap-mod0 \
   tst-tlsgap-mod1 \
@@ -1033,6 +1064,9 @@ modules-names += \
   tst-unique2mod1 \
   tst-unique2mod2 \
   tst-unwind-ctor-lib \
+  tst-version-hash-zero-linkmod \
+  tst-version-hash-zero-mod \
+  tst-version-hash-zero-refmod \
   unload2dep \
   unload2mod \
   unload3mod1 \
@@ -1144,6 +1178,10 @@ tests-pie += \
   tst-pie1 \
   tst-pie2 \
   # tests-pie
+ifeq (yes,$(aligned-65536))
+tests += tst-pie-bss
+tests-pie += tst-pie-bss
+endif
 ifneq (,$(load-address-ldflag))
 tests += \
   tst-pie-address \
@@ -1159,6 +1197,10 @@ tests += \
 tests-static += \
   tst-pie-address-static \
   # tests-static
+ifeq (yes,$(aligned-65536))
+tests += tst-pie-bss-static
+tests-static += tst-pie-bss-static
+endif
 LDFLAGS-tst-pie-address-static += \
   $(load-address-ldflag)=$(pde-load-address)
 endif
@@ -1346,11 +1388,11 @@ $(objpfx)$(1).generated-makefile: $(objpfx)$(1)
 endef
 endif
 
-postclean-generated += $(objpfx)/dso-sort-tests-1.generated-makefile \
-		       $(objpfx)/dso-sort-tests-2.generated-makefile \
-		       $(objpfx)/dso-sort-tests-all2.generated-makefile \
-		       $(objpfx)/dso-sort-tests-all3.generated-makefile \
-		       $(objpfx)/dso-sort-tests-all4.generated-makefile
+postclean-generated += $(objpfx)dso-sort-tests-1.generated-makefile \
+		       $(objpfx)dso-sort-tests-2.generated-makefile \
+		       $(objpfx)dso-sort-tests-all2.generated-makefile \
+		       $(objpfx)dso-sort-tests-all3.generated-makefile \
+		       $(objpfx)dso-sort-tests-all4.generated-makefile
 
 # Generate from each testcase description file
 $(eval $(call include_dsosort_tests,dso-sort-tests-1.def))
@@ -1404,6 +1446,10 @@ $(objpfx)tst-_dl_addr_inside_object: $(objpfx)dl-addr-obj.os
 CFLAGS-tst-_dl_addr_inside_object.c += $(PIE-ccflag)
 endif
 
+ifeq ($(run-built-tests),yes)
+tests-special += $(objpfx)tst-origin.out
+endif
+
 include ../Rules
 
 ifeq (yes,$(build-shared))
@@ -1439,6 +1485,21 @@ rtld-stubbed-symbols = \
   free \
   malloc \
   realloc \
+  # rtld-stubbed-symbols
+
+ifeq (no,$(abort-in-ld))
+# clang might generate an abort call for cleanup functions.
+rtld-stubbed-symbols += \
+  __GI_abort \
+  # rtld-stubbed-symbols
+endif
+
+# These symbols might be emitted by the compiler when fortify is enabled
+# (through builtins).
+rtld-stubbed-symbols += \
+  __GI___vfprintf_chk \
+  __GI___vsprintf_chk \
+  __GI___vsyslog_chk \
   # rtld-stubbed-symbols
 
 ifeq ($(have-ssp),yes)
@@ -1867,7 +1928,7 @@ $(objpfx)lateglobal.out: $(objpfx)ltglobmod1.so $(objpfx)ltglobmod2.so
 $(objpfx)tst-pathopt.out: tst-pathopt.sh $(objpfx)tst-pathopt \
 			  $(objpfx)pathoptobj.so
 	$(SHELL) $< $(common-objpfx) '$(test-wrapper-env)' \
-		 '$(run-program-env)'; \
+		 '$(run-program-env)' '$(rpath-link)' ; \
 	$(evaluate-test)
 
 $(objpfx)tst-rtld-load-self.out: tst-rtld-load-self.sh $(objpfx)ld.so
@@ -1988,6 +2049,9 @@ $(objpfx)tst-execstack.out: $(objpfx)tst-execstack-mod.so
 CPPFLAGS-tst-execstack.c += -DUSE_PTHREADS=0
 LDFLAGS-tst-execstack = -Wl,-z,noexecstack
 LDFLAGS-tst-execstack-mod.so = -Wl,-z,execstack
+ifeq ($(have-no-error-execstack),yes)
+LDFLAGS-tst-execstack-mod.so += -Wl,--no-error-execstack
+endif
 
 $(objpfx)tst-execstack-needed: $(objpfx)tst-execstack-mod.so
 LDFLAGS-tst-execstack-needed = -Wl,-z,noexecstack
@@ -1996,7 +2060,18 @@ LDFLAGS-tst-execstack-prog = -Wl,-z,execstack
 CFLAGS-tst-execstack-prog.c += -Wno-trampolines
 CFLAGS-tst-execstack-mod.c += -Wno-trampolines
 
+# It expects loading a module with executable stack to work.
+CFLAGS-tst-execstack-tunable.c += -DUSE_PTHREADS=0 -DDEFAULT_RWX_STACK=1
+$(objpfx)tst-execstack-tunable.out: $(objpfx)tst-execstack-mod.so
+tst-execstack-tunable-ENV = GLIBC_TUNABLES=glibc.rtld.execstack=2
+
+LDFLAGS-tst-execstack-prog-static-tunable = -Wl,-z,noexecstack
+tst-execstack-prog-static-tunable-ENV = GLIBC_TUNABLES=glibc.rtld.execstack=2
+
 LDFLAGS-tst-execstack-prog-static = -Wl,-z,execstack
+ifeq ($(have-no-error-execstack),yes)
+LDFLAGS-tst-execstack-prog-static += -Wl,--no-error-execstack
+endif
 CFLAGS-tst-execstack-prog-static.c += -Wno-trampolines
 
 ifeq (yes,$(build-hardcoded-path-in-tests))
@@ -2074,6 +2149,7 @@ $(objpfx)tst-array5-static-cmp.out: tst-array5-static.exp \
 
 CFLAGS-tst-pie1.c += $(pie-ccflag)
 CFLAGS-tst-pie2.c += $(pie-ccflag)
+CFLAGS-tst-pie-bss.c += $(pie-ccflag)
 CFLAGS-tst-pie-address.c += $(pie-ccflag)
 
 $(objpfx)tst-piemod1.so: $(libsupport)
@@ -2106,7 +2182,7 @@ $(objpfx)execstack-default: $(first-word $(wildcard $(sysdirs:%=%/stackinfo.h)))
 	$(make-target-directory)
 	{ echo '#include <elf.h>'; \
 	  echo '#include <stackinfo.h>'; \
-	  echo '#if (DEFAULT_STACK_PERMS & PF_X) == 0'; \
+	  echo '#if (DEFAULT_STACK_PROT_PERMS & PROT_EXEC) == 0'; \
 	  echo '@@@execstack-no@@@'; \
 	  echo '#else'; \
 	  echo '@@@execstack-yes@@@'; \
@@ -2205,6 +2281,13 @@ $(objpfx)tst-dlmopen2.out: $(objpfx)tst-dlmopen1mod.so
 $(objpfx)tst-dlmopen3.out: $(objpfx)tst-dlmopen1mod.so
 
 $(objpfx)tst-dlmopen4.out: $(objpfx)tst-dlmopen1mod.so
+
+CFLAGS-tst-dlmopen4-pic.c += -fPIC
+$(objpfx)tst-dlmopen4-pic.out: $(objpfx)tst-dlmopen1mod.so
+
+CFLAGS-tst-dlmopen4-nonpic.c += -fno-pie
+tst-dlmopen4-nonpic-no-pie = yes
+$(objpfx)tst-dlmopen4-nonpic.out: $(objpfx)tst-dlmopen1mod.so
 
 $(objpfx)tst-audit1.out: $(objpfx)tst-auditmod1.so
 tst-audit1-ENV = LD_AUDIT=$(objpfx)tst-auditmod1.so
@@ -2824,6 +2907,7 @@ LDFLAGS-libmarkermod2-1.so += -Wl,-soname,libmarkermod2.so
 LDFLAGS-libmarkermod3-1.so += -Wl,-soname,libmarkermod3.so
 LDFLAGS-libmarkermod4-1.so += -Wl,-soname,libmarkermod4.so
 LDFLAGS-libmarkermod5-1.so += -Wl,-soname,libmarkermod5.so
+LDFLAGS-libmarkermod6-1.so += -Wl,-soname,libmarkermod6.so
 $(objpfx)libmarkermod%.os : markermodMARKER-VALUE.c
 	$(compile-command.c) \
 	  -DMARKER=marker$(firstword $(subst -, ,$*)) \
@@ -2837,6 +2921,8 @@ $(objpfx)libmarkermod3.so: $(objpfx)libmarkermod3-1.so
 $(objpfx)libmarkermod4.so: $(objpfx)libmarkermod4-1.so
 	cp $< $@
 $(objpfx)libmarkermod5.so: $(objpfx)libmarkermod5-1.so
+	cp $< $@
+$(objpfx)libmarkermod6.so: $(objpfx)libmarkermod6-1.so
 	cp $< $@
 
 # tst-glibc-hwcaps-prepend checks that --glibc-hwcaps-prepend is
@@ -2996,7 +3082,7 @@ $(objpfx)tst-rtld-list-diagnostics.out: tst-rtld-list-diagnostics.py \
 	  > $@; \
 	$(evaluate-test)
 
-$(objpfx)tst-rtld-run-static.out: $(objpfx)/ldconfig
+$(objpfx)tst-rtld-run-static.out: $(objpfx)ldconfig
 
 $(objpfx)tst-dl_find_object.out: \
   $(objpfx)tst-dl_find_object-mod1.so $(objpfx)tst-dl_find_object-mod2.so
@@ -3189,6 +3275,9 @@ $(objpfx)tst-audit-tlsdesc.out: $(objpfx)tst-auditmod-tlsdesc.so
 tst-audit-tlsdesc-ENV = LD_AUDIT=$(objpfx)tst-auditmod-tlsdesc.so
 $(objpfx)tst-audit-tlsdesc-dlopen.out: $(objpfx)tst-auditmod-tlsdesc.so
 tst-audit-tlsdesc-dlopen-ENV = LD_AUDIT=$(objpfx)tst-auditmod-tlsdesc.so
+$(objpfx)tst-audit-tlsdesc-dlopen2.out: $(objpfx)tst-auditmod-tlsdesc2.so \
+  $(patsubst %, $(objpfx)%.so, $(tlsmod17a-modules))
+tst-audit-tlsdesc-dlopen2-ENV = LD_AUDIT=$(objpfx)tst-auditmod-tlsdesc2.so
 
 $(objpfx)tst-dlmopen-twice.out: \
   $(objpfx)tst-dlmopen-twice-mod1.so \
@@ -3304,9 +3393,11 @@ $(objpfx)tst-dlopen-auditdup.out: \
 
 # Reuse an audit module which provides ample debug logging.
 tst-rtld-no-malloc-audit-ENV = LD_AUDIT=$(objpfx)tst-auditmod1.so
+$(objpfx)tst-rtld-no-malloc-audit.out: $(objpfx)tst-auditmod1.so
 
 # Any shared object should do.
 tst-rtld-no-malloc-preload-ENV = LD_PRELOAD=$(objpfx)tst-auditmod1.so
+$(objpfx)tst-rtld-no-malloc-preload.out: $(objpfx)tst-auditmod1.so
 
 LDFLAGS-tst-hash-collision1-mod.so = -Wl,--hash-style=both
 $(objpfx)tst-hash-collision1: $(objpfx)tst-hash-collision1-mod.so
@@ -3354,6 +3445,13 @@ tst-tls22-mod1-gnu2.so-no-z-defs = yes
 tst-tls22-mod2.so-no-z-defs = yes
 tst-tls22-mod2-gnu2.so-no-z-defs = yes
 
+$(objpfx)tst-tls23: $(shared-thread-library)
+$(objpfx)tst-tls23.out: $(objpfx)tst-tls23-mod.so
+
+ifneq (no,$(have-test-mtls-traditional))
+CFLAGS-tst-tls23-mod.c += -mtls-dialect=$(have-test-mtls-traditional)
+endif
+
 ifeq ($(have-test-cc-cflags-fsemantic-interposition),yes)
 # Compiler may default to -fno-semantic-interposition.  These modules
 # must be compiled with -fsemantic-interposition.
@@ -3392,3 +3490,47 @@ $(objpfx)tst-nolink-libc-2: $(objpfx)tst-nolink-libc.o
 	  -Wl,--dynamic-linker=$(objpfx)ld.so
 $(objpfx)tst-nolink-libc-2.out: $(objpfx)tst-nolink-libc-2 $(objpfx)ld.so
 	$< > $@ 2>&1; $(evaluate-test)
+
+$(objpfx)tst-version-hash-zero.out: \
+  $(objpfx)tst-version-hash-zero-mod.so \
+  $(objpfx)tst-version-hash-zero-refmod.so
+LDFLAGS-tst-version-hash-zero-mod.so = \
+  -Wl,--version-script=tst-version-hash-zero-mod.map
+# The run-time test module tst-version-hash-zero-refmod.so is linked
+# to a stub module, tst-version-hash-zero-linkmod.so, to produce an
+# expected relocation error.
+$(objpfx)tst-version-hash-zero-refmod.so: \
+  $(objpfx)tst-version-hash-zero-linkmod.so
+LDFLAGS-tst-version-hash-zero-linkmod.so = \
+  -Wl,--version-script=tst-version-hash-zero-linkmod.map \
+  -Wl,--soname=tst-version-hash-zero-mod.so
+$(objpfx)tst-version-hash-zero-refmod.so: \
+  $(objpfx)tst-version-hash-zero-linkmod.so
+tst-version-hash-zero-refmod.so-no-z-defs = yes
+
+$(objpfx)tst-dlopen-constructor-null: \
+  $(objpfx)tst-dlopen-constructor-null-mod1.so \
+  $(objpfx)tst-dlopen-constructor-null-mod2.so
+$(objpfx)tst-dlopen-constructor-null-mod2.so: \
+  $(objpfx)tst-dlopen-constructor-null-mod1.so
+
+CFLAGS-tst-origin.c += $(no-stack-protector)
+CFLAGS-liborigin-mod.c += $(no-stack-protector)
+# Link tst-origin with liborigin-mod.so, but without a full path.
+LDFLAGS-tst-origin += -Wl,-rpath,\$$ORIGIN -L$(subst :, -L,$(rpath-link))
+LDLIBS-tst-origin += -lorigin-mod
+$(objpfx)tst-origin: +nolink-deps += $(objpfx)liborigin-mod.so
+$(objpfx)tst-origin: $(objpfx)liborigin-mod.so
+$(objpfx)tst-origin.out: tst-origin.sh $(objpfx)tst-origin
+	$(SHELL) \
+		$< \
+		'$(common-objpfx)' \
+		'$(test-wrapper-env)' \
+		'$(run-program-env)' \
+		'$(rpath-link)' \
+		tst-origin \
+		liborigin-mod.so \
+		> $@; \
+	$(evaluate-test)
+
+$(objpfx)tst-dlopen-sgid.out: $(objpfx)tst-dlopen-sgid-mod.so

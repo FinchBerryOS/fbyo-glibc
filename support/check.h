@@ -1,5 +1,5 @@
 /* Functionality for reporting test results.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -196,8 +196,10 @@ void support_test_compare_string_wide (const wchar_t *left,
 				       const char *left_expr,
 				       const char *right_expr);
 
-/* Internal function called by the test driver.  */
+/* Internal functions called by the test driver.  */
 int support_report_failure (int status)
+  __attribute__ ((weak, warn_unused_result));
+int support_is_oom_accepted (void)
   __attribute__ ((weak, warn_unused_result));
 
 /* Internal function used to test the failure recording framework.  */

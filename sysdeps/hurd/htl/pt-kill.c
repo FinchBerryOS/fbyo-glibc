@@ -1,5 +1,5 @@
 /* pthread_kill.  Hurd version.
-   Copyright (C) 2002-2025 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,6 +22,8 @@
 #include <hurd/signal.h>
 
 #include <pt-internal.h>
+#include <shlib-compat.h>
+#include <ldsodefs.h>
 
 int
 __pthread_kill (pthread_t thread, int sig)
@@ -52,4 +54,9 @@ __pthread_kill (pthread_t thread, int sig)
   __spin_lock (&ss->lock);
   return _hurd_raise_signal (ss, sig, &detail);
 }
-strong_alias (__pthread_kill, pthread_kill)
+
+versioned_symbol (libc, __pthread_kill, pthread_kill, GLIBC_2_43);
+
+#if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_12, GLIBC_2_43)
+compat_symbol (libpthread, __pthread_kill, pthread_kill, GLIBC_2_12);
+#endif

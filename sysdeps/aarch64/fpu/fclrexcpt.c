@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -20,7 +20,7 @@
 #include <fpu_control.h>
 
 int
-feclearexcept (int excepts)
+__feclearexcept (int excepts)
 {
   fpu_fpsr_t fpsr;
   fpu_fpsr_t fpsr_new;
@@ -35,4 +35,6 @@ feclearexcept (int excepts)
 
   return 0;
 }
+static_weak_alias (__feclearexcept, feclearexcept)
+libm_hidden_def (__feclearexcept)
 libm_hidden_def (feclearexcept)

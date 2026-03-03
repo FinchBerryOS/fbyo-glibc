@@ -1,5 +1,5 @@
 /* Basic tests for syslog interfaces.
-   Copyright (C) 2022-2025 Free Software Foundation, Inc.
+   Copyright (C) 2022-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -520,9 +520,7 @@ check_syslog_perror (bool large)
 				       : send_openlog_callback,
                                        &(int){LOG_PERROR});
 
-  FILE *mfp = fmemopen (result.err.buffer, result.err.length, "r");
-  if (mfp == NULL)
-    FAIL_EXIT1 ("fmemopen: %m");
+  FILE *mfp = xfmemopen (result.err.buffer, result.err.length, "r");
   if (large)
     check_syslog_console_read_large (mfp);
   else

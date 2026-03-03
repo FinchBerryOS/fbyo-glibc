@@ -1,5 +1,5 @@
 /* Get resolution of a time base.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,10 +23,5 @@
 int
 timespec_getres (struct timespec *ts, int base)
 {
-  if (base == TIME_UTC)
-    {
-      __clock_getres (CLOCK_REALTIME, ts);
-      return base;
-    }
-  return 0;
+  return __clock_getres (clock_from_timebase (base), ts) == 0 ? base : 0;
 }

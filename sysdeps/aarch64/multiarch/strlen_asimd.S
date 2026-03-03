@@ -1,5 +1,5 @@
 /* Optimized strlen implementation using SIMD.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -87,7 +87,6 @@
    character, return the length, if not, continue in the main loop.  */
 
 ENTRY (__strlen_asimd)
-	PTR_ARG (0)
 	and	tmp1, srcin, MIN_PAGE_SIZE - 1
 	cmp	tmp1, MIN_PAGE_SIZE - 32
 	b.hi	L(page_cross)

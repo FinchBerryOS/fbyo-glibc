@@ -1,5 +1,5 @@
 /* spawn a new process running an executable.  Hurd version.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -679,11 +679,29 @@ retry:
 					ref, MACH_MSG_TYPE_MAKE_SEND,
 					&newproc);
       __mach_port_destroy (__mach_task_self (), ref);
-      if (!err)
-	{
-	  __mach_port_deallocate (__mach_task_self (), proc);
-	  proc = newproc;
-	}
+      if (err)
+        goto out;
+      if (newproc == MACH_PORT_NULL)
+        {
+          /* Old versions of the proc server did not recreate the process
+             port when reauthenticating, and passed MACH_PORT_NULL through
+             the auth server.  That must be what we're dealing with.  Just
+             keep the existing proc port in this case.  */
+        }
+      else
+        {
+          err = __proc_reauthenticate_complete (newproc);
+          if (err)
+            {
+              __mach_port_deallocate (__mach_task_self (), newproc);
+              goto out;
+            }
+          else
+	    {
+	      __mach_port_deallocate (__mach_task_self (), proc);
+	      proc = newproc;
+	    }
+        }
 
       if (!err)
 	err = reauthenticate (INIT_PORT_CRDIR, &rcrdir);

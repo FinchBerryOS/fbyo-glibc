@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2015-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,5 +30,5 @@ __libc_accept (int fd, __SOCKADDR_ARG addr, socklen_t *len)
   return SOCKETCALL_CANCEL (accept, fd, addr.__sockaddr__, len);
 #endif
 }
-weak_alias (__libc_accept, accept)
+static_weak_alias (__libc_accept, accept)
 libc_hidden_def (accept)

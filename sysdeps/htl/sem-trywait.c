@@ -1,5 +1,5 @@
 /* Lock a semaphore if it does not require blocking.  Generic version.
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 
 #include <hurd.h>
 #include <pt-internal.h>
+#include <shlib-compat.h>
 
 int
 __sem_trywait (sem_t *sem)
@@ -33,4 +34,8 @@ __sem_trywait (sem_t *sem)
   return __hurd_fail (EAGAIN);
 }
 
-weak_alias (__sem_trywait, sem_trywait);
+libc_hidden_def (__sem_trywait)
+versioned_symbol (libc, __sem_trywait, sem_trywait, GLIBC_2_43);
+# if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_12, GLIBC_2_43)
+compat_symbol (libpthread, __sem_trywait, sem_trywait, GLIBC_2_12);
+#endif

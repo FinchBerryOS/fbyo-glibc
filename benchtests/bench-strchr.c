@@ -1,5 +1,5 @@
 /* Measure STRCHR functions.
-   Copyright (C) 2013-2025 Free Software Foundation, Inc.
+   Copyright (C) 2013-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -92,12 +92,15 @@ IMPL (generic_strchrnul, 0)
    branch coming we want to test the case where a potential branch in
    strchr can be used to skip a later mispredict because of the
    relationship between the two branches. */
+
+static volatile int res;
+
 static void __attribute_optimization_barrier__
 do_one_rand_plus_branch_test (json_ctx_t *json_ctx, impl_t *impl,
                               const CHAR *s, const CHAR *c)
 {
   size_t i, iters = INNER_LOOP_ITERS8;
-  int must_execute = 0;
+  volatile int must_execute = 0;
   timing_t start, stop, cur;
   TIMING_NOW (start);
   for (i = 0; i < iters; ++i)
@@ -111,6 +114,7 @@ do_one_rand_plus_branch_test (json_ctx_t *json_ctx, impl_t *impl,
         }
     }
   TIMING_NOW (stop);
+  res = must_execute;
 
   TIMING_DIFF (cur, start, stop);
 
@@ -162,7 +166,7 @@ do_rand_test (json_ctx_t *json_ctx, size_t align, size_t pos, size_t len,
   buf[align + len] = 0;
   buf[align + pos] = 1;
 
-  perc_zero_int = perc_zero * RAND_MAX;
+  perc_zero_int = perc_zero * (float) RAND_MAX;
   for (i = 0; i < NUM_SEARCH_CHARS; ++i)
     {
       if (rand () > perc_zero_int)

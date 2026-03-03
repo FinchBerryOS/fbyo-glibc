@@ -1,5 +1,5 @@
 /* Allocate a new stack.  Mach version.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include <mach.h>
 
 #include <pt-internal.h>
+#include <ldsodefs.h>
 
 /* Allocate a new stack of size STACKSIZE.  If successful, store the
    address of the newly allocated stack in *STACKADDR and return 0.
@@ -33,7 +34,7 @@ __pthread_stack_alloc (void **stackaddr, size_t stacksize)
   error_t err;
   vm_prot_t prot = VM_PROT_READ | VM_PROT_WRITE;
 
-  if (GL(dl_stack_flags) & PF_X)
+  if (GL(dl_stack_prot_flags) & PROT_EXEC)
     prot |= VM_PROT_EXECUTE;
 
   err = __vm_map (__mach_task_self (), (vm_offset_t *) stackaddr,
@@ -44,3 +45,4 @@ __pthread_stack_alloc (void **stackaddr, size_t stacksize)
     err = EAGAIN;
   return err;
 }
+libc_hidden_def (__pthread_stack_alloc)

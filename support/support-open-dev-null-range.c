@@ -1,5 +1,5 @@
 /* Return a range of open file descriptors.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ increase_nofile (void)
 
   rl.rlim_cur += 128;
 
-  if (setrlimit (RLIMIT_NOFILE, &rl) == 1)
+  if (setrlimit (RLIMIT_NOFILE, &rl) == -1)
     FAIL_EXIT1 ("setrlimit (RLIMIT_NOFILE): %m");
 }
 

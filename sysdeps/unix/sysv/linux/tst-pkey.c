@@ -1,5 +1,5 @@
 /* Tests for memory protection keys.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -191,7 +191,7 @@ do_test (void)
   pthread_t delayed_thread = xpthread_create
     (NULL, &delayed_thread_func, &delayed_thread_check_access);
 
-  keys[0] = pkey_alloc (0, 0);
+  keys[0] = pkey_alloc (0, PKEY_UNRESTRICTED);
   if (keys[0] < 0)
     {
       if (errno == ENOSYS)
@@ -333,7 +333,7 @@ do_test (void)
           if (i == allowed_key)
             {
               if (do_write)
-                TEST_COMPARE (pkey_set (keys[i], 0), 0);
+                TEST_COMPARE (pkey_set (keys[i], PKEY_UNRESTRICTED), 0);
               else
                 TEST_COMPARE (pkey_set (keys[i], PKEY_DISABLE_WRITE), 0);
             }
@@ -360,7 +360,7 @@ do_test (void)
      inherit that access.  */
   for (int i = 0; i < key_count; ++i)
     {
-      TEST_COMPARE (pkey_set (keys[i], 0), 0);
+      TEST_COMPARE (pkey_set (keys[i], PKEY_UNRESTRICTED), 0);
       TEST_VERIFY (check_page_access (i, false));
       TEST_VERIFY (check_page_access (i, true));
     }

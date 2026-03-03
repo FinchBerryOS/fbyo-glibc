@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Generate tests for <tgmath.h> macros.
-# Copyright (C) 2017-2025 Free Software Foundation, Inc.
+# Copyright (C) 2017-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 #
 # The GNU C Library is free software; you can redistribute it and/or
@@ -726,10 +726,10 @@ class Tests(object):
         self.add_tests('fminmag', 'r', ['r', 'r'])
         self.add_tests('fmaxmag', 'r', ['r', 'r'])
         self.add_tests('llogb', 'long int', ['r'])
-        self.add_tests('fromfp', 'intmax_t', ['r', 'int', 'unsigned int'])
-        self.add_tests('fromfpx', 'intmax_t', ['r', 'int', 'unsigned int'])
-        self.add_tests('ufromfp', 'uintmax_t', ['r', 'int', 'unsigned int'])
-        self.add_tests('ufromfpx', 'uintmax_t', ['r', 'int', 'unsigned int'])
+        self.add_tests('fromfp', 'r', ['r', 'int', 'unsigned int'])
+        self.add_tests('fromfpx', 'r', ['r', 'int', 'unsigned int'])
+        self.add_tests('ufromfp', 'r', ['r', 'int', 'unsigned int'])
+        self.add_tests('ufromfpx', 'r', ['r', 'int', 'unsigned int'])
         for fn, args in (('add', 2), ('div', 2), ('fma', 3), ('mul', 2),
                          ('sqrt', 1), ('sub', 2)):
             for ret, prefix in (('float', 'f'),
@@ -746,6 +746,7 @@ class Tests(object):
         self.add_tests('asinpi', 'r', ['r'])
         self.add_tests('atan2pi', 'r', ['r', 'r'])
         self.add_tests('atanpi', 'r', ['r'])
+        self.add_tests('compoundn', 'r', ['r', 'long long int'])
         self.add_tests('cospi', 'r', ['r'])
         self.add_tests('exp10', 'r', ['r'])
         self.add_tests('exp2m1', 'r', ['r'])
@@ -753,6 +754,10 @@ class Tests(object):
         self.add_tests('log2p1', 'r', ['r'])
         self.add_tests('log10p1', 'r', ['r'])
         self.add_tests('logp1', 'r', ['r'])
+        self.add_tests('pown', 'r', ['r', 'long long int'])
+        self.add_tests('powr', 'r', ['r', 'r'])
+        self.add_tests('rootn', 'r', ['r', 'long long int'])
+        self.add_tests('rsqrt', 'r', ['r'])
         self.add_tests('sinpi', 'r', ['r'])
         self.add_tests('tanpi', 'r', ['r'])
         # C23 functions.

@@ -1,5 +1,5 @@
 /* Support for GNU properties.  AArch64 version.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,21 +24,21 @@ extern void _dl_bti_protect (struct link_map *, int) attribute_hidden;
 extern void _dl_bti_check (struct link_map *, const char *)
     attribute_hidden;
 
-extern void _dl_gcs_check (struct link_map *, const char *)
+extern void _dl_gcs_check (struct link_map *, const char *, int)
     attribute_hidden;
 
 static inline void __attribute__ ((always_inline))
 _rtld_main_check (struct link_map *m, const char *program)
 {
   _dl_bti_check (m, program);
-  _dl_gcs_check (m, program);
+  _dl_gcs_check (m, program, 0);
 }
 
 static inline void __attribute__ ((always_inline))
-_dl_open_check (struct link_map *m)
+_dl_open_check (struct link_map *m, int dlopen_mode)
 {
   _dl_bti_check (m, NULL);
-  _dl_gcs_check (m, NULL);
+  _dl_gcs_check (m, NULL, dlopen_mode);
 }
 
 static inline void __attribute__ ((always_inline))

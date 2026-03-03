@@ -1,7 +1,7 @@
 /*
  * svc_unix.c, Server side for TCP/IP based RPC.
  *
- * Copyright (C) 2012-2025 Free Software Foundation, Inc.
+ * Copyright (C) 2012-2026 Free Software Foundation, Inc.
  * This file is part of the GNU C Library.
  *
  * The GNU C Library is free software; you can redistribute it and/or
@@ -65,6 +65,7 @@
 #include <libintl.h>
 #include <wchar.h>
 #include <shlib-compat.h>
+#include <libc-diag.h>
 
 /*
  * Ops vector for AF_UNIX based rpc service handle
@@ -308,12 +309,18 @@ svcunix_destroy (SVCXPRT *xprt)
 }
 
 #ifdef SCM_CREDENTIALS
+/* clang complains if a flexible array member (struct cmsghdr) is not a the
+   end of the struct (it is a GNU extension).  The __msgread explicitly
+   expects that 'struct ucred' is after the 'cmsg', so disable the warning.  */
+DIAG_PUSH_NEEDS_COMMENT_CLANG;
+DIAG_IGNORE_NEEDS_COMMENT_CLANG (18, "-Wgnu-variable-sized-type-not-at-end");
 struct cmessage {
   struct cmsghdr cmsg;
   struct ucred cmcred;
   /* hack to make sure we have enough memory */
   char dummy[(CMSG_ALIGN (sizeof (struct ucred)) - sizeof (struct ucred) + sizeof (long))];
 };
+DIAG_POP_NEEDS_COMMENT_CLANG;
 
 /* XXX This is not thread safe, but since the main functions in svc.c
    and the rpcgen generated *_svc functions for the daemon are also not
@@ -433,7 +440,7 @@ readunix (char *xprtptr, char *buf, int len)
 	case -1:
 	  if (errno == EINTR)
 	    continue;
-	  /*FALLTHROUGH*/
+	  [[fallthrough]];
 	case 0:
 	  goto fatal_err;
 	default:

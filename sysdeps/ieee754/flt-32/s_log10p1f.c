@@ -70,7 +70,7 @@ __log10p1f (float x)
     };
   static const double tl[] =
     {
-      0x1.562ec497ef351p-43, 0x1.b9476892ea99cp-8, 0x1.b5e909c959eecp-7,
+     -0x1.562ec497ef351p-43, 0x1.b9476892ea99cp-8, 0x1.b5e909c959eecp-7,
       0x1.45f4f59ec84fp-6,   0x1.af5f92cbcf2aap-6, 0x1.0ba01a6069052p-5,
       0x1.3ed119b99dd41p-5,  0x1.714834298a088p-5, 0x1.a30a9d98309c1p-5,
       0x1.d41d51266b9d9p-5,  0x1.02428c0f62dfcp-4, 0x1.1a23444eea521p-4,
@@ -155,7 +155,7 @@ __log10p1f (float x)
 	      0x1.63c62378fa3dbp-3, 0x1.fca4139a42374p-4
 	    };
 	  float ret = z * ((c[0] + z2 * c[1]) + z4 * (c[2] + z2 * c[3]));
-	  if (x != 0.0f && ret == 0.0)
+	  if (x != 0.0f && ret == 0.0f)
 	    __set_errno (ERANGE);
 	  return ret;
 	}

@@ -1,5 +1,5 @@
 # Makefile for csu code for GNU C library.
-# Copyright (C) 1995-2025 Free Software Foundation, Inc.
+# Copyright (C) 1995-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -137,7 +137,7 @@ before-compile += $(objpfx)abi-tag.h
 generated += abi-tag.h
 
 # Put it here to generate it earlier.
-gen-as-const-headers += rtld-sizes.sym
+gen-as-const-headers += rtld-sizes.sym sem_t-align.sym
 
 # These are the special initializer/finalizer files.  They are always the
 # first and last file in the link.  crti.o ... crtn.o define the global

@@ -1,5 +1,5 @@
 /* A oryon-1 core Optimized memcpy implementation for AARCH64.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    Copyright The GNU Toolchain Authors.
 
    This file is part of the GNU C Library.
@@ -63,10 +63,6 @@
 
 ENTRY (__memmove_oryon1)
 
-	PTR_ARG (0)
-	PTR_ARG (1)
-	SIZE_ARG (2)
-
 	sub	tmp1, dstin, src
 	cmp	count, 96
 	ccmp	tmp1, count, 2, hi
@@ -76,10 +72,6 @@ ENTRY (__memmove_oryon1)
 END (__memmove_oryon1)
 
 ENTRY (__memcpy_oryon1)
-
-	PTR_ARG (0)
-	PTR_ARG (1)
-	SIZE_ARG (2)
 
 	add	srcend, src, count
 	add	dstend, dstin, count
@@ -159,6 +151,46 @@ L(copy96):
 
 	.p2align 6
 L(copy_long):
+
+	/* On oryon1 cores, large memcpy's are helped by using ldnp/stnp.
+	   This loop is identical to the one below it but using ldnp/stnp
+	   instructions.  For loops that are less than 32768 bytes,
+	   the ldnp/stnp instructions will not help and will cause a slow
+	   down so only use the ldnp/stnp loop for the largest sizes.  */
+
+	cmp	count, #32768
+	b.lo	L(copy_long_without_nontemp)
+	and	tmp1, dstin, 15
+	bic	dst, dstin, 15
+	ldnp	D_l, D_h, [src]
+	sub	src, src, tmp1
+	add	count, count, tmp1	/* Count is now 16 too large.  */
+	ldnp	A_l, A_h, [src, 16]
+	stnp	D_l, D_h, [dstin]
+	ldnp	B_l, B_h, [src, 32]
+	ldnp	C_l, C_h, [src, 48]
+	ldnp	D_l, D_h, [src, 64]
+	add	src, src, #64
+	subs	count, count, 128 + 16	/* Test and readjust count.  */
+
+L(nontemp_loop64):
+	tbz	src, #6, 1f
+1:
+	stnp	A_l, A_h, [dst, 16]
+	ldnp	A_l, A_h, [src, 16]
+	stnp	B_l, B_h, [dst, 32]
+	ldnp	B_l, B_h, [src, 32]
+	stnp	C_l, C_h, [dst, 48]
+	ldnp	C_l, C_h, [src, 48]
+	stnp	D_l, D_h, [dst, 64]
+	ldnp	D_l, D_h, [src, 64]
+	add	src, src, #64
+	add	dst, dst, #64
+	subs	count, count, 64
+	b.hi	L(nontemp_loop64)
+	b	L(last64)
+
+L(copy_long_without_nontemp):
 
 	and	tmp1, dstin, 15
 	bic	dst, dstin, 15

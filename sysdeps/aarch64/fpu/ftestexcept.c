@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -20,8 +20,10 @@
 #include <fenv_private.h>
 
 int
-fetestexcept (int excepts)
+__fetestexcept (int excepts)
 {
   return libc_fetestexcept_aarch64 (excepts);
 }
+libm_hidden_def (__fetestexcept)
+static_weak_alias (__fetestexcept, fetestexcept)
 libm_hidden_def (fetestexcept)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -63,7 +63,11 @@ __getdelim (char **lineptr, size_t *n, int delimiter, FILE *fp)
     {
       *n = 120;
       *lineptr = (char *) malloc (*n);
-      if (*lineptr == NULL)
+      /* Null terminate the buffer upon allocation otherwise it will not be
+         null-terminated upon reading from an empty file.  */
+      if (*lineptr != NULL)
+        (*lineptr)[0] = '\0';
+      else
 	{
 	  fseterr_unlocked (fp);
 	  result = -1;

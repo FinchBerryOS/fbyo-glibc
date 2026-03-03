@@ -1,5 +1,5 @@
 /* Operating system support for run-time dynamic linker.  Hurd version.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -43,7 +43,6 @@
 
 #include <entry.h>
 #include <dl-machine.h>
-#include <dl-procinfo.h>
 
 #include <dl-tunables.h>
 #include <not-errno.h>
@@ -267,7 +266,7 @@ open_file (const char *file_name, int flags,
 	   mach_port_t *port, struct stat64 *stat)
 {
   enum retry_type doretry;
-  char retryname[1024];		/* XXX string_t LOSES! */
+  string_t retryname;
   file_t startdir;
   error_t err;
 

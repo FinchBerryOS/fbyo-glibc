@@ -1,5 +1,5 @@
 /* Measure memchr functions.
-   Copyright (C) 2013-2025 Free Software Foundation, Inc.
+   Copyright (C) 2013-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ char *
 generic_rawmemchr (const char *s, int c)
 {
   if ((unsigned char) c != 0)
-    return memchr (s, c, PTRDIFF_MAX);
+    return (char*) memchr (s, c, PTRDIFF_MAX);
   return (char *)s + strlen (s);
 }
 

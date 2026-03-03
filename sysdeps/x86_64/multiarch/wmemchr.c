@@ -1,6 +1,6 @@
 /* Multiple versions of wmemchr
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ weak_alias (__wmemchr, wmemchr)
 # ifdef SHARED
 __hidden_ver1 (__wmemchr, __GI___wmemchr, __redirect___wmemchr)
   __attribute__((visibility ("hidden")));
-__hidden_ver1 (wmemchr, __GI_wmemchr, __redirect_wmemchr)
+__hidden_ver1 (__wmemchr, __GI_wmemchr, __redirect_wmemchr)
   __attribute__((weak, visibility ("hidden")));
 # endif
 #endif

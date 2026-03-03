@@ -1,5 +1,5 @@
 /* Enumerate available IFUNC implementations of a function.  AARCH64 version.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    Copyright The GNU Toolchain Authors.
    This file is part of the GNU C Library.
 
@@ -36,18 +36,14 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
   /* Support sysdeps/aarch64/multiarch/memcpy.c, memmove.c and memset.c.  */
   IFUNC_IMPL (i, name, memcpy,
 	      IFUNC_IMPL_ADD (array, i, memcpy, 1, __memcpy_oryon1)
-#if HAVE_AARCH64_SVE_ASM
-	      IFUNC_IMPL_ADD (array, i, memcpy, sve && !bti, __memcpy_a64fx)
+	      IFUNC_IMPL_ADD (array, i, memcpy, sve, __memcpy_a64fx)
 	      IFUNC_IMPL_ADD (array, i, memcpy, sve, __memcpy_sve)
-#endif
 	      IFUNC_IMPL_ADD (array, i, memcpy, mops, __memcpy_mops)
 	      IFUNC_IMPL_ADD (array, i, memcpy, 1, __memcpy_generic))
   IFUNC_IMPL (i, name, memmove,
 	      IFUNC_IMPL_ADD (array, i, memmove, 1, __memmove_oryon1)
-#if HAVE_AARCH64_SVE_ASM
-	      IFUNC_IMPL_ADD (array, i, memmove, sve && !bti, __memmove_a64fx)
+	      IFUNC_IMPL_ADD (array, i, memmove, sve, __memmove_a64fx)
 	      IFUNC_IMPL_ADD (array, i, memmove, sve, __memmove_sve)
-#endif
 	      IFUNC_IMPL_ADD (array, i, memmove, mops, __memmove_mops)
 	      IFUNC_IMPL_ADD (array, i, memmove, 1, __memmove_generic))
   IFUNC_IMPL (i, name, memset,
@@ -55,9 +51,8 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
 	      IFUNC_IMPL_ADD (array, i, memset, (zva_size == 64), __memset_oryon1)
 	      IFUNC_IMPL_ADD (array, i, memset, 1, __memset_emag)
 	      IFUNC_IMPL_ADD (array, i, memset, 1, __memset_kunpeng)
-#if HAVE_AARCH64_SVE_ASM
-	      IFUNC_IMPL_ADD (array, i, memset, sve && !bti && zva_size == 256, __memset_a64fx)
-#endif
+	      IFUNC_IMPL_ADD (array, i, memset, sve && zva_size == 256, __memset_a64fx)
+	      IFUNC_IMPL_ADD (array, i, memset, sve && zva_size == 64, __memset_sve_zva64)
 	      IFUNC_IMPL_ADD (array, i, memset, mops, __memset_mops)
 	      IFUNC_IMPL_ADD (array, i, memset, 1, __memset_generic))
   IFUNC_IMPL (i, name, memchr,

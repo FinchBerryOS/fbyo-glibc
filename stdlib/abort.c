@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,6 +19,7 @@
 #include <internal-signals.h>
 #include <libc-lock.h>
 #include <pthreadP.h>
+#include <string.h>
 #include <unistd.h>
 
 /* Try to get a machine dependent instruction which will make the
@@ -42,7 +43,10 @@ __libc_rwlock_define_initialized (static, lock);
 void
 __abort_fork_reset_child (void)
 {
-  __libc_rwlock_init (lock);
+  /* Reinitialize lock without calling pthread_rwlock_init, to
+     avoid a valgrind DRD false positive.  */
+  __libc_rwlock_define_initialized (, reset_lock);
+  memcpy (&lock, &reset_lock, sizeof (lock));
 }
 
 void

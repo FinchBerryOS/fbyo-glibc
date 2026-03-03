@@ -1,5 +1,5 @@
 /* Compute remainder and a congruent to the quotient.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ __remquof (float x, float y, int *quo)
     }
   else
     {
-      float y_half = 0.5 * y;
+      float y_half = 0.5f * y;
       if (x > y_half)
 	{
 	  x -= y;

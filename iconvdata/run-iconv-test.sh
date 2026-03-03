@@ -1,6 +1,6 @@
 #!/bin/sh -f
 # Run available iconv(1) tests.
-# Copyright (C) 1998-2025 Free Software Foundation, Inc.
+# Copyright (C) 1998-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -22,6 +22,8 @@ set -e
 codir=$1
 test_wrapper_env="$2"
 run_program_env="$3"
+# Remove the last space to allow concatenate extra paths.
+library_path="$(echo $4)"
 
 # We use always the same temporary file.
 temp1=$codir/iconvdata/iconv-test.xxx
@@ -33,7 +35,7 @@ trap "rm -f $temp1 $temp2" 1 2 3 15
 LIBPATH=$codir:$codir/iconvdata
 
 # How the start the iconv(1) program.
-ICONV='$codir/elf/ld.so --library-path $LIBPATH --inhibit-rpath ${from}.so \
+ICONV='$codir/elf/ld.so --library-path $library_path:$LIBPATH --inhibit-rpath ${from}.so \
        $codir/iconv/iconv_prog'
 ICONV="$test_wrapper_env $run_program_env $ICONV"
 

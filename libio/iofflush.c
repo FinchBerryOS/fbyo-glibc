@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ _IO_fflush (FILE *fp)
 }
 libc_hidden_def (_IO_fflush)
 
-weak_alias (_IO_fflush, fflush)
+static_weak_alias (_IO_fflush, fflush)
 libc_hidden_weak (fflush)
 
 #ifndef _IO_MTSAFE_IO

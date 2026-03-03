@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -98,8 +98,9 @@ __execvpe_common (const char *file, char *const argv[], char *const envp[],
   size_t file_len = __strnlen (file, NAME_MAX) + 1;
   size_t path_len = __strnlen (path, PATH_MAX - 1) + 1;
 
-  /* NAME_MAX does not include the terminating null character.  */
-  if ((file_len - 1 > NAME_MAX)
+  /* NAME_MAX does not include the terminating NUL character.
+     The following check ensures FILE is NUL terminated.  */
+  if ((file_len - 1 == NAME_MAX && file[NAME_MAX] != '\0')
       || !__libc_alloca_cutoff (path_len + file_len + 1))
     {
       errno = ENAMETOOLONG;
@@ -149,6 +150,7 @@ __execvpe_common (const char *file, char *const argv[], char *const envp[],
 	     up finding no executable we can use, we want to diagnose
 	     that we did find one but were denied access.  */
 	    got_eacces = true;
+	    [[fallthrough]];
 	  case ENOENT:
 	  case ESTALE:
 	  case ENOTDIR:

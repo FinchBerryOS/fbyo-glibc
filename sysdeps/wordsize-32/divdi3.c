@@ -1,5 +1,5 @@
 /* 64-bit multiplication and division
-   Copyright (C) 1989, 1992-2025 Free Software Foundation, Inc.
+   Copyright (C) 1989, 1992-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,25 +19,20 @@
 #include <endian.h>
 #include <stdlib.h>
 #include <bits/wordsize.h>
+#include <stdbit.h>
 
 #if __WORDSIZE != 32
 #error This is for 32-bit targets only
 #endif
 
-typedef unsigned int UQItype	__attribute__ ((mode (QI)));
-typedef          int SItype	__attribute__ ((mode (SI)));
-typedef unsigned int USItype	__attribute__ ((mode (SI)));
-typedef          int DItype	__attribute__ ((mode (DI)));
-typedef unsigned int UDItype	__attribute__ ((mode (DI)));
 #define Wtype SItype
 #define HWtype SItype
 #define DWtype DItype
-#define UWtype USItype
 #define UHWtype USItype
 #define UDWtype UDItype
-#define W_TYPE_SIZE 32
 
-#include <stdlib/longlong.h>
+#include <gmp.h>
+#include <stdlib/gmp-impl.h>
 
 #if __BYTE_ORDER == __BIG_ENDIAN
 struct DWstruct { Wtype high, low;};
@@ -113,7 +108,7 @@ __udivmoddi4 (UDWtype n, UDWtype d, UDWtype *rp)
 	{
 	  /* 0q = nn / 0D */
 
-	  count_leading_zeros (bm, d0);
+	  bm = stdc_leading_zeros (d0);
 
 	  if (bm != 0)
 	    {
@@ -137,7 +132,7 @@ __udivmoddi4 (UDWtype n, UDWtype d, UDWtype *rp)
 	  if (d0 == 0)
 	    d0 = 1 / d0;	/* Divide intentionally by zero.  */
 
-	  count_leading_zeros (bm, d0);
+	  bm = stdc_leading_zeros (d0);
 
 	  if (bm == 0)
 	    {
@@ -202,7 +197,7 @@ __udivmoddi4 (UDWtype n, UDWtype d, UDWtype *rp)
 	{
 	  /* 0q = NN / dd */
 
-	  count_leading_zeros (bm, d1);
+	  bm = stdc_leading_zeros (d1);
 	  if (bm == 0)
 	    {
 	      /* From (n1 >= d1) /\ (the most significant bit of d1 is set),

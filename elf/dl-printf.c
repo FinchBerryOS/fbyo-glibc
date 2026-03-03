@@ -1,5 +1,5 @@
 /* printf implementation for the dynamic loader.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    Copyright The GNU Toolchain Authors.
    This file is part of the GNU C Library.
 
@@ -35,6 +35,7 @@
 
 /* The function might be called before the process is self-relocated.  */
 static size_t
+__attribute_optimization_barrier__
 _dl_debug_strlen (const char *s)
 {
   const char *p = s;

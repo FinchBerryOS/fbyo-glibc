@@ -1,5 +1,5 @@
 /* Initialize x86 cache info.
-   Copyright (C) 2020-2025 Free Software Foundation, Inc.
+   Copyright (C) 2020-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -15,6 +15,16 @@
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
    <https://www.gnu.org/licenses/>.  */
+
+/* NB: When glibc is compiled with -Os, <bits/stdlib-bsearch.h> isn't
+   included by <stdlib.h> since __USE_EXTERN_INLINES isn't defined.
+   Include <bits/stdlib-bsearch.h> here since <bits/stdlib-bsearch.h>
+   may be included more than once, rename bsearch to __bsearch and
+   use __bsearch, instead of bsearch, in intel_check_word which may
+   be called very early during startup.  */
+#define bsearch __bsearch
+#include <bits/stdlib-bsearch.h>
+#undef bsearch
 
 static const struct intel_02_cache_info
 {
@@ -214,8 +224,9 @@ intel_check_word (int name, unsigned int value, bool *has_level_2,
 	  struct intel_02_cache_info search;
 
 	  search.idx = byte;
-	  found = bsearch (&search, intel_02_known, nintel_02_known,
-			   sizeof (intel_02_known[0]), intel_02_known_compare);
+	  found = __bsearch (&search, intel_02_known, nintel_02_known,
+			     sizeof (intel_02_known[0]),
+			     intel_02_known_compare);
 	  if (found != NULL)
 	    {
 	      if (found->rel_name == folded_rel_name)

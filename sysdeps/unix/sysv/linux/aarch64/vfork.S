@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -26,6 +26,9 @@
    and the process ID of the new process to the old process.  */
 
 ENTRY (__vfork)
+
+	/* Clear ZA state of SME.  */
+	CALL_LIBC_ARM_ZA_DISABLE
 
 	mov	x0, #0x4111	/* CLONE_VM | CLONE_VFORK | SIGCHLD */
 	mov	x1, sp

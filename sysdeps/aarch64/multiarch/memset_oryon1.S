@@ -1,5 +1,5 @@
 /* Optimized memset for Qualcomm's oyron-1 core.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
    Copyright The GNU Toolchain Authors.
 
    This file is part of the GNU C Library.
@@ -32,9 +32,6 @@
 #define dstend	x4
 
 ENTRY (__memset_oryon1)
-
-	PTR_ARG (0)
-	SIZE_ARG (2)
 
 	bfi	valw, valw, 8, 8
 	bfi	valw, valw, 16, 16
@@ -93,6 +90,8 @@ L(set_long):
 	cmp	count, 256
 	ccmp	valw, 0, 0, cs
 	b.eq	L(try_zva)
+	cmp	count, #32768
+	b.hi	L(set_long_with_nontemp)
 	/* Small-size or non-zero memset does not use DC ZVA. */
 	sub	count, dstend, dst
 
@@ -113,6 +112,30 @@ L(set_long):
 	stp	val, val, [dst, 32]
 1:	stp	val, val, [dstend, -32]
 	stp	val, val, [dstend, -16]
+	ret
+
+L(set_long_with_nontemp):
+	/* Small-size or non-zero memset does not use DC ZVA. */
+	sub	count, dstend, dst
+
+	/* Adjust count and bias for loop. By subtracting extra 1 from count,
+	   it is easy to use tbz instruction to check whether loop tailing
+	   count is less than 33 bytes, so as to bypass 2 unnecessary stps. */
+	sub	count, count, 64+16+1
+
+1:	stnp	val, val, [dst, 16]
+	stnp	val, val, [dst, 32]
+	stnp	val, val, [dst, 48]
+	stnp	val, val, [dst, 64]
+	add	dst, dst, #64
+	subs	count, count, 64
+	b.hs	1b
+
+	tbz	count, 5, 1f	/* Remaining count is less than 33 bytes? */
+	stnp	val, val, [dst, 16]
+	stnp	val, val, [dst, 32]
+1:	stnp	val, val, [dstend, -32]
+	stnp	val, val, [dstend, -16]
 	ret
 
 L(try_zva):

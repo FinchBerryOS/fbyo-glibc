@@ -1,5 +1,5 @@
 /* Disable floating-point exceptions.
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
 #include <fenv.h>
 #include <unistd.h>
 #include <ldsodefs.h>
-#include <dl-procinfo.h>
+#include <math-inline-asm.h>
 
 int
 fedisableexcept (int excepts)
@@ -27,14 +27,14 @@ fedisableexcept (int excepts)
   unsigned short int new_exc, old_exc;
 
   /* Get the current control word.  */
-  __asm__ ("fstcw %0" : "=m" (*&new_exc));
+  __asm__ ("fstcw %0" : "=m" (new_exc));
 
   old_exc = (~new_exc) & FE_ALL_EXCEPT;
 
   excepts &= FE_ALL_EXCEPT;
 
   new_exc |= excepts;
-  __asm__ ("fldcw %0" : : "m" (*&new_exc));
+  __asm__ ("fldcw %0" : : "m" (new_exc));
 
   /* If the CPU supports SSE we set the MXCSR as well.  */
   if (CPU_FEATURE_USABLE (SSE))
@@ -42,11 +42,11 @@ fedisableexcept (int excepts)
       unsigned int xnew_exc;
 
       /* Get the current control word.  */
-      __asm__ ("stmxcsr %0" : "=m" (*&xnew_exc));
+      stmxcsr_inline_asm (&xnew_exc);
 
       xnew_exc |= excepts << 7;
 
-      __asm__ ("ldmxcsr %0" : : "m" (*&xnew_exc));
+      ldmxcsr_inline_asm (&xnew_exc);
     }
 
   return old_exc;

@@ -1,5 +1,5 @@
 /* mmap - map files or devices into memory.  Linux version.
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ weak_alias (__mmap64, mmap64)
 libc_hidden_def (__mmap64)
 
 #ifdef __OFF_T_MATCHES_OFF64_T
-weak_alias (__mmap64, mmap)
-weak_alias (__mmap64, __mmap)
+static_weak_alias (__mmap64, mmap)
+strong_alias (__mmap64, __mmap)
 libc_hidden_def (__mmap)
 #endif

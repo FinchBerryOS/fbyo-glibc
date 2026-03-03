@@ -1,5 +1,5 @@
 /* Profiling of shared libraries.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Based on the BSD mcount implementation.
 
@@ -553,7 +553,7 @@ _dl_mcount (ElfW(Addr) frompc, ElfW(Addr) selfpc)
 	      froms[newfromidx].here = &data[narcs];
 	      froms[newfromidx].link = tos[to_index];
 	      tos[to_index] = newfromidx;
-	      catomic_increment (&narcs);
+	      atomic_fetch_add_relaxed (&narcs, 1);
 	    }
 
 	  /* If we still have no entry stop searching and insert.  */

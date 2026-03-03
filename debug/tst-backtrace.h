@@ -1,6 +1,6 @@
 /* Test backtrace and backtrace_symbols: common code for examining
    backtraces.
-   Copyright (C) 2013-2025 Free Software Foundation, Inc.
+   Copyright (C) 2013-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -43,6 +43,6 @@ volatile int x;
 static inline bool
 match (const char *sym, const char *name)
 {
-  char *p = strchr (sym, '(');
+  const char *p = strchr (sym, '(');
   return p != NULL && strstr (p, name) != NULL;
 }

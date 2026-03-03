@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -90,5 +90,5 @@ __feraiseexcept (int excepts)
   return 0;
 }
 libm_hidden_def (__feraiseexcept)
-weak_alias (__feraiseexcept, feraiseexcept)
+static_weak_alias (__feraiseexcept, feraiseexcept)
 libm_hidden_weak (feraiseexcept)

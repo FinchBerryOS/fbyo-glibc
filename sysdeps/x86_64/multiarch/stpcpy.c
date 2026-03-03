@@ -1,6 +1,6 @@
 /* Multiple versions of stpcpy.
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ weak_alias (__stpcpy, stpcpy)
 # ifdef SHARED
 __hidden_ver1 (__stpcpy, __GI___stpcpy, __redirect___stpcpy)
   __attribute__ ((visibility ("hidden"))) __attribute_copy__ (stpcpy);
-__hidden_ver1 (stpcpy, __GI_stpcpy, __redirect_stpcpy)
+__hidden_ver1 (__stpcpy, __GI_stpcpy, __redirect_stpcpy)
   __attribute__ ((visibility ("hidden"))) __attribute_copy__ (stpcpy);
 # endif
 #endif

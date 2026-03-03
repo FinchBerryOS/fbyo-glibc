@@ -1,4 +1,4 @@
-/* Copyright (C) 2024-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2024-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
    ISA, double support can be subsetted.  Only FMAF is enabled for this
    case.  */
 
-#include <sysdep.h>
+#include <isarev.h>
 
 #if __mips_isa_rev >= 6
 # ifdef __mips_single_float

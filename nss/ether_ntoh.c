@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,24 +31,21 @@ int
 ether_ntohost (char *hostname, const struct ether_addr *addr)
 {
   nss_action_list nip;
-  union
-  {
-    lookup_function f;
-    void *ptr;
-  } fct;
+  void *fct;
   int no_more;
   enum nss_status status = NSS_STATUS_UNAVAIL;
   struct etherent etherent;
 
-  no_more = __nss_ethers_lookup2 (&nip, "getntohost_r", NULL, &fct.ptr);
+  no_more = __nss_ethers_lookup2 (&nip, "getntohost_r", NULL, &fct);
 
   while (no_more == 0)
     {
       char buffer[1024];
 
-      status = (*fct.f) (addr, &etherent, buffer, sizeof buffer, &errno);
+      status = ((lookup_function) fct) (addr, &etherent, buffer,
+					sizeof buffer, &errno);
 
-      no_more = __nss_next2 (&nip, "getntohost_r", NULL, &fct.ptr, status, 0);
+      no_more = __nss_next2 (&nip, "getntohost_r", NULL, &fct, status, 0);
     }
 
   if (status == NSS_STATUS_SUCCESS)

@@ -1,5 +1,5 @@
 /* Clear given exceptions in current floating-point environment.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
 #include <fenv.h>
 
 int
-feclearexcept (int excepts)
+__feclearexcept (int excepts)
 {
   union { unsigned long long l; unsigned int sw[2]; } s;
 
@@ -32,4 +32,6 @@ feclearexcept (int excepts)
   /* Success.  */
   return 0;
 }
+libm_hidden_def (__feclearexcept)
+weak_alias (__feclearexcept, feclearexcept)
 libm_hidden_def (feclearexcept)

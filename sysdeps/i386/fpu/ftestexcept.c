@@ -1,5 +1,5 @@
 /* Test exception in current environment.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,22 +18,24 @@
 
 #include <fenv.h>
 #include <unistd.h>
-#include <dl-procinfo.h>
 #include <ldsodefs.h>
+#include <math-inline-asm.h>
 
 int
-fetestexcept (int excepts)
+__fetestexcept (int excepts)
 {
   short temp;
-  int xtemp = 0;
+  unsigned int xtemp = 0;
 
   /* Get current exceptions.  */
   __asm__ ("fnstsw %0" : "=a" (temp));
 
   /* If the CPU supports SSE we test the MXCSR as well.  */
   if (CPU_FEATURE_USABLE (SSE))
-    __asm__ ("stmxcsr %0" : "=m" (*&xtemp));
+    stmxcsr_inline_asm (&xtemp);
 
   return (temp | xtemp) & excepts & FE_ALL_EXCEPT;
 }
+libm_hidden_def (__fetestexcept)
+weak_alias (__fetestexcept, fetestexcept)
 libm_hidden_def (fetestexcept)

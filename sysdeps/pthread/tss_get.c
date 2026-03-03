@@ -1,5 +1,5 @@
 /* C11 threads thread-specific get implementation.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,17 +18,14 @@
 
 #include <shlib-compat.h>
 #include "thrd_priv.h"
+#include <c11-thread.h>
 
 void *
 __tss_get (tss_t tss_id)
 {
   return __pthread_getspecific (tss_id);
 }
-#if PTHREAD_IN_LIBC
-versioned_symbol (libc, __tss_get, tss_get, GLIBC_2_34);
-# if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_28, GLIBC_2_34)
-compat_symbol (libpthread, __tss_get, tss_get, GLIBC_2_28);
-# endif
-#else /* !PTHREAD_IN_LIBC */
-strong_alias (__tss_get, tss_get)
+versioned_symbol (libc, __tss_get, tss_get, C11_THREADS_IN_LIBC);
+#if OTHER_SHLIB_COMPAT (libpthread, C11_THREADS_INTRODUCED, C11_THREADS_IN_LIBC)
+compat_symbol (libpthread, __tss_get, tss_get, C11_THREADS_INTRODUCED);
 #endif

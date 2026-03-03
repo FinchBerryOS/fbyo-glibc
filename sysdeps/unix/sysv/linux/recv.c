@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2015-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,6 +30,6 @@ __libc_recv (int fd, void *buf, size_t len, int flags)
   return SOCKETCALL_CANCEL (recv, fd, buf, len, flags);
 #endif
 }
-weak_alias (__libc_recv, recv)
-weak_alias (__libc_recv, __recv)
+static_weak_alias (__libc_recv, recv)
+static_weak_alias (__libc_recv, __recv)
 libc_hidden_weak (__recv)

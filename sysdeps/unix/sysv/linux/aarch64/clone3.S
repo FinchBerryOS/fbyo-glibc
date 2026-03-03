@@ -1,5 +1,5 @@
 /* The clone3 syscall wrapper.  Linux/aarch64 version.
-   Copyright (C) 2023-2025 Free Software Foundation, Inc.
+   Copyright (C) 2023-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -36,10 +36,6 @@
 
         .text
 ENTRY(__clone3)
-	PTR_ARG (0)
-	PTR_ARG (1)
-	PTR_ARG (3)
-	PTR_ARG (4)
 	/* Save args for the child.  */
 	mov	x10, x0		/* cl_args  */
 	mov	x11, x2		/* func	 */
@@ -49,6 +45,9 @@ ENTRY(__clone3)
 	mov	x0, #-EINVAL
 	cbz	x10, .Lsyscall_error	/* No NULL cl_args pointer.  */
 	cbz	x2, .Lsyscall_error	/* No NULL function pointer.  */
+
+    /* Clear ZA state of SME.  */
+	CALL_LIBC_ARM_ZA_DISABLE
 
 	/* Do the system call, the kernel expects:
 	   x8: system call number

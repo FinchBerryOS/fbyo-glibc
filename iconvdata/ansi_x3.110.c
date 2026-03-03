@@ -1,5 +1,5 @@
 /* Generic conversion to and from ANSI_X3.110-1983.
-   Copyright (C) 1998-2025 Free Software Foundation, Inc.
+   Copyright (C) 1998-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -407,7 +407,7 @@ static const char from_ucs4[][2] =
 	   is also available.  */					      \
 	uint32_t ch2;							      \
 									      \
-	if (inptr + 1 >= inend)						      \
+	if (inend - inptr <= 1)						      \
 	  {								      \
 	    /* The second character is not available.  */		      \
 	    result = __GCONV_INCOMPLETE_INPUT;				      \

@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2025 Free Software Foundation, Inc.
+# Copyright (C) 1995-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -172,6 +172,7 @@ tests := \
   tst-c16-surrogate \
   tst-c16c32-1 \
   tst-c32-state \
+  tst-const \
   tst-fgetwc-after-eof \
   tst-mbrtowc \
   tst-mbrtowc2 \
@@ -248,31 +249,23 @@ CFLAGS-wcwidth.c += -I../wctype
 CFLAGS-wcswidth.c += -I../wctype
 
 strtox-CFLAGS = -I../include
-CFLAGS-wcstol.c += $(strtox-CFLAGS) $(config-cflags-wno-ignored-attributes)
-CFLAGS-wcstoul.c += $(strtox-CFLAGS) $(config-cflags-wno-ignored-attributes)
+CFLAGS-wcstol.c += $(strtox-CFLAGS)
+CFLAGS-wcstoul.c += $(strtox-CFLAGS)
 CFLAGS-wcstoll.c += $(strtox-CFLAGS)
 CFLAGS-wcstoull.c += $(strtox-CFLAGS)
-CFLAGS-wcstod.c += $(strtox-CFLAGS) $(config-cflags-wno-ignored-attributes)
-CFLAGS-wcstold.c += $(strtox-CFLAGS) $(config-cflags-wno-ignored-attributes)
+CFLAGS-wcstod.c += $(strtox-CFLAGS)
+CFLAGS-wcstold.c += $(strtox-CFLAGS)
 CFLAGS-wcstof128.c += $(strtox-CFLAGS)
-CFLAGS-wcstof.c += $(strtox-CFLAGS) $(config-cflags-wno-ignored-attributes)
+CFLAGS-wcstof.c += $(strtox-CFLAGS)
 CFLAGS-wcstol_l.c += $(strtox-CFLAGS)
 CFLAGS-wcstoul_l.c += $(strtox-CFLAGS)
 CFLAGS-wcstoll_l.c += $(strtox-CFLAGS)
 CFLAGS-wcstoull_l.c += $(strtox-CFLAGS)
-CFLAGS-wcstod_l.c += $(strtox-CFLAGS) $(config-cflags-wno-ignored-attributes)
-CFLAGS-wcstold_l.c += $(strtox-CFLAGS) $(config-cflags-wno-ignored-attributes)
+CFLAGS-wcstod_l.c += $(strtox-CFLAGS)
+CFLAGS-wcstold_l.c += $(strtox-CFLAGS)
 CFLAGS-wcstof128_l.c += $(strtox-CFLAGS)
-CFLAGS-wcstof_l.c += $(strtox-CFLAGS) $(config-cflags-wno-ignored-attributes)
+CFLAGS-wcstof_l.c += $(strtox-CFLAGS)
 CPPFLAGS-tst-wchar-h.c += $(no-fortify-source) -D_FORTIFY_SOURCE=2
-
-CFLAGS-wcschr.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-wmemchr.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-wmemset.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-mbrtowc.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-wcrtomb.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-wcstoll.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-wcstoull.c += $(config-cflags-wno-ignored-attributes)
 
 CFLAGS-isoc99_wscanf.c += -fexceptions
 CFLAGS-isoc99_fwscanf.c += -fexceptions

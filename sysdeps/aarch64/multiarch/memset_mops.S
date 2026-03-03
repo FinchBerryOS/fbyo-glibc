@@ -1,5 +1,5 @@
 /* Optimized memset for MOPS.
-   Copyright (C) 2023-2025 Free Software Foundation, Inc.
+   Copyright (C) 2023-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -26,9 +26,6 @@
  */
 
 ENTRY (__memset_mops)
-	PTR_ARG (0)
-	SIZE_ARG (2)
-
 	mov     x3, x0
 	.inst   0x19c10443	/* setp    [x3]!, x2!, x1  */
 	.inst   0x19c14443	/* setm    [x3]!, x2!, x1  */

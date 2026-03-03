@@ -1,5 +1,5 @@
 /* Enumerate available IFUNC implementations of a function.  PowerPC64 version.
-   Copyright (C) 2013-2025 Free Software Foundation, Inc.
+   Copyright (C) 2013-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -229,12 +229,6 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
 
   /* Support sysdeps/powerpc/powerpc64/multiarch/memchr.c.  */
   IFUNC_IMPL (i, name, memchr,
-#ifdef __LITTLE_ENDIAN__
-	      IFUNC_IMPL_ADD (array, i, memchr,
-		              hwcap2 & PPC_FEATURE2_ARCH_3_1
-			      && hwcap & PPC_FEATURE_HAS_VSX,
-			      __memchr_power10)
-#endif
 	      IFUNC_IMPL_ADD (array, i, memchr,
 			      hwcap2 & PPC_FEATURE2_ARCH_2_07
 			      && hwcap & PPC_FEATURE_HAS_ALTIVEC,
@@ -311,18 +305,7 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
 			      hwcap2 & PPC_FEATURE2_ARCH_2_07
 			       && hwcap & PPC_FEATURE_HAS_ALTIVEC,
 			      __strncasecmp_power8)
-	      IFUNC_IMPL_ADD (array, i, strncasecmp,
-			      hwcap & PPC_FEATURE_ARCH_2_06,
-			      __strncasecmp_power7)
 	      IFUNC_IMPL_ADD (array, i, strncasecmp, 1, __strncasecmp_ppc))
-
-  /* Support sysdeps/powerpc/powerpc64/multiarch/strncase_l.c.  */
-  IFUNC_IMPL (i, name, strncasecmp_l,
-	      IFUNC_IMPL_ADD (array, i, strncasecmp_l,
-			      hwcap & PPC_FEATURE_ARCH_2_06,
-			      __strncasecmp_l_power7)
-	      IFUNC_IMPL_ADD (array, i, strncasecmp_l, 1,
-			      __strncasecmp_l_ppc))
 
   /* Support sysdeps/powerpc/powerpc64/multiarch/strrchr.c.  */
   IFUNC_IMPL (i, name, strrchr,

@@ -1,5 +1,5 @@
 /* Mapping table for IBM1025.
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -88,11 +88,11 @@ static const uint32_t to_ucs4[256] =
 
 static const struct gap from_idx[] =
 {
-  { start: 0x0000, end: 0x00a0, idx:     0 },
-  { start: 0x00a7, end: 0x00ad, idx:    -6 },
-  { start: 0x0401, end: 0x045f, idx:  -857 },
-  { start: 0x2116, end: 0x2116, idx: -8207 },
-  { start: 0xffff, end: 0xffff, idx:     0 }
+  { .start = 0x0000, .end = 0x00a0, .idx =     0 },
+  { .start = 0x00a7, .end = 0x00ad, .idx =    -6 },
+  { .start = 0x0401, .end = 0x045f, .idx =  -857 },
+  { .start = 0x2116, .end = 0x2116, .idx = -8207 },
+  { .start = 0xffff, .end = 0xffff, .idx =     0 }
 };
 
 static const char from_ucs4[] =

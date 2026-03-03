@@ -1,5 +1,5 @@
 /* Optimized memmove for MOPS.
-   Copyright (C) 2023-2025 Free Software Foundation, Inc.
+   Copyright (C) 2023-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -26,10 +26,6 @@
  */
 
 ENTRY (__memmove_mops)
-	PTR_ARG (0)
-	PTR_ARG (1)
-	SIZE_ARG (2)
-
 	mov	x3, x0
 	.inst	0x1d010443	/* cpyp    [x3]!, [x1]!, x2!  */
 	.inst	0x1d410443	/* cpym    [x3]!, [x1]!, x2!  */

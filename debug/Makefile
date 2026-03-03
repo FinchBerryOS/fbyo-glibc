@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2025 Free Software Foundation, Inc.
+# Copyright (C) 1998-2026 Free Software Foundation, Inc.
 # Copyright The GNU Toolchain Authors.
 # This file is part of the GNU C Library.
 
@@ -55,6 +55,8 @@ routines = \
   gethostname_chk \
   gets_chk \
   getwd_chk \
+  inet_ntop_chk \
+  inet_pton_chk \
   longjmp_chk \
   mbsnrtowcs_chk \
   mbsrtowcs_chk \
@@ -63,6 +65,7 @@ routines = \
   memmove_chk \
   mempcpy_chk \
   memset_chk \
+  memset_explicit_chk \
   noophooks \
   obprintf_chk \
   poll_chk \
@@ -74,6 +77,7 @@ routines = \
   readlink_chk \
   readlinkat_chk \
   readonly-area \
+  readonly-area-fallback \
   realpath_chk \
   recv_chk \
   recvfrom_chk \
@@ -179,8 +183,22 @@ CPPFLAGS-tst-longjmp_chk3.c += $(no-fortify-source) -D_FORTIFY_SOURCE=1
 CPPFLAGS-tst-realpath-chk.c += $(no-fortify-source) -D_FORTIFY_SOURCE=2
 CPPFLAGS-tst-chk-cancel.c += $(no-fortify-source) -D_FORTIFY_SOURCE=2
 CFLAGS-tst-sprintf-fortify-rdonly.c += $(no-fortify-source) -D_FORTIFY_SOURCE=2
+CFLAGS-tst-sprintf-fortify-rdonly-mod.c += $(no-fortify-source) -D_FORTIFY_SOURCE=2
+CFLAGS-tst-sprintf-fortify-rdonly-dlopen.c += $(no-fortify-source) -D_FORTIFY_SOURCE=2
+CFLAGS-tst-sprintf-fortify-rdonly-static.c += $(no-fortify-source) -D_FORTIFY_SOURCE=2
 CFLAGS-tst-fortify-syslog.c += $(no-fortify-source) -D_FORTIFY_SOURCE=2
 CFLAGS-tst-fortify-wide.c += $(no-fortify-source) -D_FORTIFY_SOURCE=2
+LDFLAGS-tst-sprintf-fortify-rdonly-static += $(relro-LDFLAGS)
+
+$(objpfx)tst-sprintf-fortify-rdonly: $(objpfx)tst-sprintf-fortify-rdonly-mod.so
+$(objpfx)tst-sprintf-fortify-rdonly.out: \
+  $(objpfx)tst-sprintf-fortify-rdonly-dlopen.so
+$(objpfx)tst-sprintf-fortify-rdonly-static: \
+  $(objpfx)tst-sprintf-fortify-rdonly-dlopen.o
+$(objpfx)tst-sprintf-fortify-rdonly-static.out: \
+  $(objpfx)tst-sprintf-fortify-rdonly-dlopen.so
+tst-sprintf-fortify-rdonly-static-ENV = \
+  LD_LIBRARY_PATH=$(objpfx):$(common-objpfx):$(common-objpfx)/elf
 
 # _FORTIFY_SOURCE tests.
 # Auto-generate tests for _FORTIFY_SOURCE for different levels, compilers and
@@ -269,6 +287,39 @@ LDFLAGS-tst-backtrace4 = -rdynamic
 LDFLAGS-tst-backtrace5 = -rdynamic
 LDFLAGS-tst-backtrace6 = -rdynamic
 
+$(objpfx)tst-backtrace1: $(shared-thread-library)
+
+# When SFrame is enabled, make sure the dwarf unwinder is also exercised.
+ifeq ($(enable-gsframe),yes)
+dw_unwind_pair := \
+  tst-backtrace1-nosframe:tst-backtrace1 \
+  tst-backtrace2-nosframe:tst-backtrace2 \
+  tst-backtrace3-nosframe:tst-backtrace3 \
+  tst-backtrace4-nosframe:tst-backtrace4 \
+  tst-backtrace5-nosframe:tst-backtrace5 \
+  tst-backtrace6-nosframe:tst-backtrace6
+
+first_column = $(foreach pair,$(dw_unwind_pair),$(word 1,$(subst :, ,$(pair))))
+tests-dw-unwind = $(patsubst %,$(objpfx)%.out,$(first_column))
+ifeq ($(run-built-tests),yes)
+tests-special += $(tests-dw-unwind)
+endif
+endif
+
+define make-strip-rule
+$(objpfx)$(word 1,$(subst :, ,$(1))): $(objpfx)$(word 2,$(subst :, ,$(1)))
+	$(STRIP) --remove-section=.sframe $$< -o $$@
+endef
+
+$(foreach pair,$(dw_unwind_pair),$(eval $(call make-strip-rule,$(pair))))
+
+define make-run-rule
+$(objpfx)$(word 1,$(subst :, ,$(1))).out: /dev/null $(objpfx)$(word 1,$(subst :, ,$(1)))
+	$$(make-test-out) > $$@; $$(evaluate-test)
+endef
+
+$(foreach pair,$(dw_unwind_pair),$(eval $(call make-run-rule,$(pair))))
+
 CFLAGS-tst-ssp-1.c += -fstack-protector-all
 
 # Disable compiler optimizations around vsprintf (the function under test).
@@ -280,6 +331,7 @@ tests = \
   backtrace-tst \
   test-stpcpy_chk \
   test-strcpy_chk \
+  tst-backtrace1 \
   tst-backtrace2 \
   tst-backtrace3 \
   tst-backtrace4 \
@@ -291,8 +343,13 @@ tests = \
   tst-longjmp_chk3 \
   tst-realpath-chk \
   tst-sprintf-fortify-rdonly \
+  tst-sprintf-fortify-rdonly-static \
   tst-sprintf-fortify-unchecked \
   # tests
+
+tests-static = \
+  tst-sprintf-fortify-rdonly-static \
+  # tests-static
 
 tests-time64 += \
   $(tests-all-time64-chk) \
@@ -301,6 +358,11 @@ tests-time64 += \
 tests-container += \
   tst-fortify-syslog \
   # tests-container
+
+modules-names += \
+  tst-sprintf-fortify-rdonly-dlopen \
+  tst-sprintf-fortify-rdonly-mod \
+  # modules-names
 
 ifeq ($(have-ssp),yes)
 tests += tst-ssp-1

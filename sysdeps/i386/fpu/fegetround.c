@@ -1,5 +1,5 @@
 /* Return current rounding direction.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ __fegetround (void)
 {
   int cw;
 
-  __asm__ ("fnstcw %0" : "=m" (*&cw));
+  __asm__ ("fnstcw %0" : "=m" (cw));
 
   return cw & 0xc00;
 }

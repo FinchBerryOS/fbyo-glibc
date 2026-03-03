@@ -1,5 +1,5 @@
 /* Allocate a stack suitable to be used with xclone or xsigaltstack.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -64,11 +64,10 @@ support_stack_alloc (size_t size)
                             MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE|MAP_STACK,
                             -1);
   /* Some architecture still requires executable stack for the signal return
-     trampoline, although PF_X could be overridden if PT_GNU_STACK is present.
-     However since glibc does not export such information with a proper ABI,
-     it uses the historical permissions.  */
-  int prot = PROT_READ | PROT_WRITE
-	     | (DEFAULT_STACK_PERMS & PF_X ? PROT_EXEC : 0);
+     trampoline, although PROT_EXEC could be overridden if PT_GNU_STACK is
+     present.  However since glibc does not export such information with a
+     proper ABI, it uses the historical permissions.  */
+  int prot = DEFAULT_STACK_PROT_PERMS;
   xmprotect (alloc_base + guardsize, stacksize, prot);
   memset (alloc_base + guardsize, 0xA5, stacksize);
   return (struct support_stack) { alloc_base + guardsize, stacksize, guardsize };

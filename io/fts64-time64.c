@@ -1,5 +1,5 @@
 /* File tree traversal functions LFS version.
-   Copyright (C) 2015-2025 Free Software Foundation, Inc.
+   Copyright (C) 2015-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 # define STRUCT_STAT __stat64_t64
 # define STAT __stat64_time64
 # define LSTAT __lstat64_time64
+# define FSTAT __fstat64_time64
 
 # include "fts.c"
 #endif

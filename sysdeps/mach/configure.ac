@@ -94,10 +94,16 @@ mach_RPC_CHECK(mach_host.defs, host_page_size,
 	       HAVE_HOST_PAGE_SIZE)
 mach_RPC_CHECK(mach_host.defs, host_get_uptime64,
 	       HAVE_HOST_GET_UPTIME64)
+mach_RPC_CHECK(mach_host.defs, host_get_time64,
+	       HAVE_HOST_GET_TIME64)
 mach_RPC_CHECK(gnumach.defs, thread_set_name,
 	       HAVE_MACH_THREAD_SET_NAME)
 mach_RPC_CHECK(gnumach.defs, thread_get_name,
 	       HAVE_MACH_THREAD_GET_NAME)
+mach_RPC_CHECK(gnumach.defs, vm_set_size_limit,
+               HAVE_MACH_VM_SET_SIZE_LIMIT)
+mach_RPC_CHECK(gnumach.defs, vm_get_size_limit,
+               HAVE_MACH_VM_GET_SIZE_LIMIT)
 
 AC_CHECK_HEADER(mach/machine/ndr_def.h, [dnl
   DEFINES="$DEFINES -DNDR_DEF_HEADER='<mach/machine/ndr_def.h>'"], [dnl

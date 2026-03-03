@@ -1,5 +1,5 @@
 /* Test getnetbyname and getnetbyaddr.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -46,6 +46,9 @@ handle_code (const struct resolv_response_context *ctx,
 {
   switch (code)
     {
+    case 0:
+      send_ptr (b, qname, qclass, qtype, "0.in-addr.arpa");
+      break;
     case 1:
       send_ptr (b, qname, qclass, qtype, "1.in-addr.arpa");
       break;
@@ -265,6 +268,9 @@ do_test (void)
                 "error: TRY_AGAIN\n");
 
   /* Lookup by address, success cases.  */
+  check_reverse (0,
+                 "name: 0.in-addr.arpa\n"
+                 "net: 0x00000000\n");
   check_reverse (1,
                  "name: 1.in-addr.arpa\n"
                  "net: 0x00000001\n");

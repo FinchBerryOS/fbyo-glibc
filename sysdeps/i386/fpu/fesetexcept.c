@@ -1,5 +1,5 @@
 /* Set given exception flags.  i386 version.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,6 +18,7 @@
 
 #include <fenv.h>
 #include <ldsodefs.h>
+#include <math-inline-asm.h>
 
 int
 fesetexcept (int excepts)
@@ -31,15 +32,16 @@ fesetexcept (int excepts)
 
   if (CPU_FEATURE_USABLE (SSE))
     {
-      /* Get the control word of the SSE unit.  */
       unsigned int mxcsr;
-      __asm__ ("stmxcsr %0" : "=m" (*&mxcsr));
+
+      /* Get the control word of the SSE unit.  */
+      stmxcsr_inline_asm (&mxcsr);
 
       /* Set relevant flags.  */
       mxcsr |= excepts;
 
       /* Put the new data in effect.  */
-      __asm__ ("ldmxcsr %0" : : "m" (*&mxcsr));
+      ldmxcsr_inline_asm (&mxcsr);
     }
   else
     {
@@ -47,7 +49,7 @@ fesetexcept (int excepts)
 
       /* Note: fnstenv masks all floating-point exceptions until the fldenv
 	 or fldcw below.  */
-      __asm__ ("fnstenv %0" : "=m" (*&temp));
+      __asm__ ("fnstenv %0" : "=m" (temp));
 
       /* Set relevant flags.  */
       temp.__status_word |= excepts;
@@ -57,12 +59,12 @@ fesetexcept (int excepts)
 	  /* Setting the exception flags may trigger a trap (at the next
 	     floating-point instruction, but that does not matter).
 	     ISO C23 (7.6.4.4) does not allow it.  */
-	  __asm__ volatile ("fldcw %0" : : "m" (*&temp.__control_word));
+	  __asm__ volatile ("fldcw %0" : : "m" (temp.__control_word));
 	  return -1;
 	}
 
       /* Store the new status word (along with the rest of the environment).  */
-      __asm__ ("fldenv %0" : : "m" (*&temp));
+      __asm__ ("fldenv %0" : : "m" (temp));
     }
 
   return 0;

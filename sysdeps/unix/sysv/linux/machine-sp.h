@@ -1,5 +1,5 @@
 /* Machine-specific function to return the stack pointer.  Linux version.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,6 +18,8 @@
 
 #ifndef _MACHINE_SP_H
 #define _MACHINE_SP_H
+
+#include <stackinfo.h>
 
 /* Return the current stack pointer.  */
 static inline uintptr_t

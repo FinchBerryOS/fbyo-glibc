@@ -1,5 +1,5 @@
 /* arch_fork definition for Linux fork implementation.
-   Copyright (C) 2014-2025 Free Software Foundation, Inc.
+   Copyright (C) 2014-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 #include <unistd.h>
 
 /* Call the clone syscall with fork semantic.  The CTID address is used
-   to store the child thread ID at its locationm, to erase it in child memory
+   to store the child thread ID at its location, to erase it in child memory
    when the child exits, and do a wakeup on the futex at that address.
 
    The architecture with non-default kernel abi semantic should correctly

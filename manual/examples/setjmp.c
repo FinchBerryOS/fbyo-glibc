@@ -1,5 +1,5 @@
 /* Introduction to Non-Local Exits
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -27,17 +27,6 @@ abort_to_main_loop (int status)
   longjmp (main_loop, status);
 }
 
-int
-main (void)
-{
-  while (1)
-    if (setjmp (main_loop))
-      puts ("Back at main loop....");
-    else
-      do_command ();
-}
-
-
 void
 do_command (void)
 {
@@ -46,4 +35,14 @@ do_command (void)
     abort_to_main_loop (-1);
   else
     exit (EXIT_SUCCESS);
+}
+
+int
+main (void)
+{
+  while (1)
+    if (setjmp (main_loop))
+      puts ("Back at main loop....");
+    else
+      do_command ();
 }

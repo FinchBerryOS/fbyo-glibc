@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Plot GNU C Library string microbenchmark output.
-# Copyright (C) 2019-2025 Free Software Foundation, Inc.
+# Copyright (C) 2019-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 #
 # The GNU C Library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ def gmean(numbers):
     Return:
         numpy array with geometric means of numbers along each column
     """
-    a = np.array(numbers, dtype=np.complex)
+    a = np.array(numbers, dtype=complex)
     means = a.prod(0) ** (1.0 / len(a))
     return np.real(means)
 

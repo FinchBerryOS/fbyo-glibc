@@ -1,5 +1,5 @@
 /* Enable floating-point exceptions.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
    <https://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
+#include <math-inline-asm.h>
 
 int
 feenableexcept (int excepts)
@@ -27,19 +28,19 @@ feenableexcept (int excepts)
   excepts &= FE_ALL_EXCEPT;
 
   /* Get the current control word of the x87 FPU.  */
-  __asm__ ("fstcw %0" : "=m" (*&new_exc));
+  __asm__ ("fstcw %0" : "=m" (new_exc));
 
   old_exc = (~new_exc) & FE_ALL_EXCEPT;
 
   new_exc &= ~excepts;
-  __asm__ ("fldcw %0" : : "m" (*&new_exc));
+  __asm__ ("fldcw %0" : : "m" (new_exc));
 
   /* And now the same for the SSE MXCSR register.  */
-  __asm__ ("stmxcsr %0" : "=m" (*&new));
+  stmxcsr_inline_asm (&new);
 
   /* The SSE exception masks are shifted by 7 bits.  */
   new &= ~(excepts << 7);
-  __asm__ ("ldmxcsr %0" : : "m" (*&new));
+  ldmxcsr_inline_asm (&new);
 
   return old_exc;
 }

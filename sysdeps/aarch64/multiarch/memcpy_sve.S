@@ -1,5 +1,5 @@
 /* Optimized memcpy for SVE.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -56,15 +56,9 @@
    The loop tail is handled by always copying 64 bytes from the end.
 */
 
-#if HAVE_AARCH64_SVE_ASM
-
 	.arch armv8.2-a+sve
 
 ENTRY (__memcpy_sve)
-	PTR_ARG (0)
-	PTR_ARG (1)
-	SIZE_ARG (2)
-
 	cmp	count, 128
 	b.hi	L(copy_long)
 	cntb	vlen
@@ -144,10 +138,6 @@ END (__memcpy_sve)
 
 
 ENTRY (__memmove_sve)
-	PTR_ARG (0)
-	PTR_ARG (1)
-	SIZE_ARG (2)
-
 	cmp	count, 128
 	b.hi	L(move_long)
 	cntb	vlen
@@ -207,4 +197,3 @@ L(return):
 	ret
 
 END (__memmove_sve)
-#endif

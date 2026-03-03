@@ -1,5 +1,5 @@
 /* Support code for testing libm functions (driver).
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -222,6 +222,17 @@ struct test_fl_f_data
     int exceptions;
   } rd, rn, rz, ru;
 };
+struct test_fL_f_data
+{
+  const char *arg_str;
+  FLOAT arg1;
+  long long int arg2;
+  struct
+  {
+    FLOAT expected;
+    int exceptions;
+  } rd, rn, rz, ru;
+};
 struct test_if_f_data
 {
   const char *arg_str;
@@ -237,6 +248,18 @@ struct test_fff_f_data
 {
   const char *arg_str;
   FLOAT arg1, arg2, arg3;
+  struct
+  {
+    FLOAT expected;
+    int exceptions;
+  } rd, rn, rz, ru;
+};
+struct test_fiu_f_data
+{
+  const char *arg_str;
+  FLOAT arg1;
+  int arg2;
+  unsigned int arg3;
   struct
   {
     FLOAT expected;
@@ -544,6 +567,8 @@ struct test_Ff_b1_data
 #define RUN_TEST_LOOP_fi_f RUN_TEST_LOOP_2_f
 #define RUN_TEST_fl_f RUN_TEST_2_f
 #define RUN_TEST_LOOP_fl_f RUN_TEST_LOOP_2_f
+#define RUN_TEST_fL_f RUN_TEST_2_f
+#define RUN_TEST_LOOP_fL_f RUN_TEST_LOOP_2_f
 #define RUN_TEST_if_f RUN_TEST_2_f
 #define RUN_TEST_LOOP_if_f RUN_TEST_LOOP_2_f
 #define RUN_TEST_3_f(ARG_STR, FUNC_NAME, ARG1, ARG2, ARG3,		\
@@ -567,6 +592,7 @@ struct test_Ff_b1_data
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_LOOP_fff_f RUN_TEST_LOOP_3_f
 #define RUN_TEST_LOOP_aaa_f RUN_TEST_LOOP_3_f
+#define RUN_TEST_LOOP_fiu_f RUN_TEST_LOOP_3_f
 #define RUN_TEST_fiu_M(ARG_STR, FUNC_NAME, ARG1, ARG2, ARG3,		\
 		       EXPECTED, EXCEPTIONS)				\
   do									\

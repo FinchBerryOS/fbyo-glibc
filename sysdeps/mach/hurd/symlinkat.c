@@ -1,5 +1,5 @@
 /* Create a symbolic link named relative to an open directory.  Hurd version.
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ __symlinkat (const char *from, int fd, const char *to)
 
   if (! *name)
     /* Can't link to the existing directory itself.  */
-    err = ENOTDIR;
+    err = EEXIST;
   else
     /* Create a new, unlinked node in the target directory.  */
     err = __dir_mkfile (dir, O_WRITE, 0777 & ~_hurd_umask, &node);

@@ -1,5 +1,5 @@
 /* Macros for controlling diagnostic output from the compiler.
-   Copyright (C) 2014-2025 Free Software Foundation, Inc.
+   Copyright (C) 2014-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -86,9 +86,12 @@
 #ifndef __clang__
 # define DIAG_IGNORE_NEEDS_COMMENT_GCC(VERSION, WARNING) \
   DIAG_IGNORE_NEEDS_COMMENT (VERSION, WARNING)
+# define DIAG_IGNORE_Os_NEEDS_COMMENT_GCC(VERSION, WARNING) \
+  DIAG_IGNORE_Os_NEEDS_COMMENT (VERSION, WARNING)
 # define DIAG_IGNORE_NEEDS_COMMENT_CLANG(version, option)
 #else
 # define DIAG_IGNORE_NEEDS_COMMENT_GCC(VERSION, WARNING)
+# define DIAG_IGNORE_Os_NEEDS_COMMENT_GCC(VERSION, WARNING)
 # define DIAG_IGNORE_NEEDS_COMMENT_CLANG(version, option) \
   _Pragma (_DIAG_STR (clang diagnostic ignored option))
 #endif

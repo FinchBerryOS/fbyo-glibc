@@ -185,219 +185,302 @@ else
 default-abi = lp64"
 fi
 
-# Only consider BTI supported if -mbranch-protection=bti is
-# on by default in the compiler and the linker produces
-# binaries with GNU property notes in PT_GNU_PROPERTY segment.
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for BTI support" >&5
-printf %s "checking for BTI support... " >&6; }
-if test ${libc_cv_aarch64_bti+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e)   cat > conftest.c <<EOF
-void foo (void) { }
-EOF
-  libc_cv_aarch64_bti=no
-  if { ac_try='${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS -nostdlib -nostartfiles $no_ssp -shared -fPIC -o conftest.so conftest.c'
-  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; } \
-     && { ac_try='$READELF -lW conftest.so | grep -q GNU_PROPERTY'
-  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; } \
-     && { ac_try='$READELF -nW conftest.so | grep -q "NT_GNU_PROPERTY_TYPE_0.*AArch64 feature:.* BTI"'
-  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; }
-  then
-    libc_cv_aarch64_bti=yes
-  fi
-  rm -rf conftest.* ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_cv_aarch64_bti" >&5
-printf "%s\n" "$libc_cv_aarch64_bti" >&6; }
-config_vars="$config_vars
-aarch64-bti = $libc_cv_aarch64_bti"
-if test $libc_cv_aarch64_bti = yes; then
-  printf "%s\n" "#define HAVE_AARCH64_BTI 1" >>confdefs.h
-
-fi
-
-# Check if glibc is built with return address signing, i.e.
-# if -mbranch-protection=pac-ret is on. We need this because
-# pac-ret relies on unwinder support so it's not safe to use
-# it in assembly code unconditionally, but there is no
-# feature test macro for it in gcc.
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if pac-ret is enabled" >&5
-printf %s "checking if pac-ret is enabled... " >&6; }
-if test ${libc_cv_aarch64_pac_ret+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e)   cat > conftest.c <<EOF
-int bar (void);
-int foo (void) { return bar () + 1; }
-EOF
-  libc_cv_aarch64_pac_ret=no
-  if { ac_try='${CC-cc} $CFLAGS $CPPFLAGS -S -o conftest.s conftest.c'
-  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; } \
-     && { ac_try='grep -q -E '\''(hint( |	)+25|paciasp)'\'' conftest.s'
-  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; }
-  then
-    libc_cv_aarch64_pac_ret=yes
-  fi
-  rm -rf conftest.* ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_cv_aarch64_pac_ret" >&5
-printf "%s\n" "$libc_cv_aarch64_pac_ret" >&6; }
-if test $libc_cv_aarch64_pac_ret = yes; then
-  printf "%s\n" "#define HAVE_AARCH64_PAC_RET 1" >>confdefs.h
-
-fi
-
-# Check if binutils supports variant PCS symbols.
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for variant PCS support" >&5
-printf %s "checking for variant PCS support... " >&6; }
-if test ${libc_cv_aarch64_variant_pcs+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e)   cat > conftest.S <<EOF
-.global foo
-.type foo, %function
-.variant_pcs foo
-foo:
-	ret
-.global bar
-.type bar, %function
-bar:
-	b foo
-EOF
-  libc_cv_aarch64_variant_pcs=no
-  if { ac_try='${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS -nostdlib -nostartfiles $no_ssp -shared -fPIC -o conftest.so conftest.S'
-  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; } \
-     && { ac_try='$READELF -dW conftest.so | grep -q AARCH64_VARIANT_PCS'
-  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; }
-  then
-    libc_cv_aarch64_variant_pcs=yes
-  fi
-  rm -rf conftest.* ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_cv_aarch64_variant_pcs" >&5
-printf "%s\n" "$libc_cv_aarch64_variant_pcs" >&6; }
-config_vars="$config_vars
-aarch64-variant-pcs = $libc_cv_aarch64_variant_pcs"
-
-# Check if asm support armv8.2-a+sve
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SVE support in assembler" >&5
-printf %s "checking for SVE support in assembler... " >&6; }
-if test ${libc_cv_aarch64_sve_asm+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) cat > conftest.s <<\EOF
-	.arch armv8.2-a+sve
-	ptrue p0.b
-EOF
-if { ac_try='${CC-cc} -c conftest.s 1>&5'
-  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; }; then
-  libc_cv_aarch64_sve_asm=yes
-else
-  libc_cv_aarch64_sve_asm=no
-fi
-rm -f conftest* ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_cv_aarch64_sve_asm" >&5
-printf "%s\n" "$libc_cv_aarch64_sve_asm" >&6; }
-if test $libc_cv_aarch64_sve_asm = yes; then
-  printf "%s\n" "#define HAVE_AARCH64_SVE_ASM 1" >>confdefs.h
-
-fi
-
 if test x"$build_mathvec" = xnotset; then
   build_mathvec=yes
 fi
 
-# Check if compiler supports SVE ACLE.
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for availability of SVE ACLE" >&5
-printf %s "checking for availability of SVE ACLE... " >&6; }
-if test ${libc_cv_aarch64_sve_acle+y}
+if test $build_mathvec = no; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: mathvec is disabled, this results in incomplete ABI." >&5
+printf "%s\n" "$as_me: WARNING: mathvec is disabled, this results in incomplete ABI." >&2;}
+fi
+
+libc_cv_support_sframe=yes
+
+# Check if compilers support BTI in branch protection:
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if compiler supports -mbranch-protection=bti" >&5
+printf %s "checking if compiler supports -mbranch-protection=bti... " >&6; }
+if test ${libc_cv_cc_bti+y}
 then :
   printf %s "(cached) " >&6
 else case e in #(
-  e)   cat > conftest.c <<EOF
-#include <arm_sve.h>
-EOF
-  if { ac_try='${CC-cc} $CFLAGS $CPPFLAGS -fsyntax-only -ffreestanding conftest.c'
+  e) if { ac_try='${CC-cc} -Werror -mbranch-protection=bti -xc /dev/null -S -o /dev/null'
   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
   (eval $ac_try) 2>&5
   ac_status=$?
   printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; }; then
-    libc_cv_aarch64_sve_acle=yes
-  else
-    libc_cv_aarch64_sve_acle=no
-  fi
-  rm conftest.c ;;
+  test $ac_status = 0; }; }
+then :
+  libc_cv_cc_bti=yes
+else case e in #(
+  e) libc_cv_cc_bti=no ;;
+esac
+fi ;;
 esac
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_cv_aarch64_sve_acle" >&5
-printf "%s\n" "$libc_cv_aarch64_sve_acle" >&6; }
-
-# Check if compiler is sufficient to build mathvec
-if test $build_mathvec = yes; then
-  fail=no
-  if test $libc_cv_aarch64_variant_pcs = no; then
-    fail=yes
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: mathvec is enabled but linker does not support variant PCS." >&5
-printf "%s\n" "$as_me: WARNING: mathvec is enabled but linker does not support variant PCS." >&2;}
-  fi
-  if test $libc_cv_aarch64_sve_asm = no; then
-    fail=yes
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: mathvec is enabled but assembler does not support SVE." >&5
-printf "%s\n" "$as_me: WARNING: mathvec is enabled but assembler does not support SVE." >&2;}
-  fi
-  if test $libc_cv_aarch64_sve_acle = no; then
-    fail=yes
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: mathvec is enabled but compiler does not have SVE ACLE." >&5
-printf "%s\n" "$as_me: WARNING: mathvec is enabled but compiler does not have SVE ACLE." >&2;}
-  fi
-  if test $fail = yes; then
-    as_fn_error $? "use a compatible toolchain or configure with --disable-mathvec (this results in incomplete ABI)." "$LINENO" 5
-  fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_cv_cc_bti" >&5
+printf "%s\n" "$libc_cv_cc_bti" >&6; }
+if test "$TEST_CC" = "$CC"; then
+  libc_cv_test_cc_bti=$libc_cv_cc_bti
 else
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: mathvec is disabled, this results in incomplete ABI." >&5
-printf "%s\n" "$as_me: WARNING: mathvec is disabled, this results in incomplete ABI." >&2;}
+
+saved_CC="$CC"
+CC="$TEST_CC"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if compiler supports -mbranch-protection=bti in testing" >&5
+printf %s "checking if compiler supports -mbranch-protection=bti in testing... " >&6; }
+if test ${libc_cv_test_cc_bti+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) if { ac_try='${CC-cc} -Werror -mbranch-protection=bti -xc /dev/null -S -o /dev/null'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+then :
+  libc_cv_test_cc_bti=yes
+else case e in #(
+  e) libc_cv_test_cc_bti=no
+ ;;
+esac
+fi ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_cv_test_cc_bti" >&5
+printf "%s\n" "$libc_cv_test_cc_bti" >&6; }
+
+CC="$saved_CC"
+
+fi
+
+
+# Check if linker supports BTI marking
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for linker that supports -z force-bti" >&5
+printf %s "checking for linker that supports -z force-bti... " >&6; }
+libc_linker_feature=no
+cat > conftest.c <<EOF
+int _start (void) { return 42; }
+EOF
+if { ac_try='${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS $no_ssp
+		  -Wl,-z,force-bti -nostdlib -nostartfiles
+		  -fPIC -shared -o conftest.so conftest.c
+		  1>&5'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+then
+  if ${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS $no_ssp -Wl,-z,force-bti -nostdlib \
+      -nostartfiles -fPIC -shared -o conftest.so conftest.c 2>&1 \
+      | grep "warning: -z force-bti ignored" > /dev/null 2>&1; then
+    true
+  else
+    libc_linker_feature=yes
+  fi
+fi
+rm -f conftest*
+if test $libc_linker_feature = yes; then
+  libc_cv_ld_bti=yes
+else
+  libc_cv_ld_bti=no
+
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_linker_feature" >&5
+printf "%s\n" "$libc_linker_feature" >&6; }
+
+# Check if toolchain is enabled to support BTI
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if toolchain is enabled to support BTI" >&5
+printf %s "checking if toolchain is enabled to support BTI... " >&6; }
+libc_elf_property=no
+cat > conftest.c <<EOF
+int foo (void) { return 42; }
+EOF
+if { ac_try='${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS
+		  -fPIC -shared -o conftest.so conftest.c
+		  1>&5'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+then
+  if { ac_try='LC_ALL=C $READELF -n --wide conftest.so | grep "AArch64 feature: .*BTI" 1>&5'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+  then
+    libc_elf_property=yes
+  else
+    libc_elf_property=no
+  fi
+fi
+rm -f conftest*
+if test $libc_elf_property = yes; then
+  libc_cv_bti_supported=yes
+else
+  libc_cv_bti_supported=no
+
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_elf_property" >&5
+printf "%s\n" "$libc_elf_property" >&6; }
+
+if test $libc_cv_cc_bti = yes && \
+  test $libc_cv_test_cc_bti = yes && \
+  test $libc_cv_ld_bti = yes && \
+  test $libc_cv_bti_supported = yes
+then
+  config_vars="$config_vars
+have-test-bti = yes"
+else
+  config_vars="$config_vars
+have-test-bti = no"
+fi
+
+# Check if compilers support GCS in branch protection:
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if compiler supports -mbranch-protection=gcs" >&5
+printf %s "checking if compiler supports -mbranch-protection=gcs... " >&6; }
+if test ${libc_cv_cc_gcs+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) if { ac_try='${CC-cc} -Werror -mbranch-protection=gcs -xc /dev/null -S -o /dev/null'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+then :
+  libc_cv_cc_gcs=yes
+else case e in #(
+  e) libc_cv_cc_gcs=no ;;
+esac
+fi ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_cv_cc_gcs" >&5
+printf "%s\n" "$libc_cv_cc_gcs" >&6; }
+if test "$TEST_CC" = "$CC"; then
+  libc_cv_test_cc_gcs=$libc_cv_cc_gcs
+else
+
+saved_CC="$CC"
+CC="$TEST_CC"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if compiler supports -mbranch-protection=gcs in testing" >&5
+printf %s "checking if compiler supports -mbranch-protection=gcs in testing... " >&6; }
+if test ${libc_cv_test_cc_gcs+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) if { ac_try='${CC-cc} -Werror -mbranch-protection=gcs -xc /dev/null -S -o /dev/null'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+then :
+  libc_cv_test_cc_gcs=yes
+else case e in #(
+  e) libc_cv_test_cc_gcs=no
+ ;;
+esac
+fi ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_cv_test_cc_gcs" >&5
+printf "%s\n" "$libc_cv_test_cc_gcs" >&6; }
+
+CC="$saved_CC"
+
+fi
+
+
+# Check if linker supports GCS marking
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for linker that supports -z gcs=always" >&5
+printf %s "checking for linker that supports -z gcs=always... " >&6; }
+libc_linker_feature=no
+cat > conftest.c <<EOF
+int _start (void) { return 42; }
+EOF
+if { ac_try='${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS $no_ssp
+		  -Wl,-z,gcs=always -nostdlib -nostartfiles
+		  -fPIC -shared -o conftest.so conftest.c
+		  1>&5'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+then
+  if ${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS $no_ssp -Wl,-z,gcs=always -nostdlib \
+      -nostartfiles -fPIC -shared -o conftest.so conftest.c 2>&1 \
+      | grep "warning: -z gcs=always ignored" > /dev/null 2>&1; then
+    true
+  else
+    libc_linker_feature=yes
+  fi
+fi
+rm -f conftest*
+if test $libc_linker_feature = yes; then
+  libc_cv_ld_gcs=yes
+else
+  libc_cv_ld_gcs=no
+
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_linker_feature" >&5
+printf "%s\n" "$libc_linker_feature" >&6; }
+
+# Check if toolchain is enabled to support GCS
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if toolchain is enabled to support GCS" >&5
+printf %s "checking if toolchain is enabled to support GCS... " >&6; }
+libc_elf_property=no
+cat > conftest.c <<EOF
+int foo (void) { return 42; }
+EOF
+if { ac_try='${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS
+		  -fPIC -shared -o conftest.so conftest.c
+		  1>&5'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+then
+  if { ac_try='LC_ALL=C $READELF -n --wide conftest.so | grep "AArch64 feature: .*GCS" 1>&5'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+  then
+    libc_elf_property=yes
+  else
+    libc_elf_property=no
+  fi
+fi
+rm -f conftest*
+if test $libc_elf_property = yes; then
+  libc_cv_gcs_supported=yes
+else
+  libc_cv_gcs_supported=no
+
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_elf_property" >&5
+printf "%s\n" "$libc_elf_property" >&6; }
+
+if test $libc_cv_cc_gcs = yes && \
+  test $libc_cv_test_cc_gcs = yes && \
+  test $libc_cv_ld_gcs = yes && \
+  test $libc_cv_gcs_supported = yes
+then
+  config_vars="$config_vars
+have-test-gcs = yes"
+else
+  config_vars="$config_vars
+have-test-gcs = no"
 fi
 

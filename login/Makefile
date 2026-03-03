@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2025 Free Software Foundation, Inc.
+# Copyright (C) 1996-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -110,7 +110,6 @@ endif # $(have-GLIBC_2.33)
 include ../Rules
 
 CFLAGS-getpt.c += -fexceptions
-CFLAGS-getlogin_r.c += $(config-cflags-wno-ignored-attributes)
 
 # Exclude fortified routines from being built with _FORTIFY_SOURCE
 routines_no_fortify += \

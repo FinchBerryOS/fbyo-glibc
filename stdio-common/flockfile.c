@@ -1,5 +1,5 @@
 /* Lock I/O stream.  Singlethreaded version.
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,5 +24,6 @@ __flockfile (FILE *stream)
 {
   _IO_lock_lock (*stream->_lock);
 }
+libc_hidden_def(__flockfile)
 weak_alias (__flockfile, flockfile);
 weak_alias (__flockfile, _IO_flockfile)

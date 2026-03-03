@@ -1,5 +1,5 @@
 /* Convert string representation of a number into an integer value.
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -117,7 +117,7 @@ __strtol (const STRING_TYPE *nptr, STRING_TYPE **endptr, int base)
   return INTERNAL (__strtol_l) (nptr, endptr, base, 0, false,
 				_NL_CURRENT_LOCALE);
 }
-weak_alias (__strtol, strtol)
+static_weak_alias (__strtol, strtol)
 libc_hidden_weak (strtol)
 
 INT

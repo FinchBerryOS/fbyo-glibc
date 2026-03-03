@@ -1,5 +1,5 @@
 /* Wrapper for sprintf.  IEEE128 version.
-   Copyright (C) 2019-2025 Free Software Foundation, Inc.
+   Copyright (C) 2019-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -34,3 +34,4 @@ ___ieee128_sprintf (char *s, const char *format, ...)
 }
 strong_alias (___ieee128_sprintf, __sprintfieee128)
 hidden_def (___ieee128_sprintf)
+asm (".local sprintf\n" ".set sprintf, __sprintfieee128");

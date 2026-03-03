@@ -1,5 +1,5 @@
 /* RISC-V hardware feature probing support on Linux
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -23,13 +23,13 @@
 #include <sysdep-vdso.h>
 
 int __riscv_hwprobe (struct riscv_hwprobe *pairs, size_t pair_count,
-		     size_t cpu_count, unsigned long int *cpus,
+		     size_t cpusetsize, __RISCV_HWPROBE_CPUS_TYPE cpus,
 		     unsigned int flags)
 {
   int r;
 
   r = INTERNAL_VSYSCALL (riscv_hwprobe, 5, pairs, pair_count,
-                         cpu_count, cpus, flags);
+                         cpusetsize, cpus.__ul, flags);
 
   /* Negate negative errno values to match pthreads API. */
   return -r;

@@ -1,5 +1,5 @@
 /* Measure memset functions.
-   Copyright (C) 2013-2025 Free Software Foundation, Inc.
+   Copyright (C) 2013-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -148,6 +148,7 @@ test_main (void)
 #define libc_hidden_def(X)
 #define libc_hidden_weak(X)
 #define weak_alias(X,Y)
+#define static_weak_alias(X,Y)
 #ifndef WIDE
 # undef MEMSET
 # define MEMSET generic_memset

@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,6 +17,15 @@
 
 #include "pthreadP.h"
 #include <shlib-compat.h>
+
+#define __ARCH_ACQ_INSTR        "isync"
+#if defined _ARCH_PWR6 || defined _ARCH_PWR6X
+# define MUTEX_HINT_ACQ	",1"
+# define MUTEX_HINT_REL	",0"
+#else
+# define MUTEX_HINT_ACQ
+# define MUTEX_HINT_REL
+#endif
 
 int
 __pthread_spin_lock (pthread_spinlock_t *lock)

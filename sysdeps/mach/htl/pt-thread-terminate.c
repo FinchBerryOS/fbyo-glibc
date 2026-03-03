@@ -1,5 +1,5 @@
 /* Deallocate the kernel thread resources.  Mach version.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -91,3 +91,4 @@ __pthread_thread_terminate (struct __pthread *thread)
   /* We are out of luck.  */
   assert_perror (err);
 }
+libc_hidden_def (__pthread_thread_terminate)

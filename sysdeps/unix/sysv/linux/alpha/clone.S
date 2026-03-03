@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -49,6 +49,8 @@ __clone:
 	/* Sanity check arguments.  */
 	ldiq	v0, EINVAL
 	beq	a0, SYSCALL_ERROR_LABEL	/* no NULL function pointers */
+	/* Align stack.  */
+	bic	a1, 15, a1
 	beq	a1, SYSCALL_ERROR_LABEL	/* no NULL stack pointers */
 
 	/* Save the fn ptr and arg on the new stack.  */

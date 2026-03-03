@@ -1,5 +1,5 @@
 /* Clear given exceptions in current floating-point environment.
-   Copyright (C) 2020-2025 Free Software Foundation, Inc.
+   Copyright (C) 2020-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 #include <fpu_control.h>
 
 int
-feclearexcept (int excepts)
+__feclearexcept (int excepts)
 {
   unsigned int fpsr;
 
@@ -33,4 +33,6 @@ feclearexcept (int excepts)
 
   return 0;
 }
+libm_hidden_def (__feclearexcept)
+weak_alias (__feclearexcept, feclearexcept)
 libm_hidden_def (feclearexcept)

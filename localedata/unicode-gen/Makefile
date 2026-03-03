@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2025 Free Software Foundation, Inc.
+# Copyright (C) 2015-2026 Free Software Foundation, Inc.
 # Copyright The GNU Toolchain Authors.
 # This file is part of the GNU C Library.
 
@@ -36,7 +36,7 @@
 # files for making modifications.
 
 
-UNICODE_VERSION = 16.0.0
+UNICODE_VERSION = 17.0.0
 
 PYTHON3 = python3
 WGET = wget

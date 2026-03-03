@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -85,5 +85,5 @@ __feupdateenv (const fenv_t *envp)
   return 0;
 }
 libm_hidden_def (__feupdateenv)
-weak_alias (__feupdateenv, feupdateenv)
+static_weak_alias (__feupdateenv, feupdateenv)
 libm_hidden_weak (feupdateenv)

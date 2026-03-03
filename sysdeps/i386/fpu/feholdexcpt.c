@@ -1,5 +1,5 @@
 /* Store current floating-point environment and clear exceptions.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
 #include <fenv.h>
 #include <unistd.h>
 #include <ldsodefs.h>
-#include <dl-procinfo.h>
+#include <math-inline-asm.h>
 
 int
 __feholdexcept (fenv_t *envp)
@@ -34,12 +34,12 @@ __feholdexcept (fenv_t *envp)
       unsigned int xwork;
 
       /* Get the current control word.  */
-      __asm__ ("stmxcsr %0" : "=m" (envp->__eip));
+      stmxcsr_inline_asm (&envp->__eip);
 
       /* Set all exceptions to non-stop and clear them.  */
       xwork = (envp->__eip | 0x1f80) & ~0x3f;
 
-      __asm__ ("ldmxcsr %0" : : "m" (*&xwork));
+      ldmxcsr_inline_asm (&xwork);
     }
 
   return 0;

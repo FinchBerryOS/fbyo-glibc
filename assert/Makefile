@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2025 Free Software Foundation, Inc.
+# Copyright (C) 1991-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -36,10 +36,17 @@ routines := \
 tests := \
   test-assert \
   test-assert-2 \
+  test-assert-c99 \
+  test-assert-gnu99 \
   test-assert-perr \
+  test-assert-variadic \
   tst-assert-c++ \
   tst-assert-g++ \
+  tst-assert-sa-2025-0001 \
   # tests
+
+CFLAGS-test-assert-c99.c += -std=c99
+CFLAGS-test-assert-gnu99.c += -std=gnu99
 
 ifeq ($(have-cxx-thread_local),yes)
 CFLAGS-tst-assert-c++.o = -std=c++11

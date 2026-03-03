@@ -1,5 +1,5 @@
 /* Single-precision pow function.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -41,11 +41,10 @@ relerr_exp2: 1.69 * 2^-34 (Relative error of exp2(ylogx).)
 
 /* Subnormal input is normalized so ix has negative biased exponent.
    Output is multiplied by N (POWF_SCALE) if TOINT_INTRINICS is set.  */
-static inline double_t
+static inline double
 log2_inline (uint32_t ix)
 {
-  /* double_t for better performance on targets with FLT_EVAL_METHOD==2.  */
-  double_t z, r, r2, r4, p, q, y, y0, invc, logc;
+  double z, r, r2, r4, p, q, y, y0, invc, logc;
   uint32_t iz, top, tmp;
   int k, i;
 
@@ -59,11 +58,11 @@ log2_inline (uint32_t ix)
   k = (int32_t) top >> (23 - POWF_SCALE_BITS); /* arithmetic shift */
   invc = T[i].invc;
   logc = T[i].logc;
-  z = (double_t) asfloat (iz);
+  z = asfloat (iz);
 
   /* log2(x) = log1p(z/c-1)/ln2 + log2(c) + k */
   r = z * invc - 1;
-  y0 = logc + (double_t) k;
+  y0 = logc + (double) k;
 
   /* Pipelined polynomial evaluation to approximate log1p(r)/ln2.  */
   r2 = r * r;
@@ -85,12 +84,11 @@ log2_inline (uint32_t ix)
 /* The output of log2 and thus the input of exp2 is either scaled by N
    (in case of fast toint intrinsics) or not.  The unscaled xd must be
    in [-1021,1023], sign_bias sets the sign of the result.  */
-static inline double_t
+static inline double
 exp2_inline (double_t xd, uint32_t sign_bias)
 {
   uint64_t ki, ski, t;
-  /* double_t for better performance on targets with FLT_EVAL_METHOD==2.  */
-  double_t kd, z, r, r2, y, s;
+  double kd, z, r, r2, y, s;
 
 #if TOINT_INTRINSICS
 # define C __exp2f_data.poly_scaled
@@ -101,6 +99,7 @@ exp2_inline (double_t xd, uint32_t sign_bias)
 # define C __exp2f_data.poly
 # define SHIFT __exp2f_data.shift_scaled
   /* x = k/N + r with r in [-1/(2N), 1/(2N)] */
+  xd = (double) xd; /* Force double precision if FLT_EVAL_METHOD == 2.  */
   kd = (double) (xd + SHIFT); /* Rounding to double precision is required.  */
   ki = asuint64 (kd);
   kd -= SHIFT; /* k/N */
@@ -171,7 +170,7 @@ __powf (float x, float y)
 	}
       if (__glibc_unlikely (zeroinfnan (ix)))
 	{
-	  float_t x2 = x * x;
+	  float x2 = x * x;
 	  if (ix & 0x80000000 && checkint (iy) == 1)
 	    {
 	      x2 = -x2;
@@ -202,30 +201,40 @@ __powf (float x, float y)
 	  ix -= 23 << 23;
 	}
     }
-  double_t logx = log2_inline (ix);
-  double_t ylogx = y * logx; /* Note: cannot overflow, y is single prec.  */
+  /* y * log2(x) cannot overflow since y is single precision.  */
+  double ylogx = (double) y * log2_inline (ix);
+
+  /* Check whether |y*log(x)| >= 126.  */
   if (__glibc_unlikely ((asuint64 (ylogx) >> 47 & 0xffff)
 			>= asuint64 (126.0 * POWF_SCALE) >> 47))
     {
-      /* |y*log(x)| >= 126.  */
-      if (ylogx > 0x1.fffffffd1d571p+6 * POWF_SCALE)
-	/* |x^y| > 0x1.ffffffp127.  */
-	return __math_oflowf (sign_bias);
-      if (WANT_ROUNDING && WANT_ERRNO
-	  && ylogx > 0x1.fffffffa3aae2p+6 * POWF_SCALE)
-	/* |x^y| > 0x1.fffffep127, check if we round away from 0.  */
-	if ((!sign_bias
-	     && math_narrow_eval (1.0f + math_opt_barrier (0x1p-25f)) != 1.0f)
-	    || (sign_bias
-		&& math_narrow_eval (-1.0f - math_opt_barrier (0x1p-25f))
-		     != -1.0f))
-	  return __math_oflowf (sign_bias);
+
       if (ylogx <= -150.0 * POWF_SCALE)
 	return __math_uflowf (sign_bias);
-#if WANT_ERRNO_UFLOW
-      if (ylogx < -149.0 * POWF_SCALE)
+
+      if (WANT_ERRNO_UFLOW && ylogx < -149.0 * POWF_SCALE)
 	return __math_may_uflowf (sign_bias);
-#endif
+
+      /* |x^y| > 0x1.ffffffp127.  */
+      if (!WANT_ROUNDING && ylogx > 0x1.fffffffd1d571p+6 * POWF_SCALE)
+	return __math_oflowf (sign_bias);
+
+      if (WANT_ROUNDING && ylogx > 0x1.fffffffa3aae2p+6 * POWF_SCALE)
+	{
+	  if (ylogx > 0x1.fffffffd1d571p+6 * POWF_SCALE)
+	    return __math_oflowf (sign_bias);
+
+	  /* |x^y| > 0x1.fffffep127, check if we round away from 0.  */
+	  if (ylogx != 0x1.fffffffa3aae3p+6 * POWF_SCALE)
+	    {
+	      float x = math_opt_barrier (0x1p-25f);
+	      if ((!sign_bias && math_narrow_eval (1.0f + x) != 1.0f)
+		  || (sign_bias && math_narrow_eval (-1.0f - x) != -1.0f))
+		return __math_oflowf (sign_bias);
+	    }
+
+	  return sign_bias ? -0x1.fffffep127 : 0x1.fffffep127;
+	}
     }
   return (float) exp2_inline (ylogx, sign_bias);
 }

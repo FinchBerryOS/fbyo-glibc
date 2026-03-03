@@ -1,5 +1,5 @@
 /* Iterate through the elements of an argz block.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -36,5 +36,5 @@ __argz_next (const char *argz, size_t argz_len, const char *entry)
       return NULL;
 }
 libc_hidden_def (__argz_next)
-weak_alias (__argz_next, argz_next)
+static_weak_alias (__argz_next, argz_next)
 libc_hidden_weak (argz_next)

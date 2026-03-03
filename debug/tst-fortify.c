@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2026 Free Software Foundation, Inc.
    Copyright The GNU Toolchain Authors.
    This file is part of the GNU C Library.
 
@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#include <arpa/inet.h>
 #include <limits.h>
 #include <locale.h>
 #include <obstack.h>
@@ -200,6 +201,10 @@ do_test (void)
   if (memcmp (buf, "aabcda\0\0\0\0", 10))
     FAIL ();
 
+  memset_explicit (buf + 5, 0x1234, 3);
+  if (memcmp (buf, "aabcd444\0\0", 10))
+    FAIL ();
+
   strcpy (buf + 4, "EDCBA");
   if (memcmp (buf, "aabcEDCBA", 10))
     FAIL ();
@@ -243,6 +248,10 @@ do_test (void)
 
   explicit_bzero (buf + 6, l0 + 4);
   if (memcmp (buf, "aabcda\0\0\0\0", 10))
+    FAIL ();
+
+  memset_explicit (buf + 5, 0x1234, l0 + 3);
+  if (memcmp (buf, "aabcd444\0\0", 10))
     FAIL ();
 
   strcpy (buf + 4, str1 + 5);
@@ -303,6 +312,10 @@ do_test (void)
 
   explicit_bzero (a.buf1 + 6, l0 + 4);
   if (memcmp (a.buf1, "aabcda\0\0\0\0", 10))
+    FAIL ();
+
+  memset_explicit (a.buf1 + 5, 0x1234, l0 + 3);
+  if (memcmp (a.buf1, "aabcd444\0\0", 10))
     FAIL ();
 
 #if __USE_FORTIFY_LEVEL < 2
@@ -402,6 +415,14 @@ do_test (void)
 
   CHK_FAIL_START
   explicit_bzero (buf + 9, l0 + 2);
+  CHK_FAIL_END
+
+  CHK_FAIL_START
+  memset_explicit (buf + 9, 1, 2);
+  CHK_FAIL_END
+
+  CHK_FAIL_START
+  memset_explicit (buf + 9, 4, l0 + 2);
   CHK_FAIL_END
 
   CHK_FAIL_START
@@ -519,6 +540,14 @@ do_test (void)
 
   CHK_FAIL_START
   explicit_bzero (a.buf1 + 9, l0 + 2);
+  CHK_FAIL_END
+
+  CHK_FAIL_START
+  memset_explicit (a.buf1 + 9, 0, 2);
+  CHK_FAIL_END
+
+  CHK_FAIL_START
+  memset_explicit (a.buf1 + 9, 128, l0 + 2);
   CHK_FAIL_END
 
 # if __USE_FORTIFY_LEVEL >= 2
@@ -1830,6 +1859,50 @@ do_test (void)
   ppoll (fds, l0 + 2, NULL, NULL);
   CHK_FAIL_END
 # endif
+#endif
+
+  struct in6_addr addr6 = {};
+  struct in_addr addr = {};
+  char addrstr6[INET6_ADDRSTRLEN];
+  char addrstr[INET_ADDRSTRLEN];
+
+  if (inet_ntop (AF_INET6, &addr6, addrstr6, sizeof (addrstr6)) == NULL)
+    FAIL ();
+  if (inet_ntop (AF_INET, &addr, addrstr, sizeof (addrstr)) == NULL)
+    FAIL ();
+
+#if __USE_FORTIFY_LEVEL >= 1
+  CHK_FAIL_START
+  inet_ntop (AF_INET6, &addr6, buf, INET6_ADDRSTRLEN);
+  CHK_FAIL_END
+
+  CHK_FAIL_START
+  inet_ntop (AF_INET, &addr, buf, INET_ADDRSTRLEN);
+  CHK_FAIL_END
+#endif
+
+  const char *ipv4str = "127.0.0.1";
+  const char *ipv6str = "::1";
+
+  if (inet_pton (AF_INET, ipv4str, (void *) &addr) != 1)
+    FAIL ();
+  if (inet_pton (AF_INET6, ipv6str, (void *) &addr6) != 1)
+    FAIL ();
+
+#if __USE_FORTIFY_LEVEL >= 1
+  char smallbuf[2];
+
+  CHK_FAIL_START
+  inet_pton (AF_INET, ipv4str, (void *) smallbuf);
+  CHK_FAIL_END
+
+  CHK_FAIL_START
+  inet_pton (AF_INET6, ipv6str, (void *) smallbuf);
+  CHK_FAIL_END
+
+  CHK_FAIL_START
+  inet_pton (AF_INET6, ipv6str, (void *) &addr);
+  CHK_FAIL_END
 #endif
 
   return ret;

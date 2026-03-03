@@ -1,5 +1,5 @@
 /* Check DT_AUDIT with dlmopen.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -103,8 +103,7 @@ do_test (int argc, char *argv[])
 
   /* Some hooks are called more than once but the test only check if any
      is called at least once.  */
-  FILE *out = fmemopen (result.err.buffer, result.err.length, "r");
-  TEST_VERIFY (out != NULL);
+  FILE *out = xfmemopen (result.err.buffer, result.err.length, "r");
   char *buffer = NULL;
   size_t buffer_length = 0;
   while (xgetline (&buffer, &buffer_length, out))

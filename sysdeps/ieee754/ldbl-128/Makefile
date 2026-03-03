@@ -71,6 +71,8 @@ CFLAGS-s_fminmagl.c += -fno-builtin-fminmagf64x -fno-builtin-fminmagf128
 CFLAGS-w_fmodl.c += -fno-builtin-fmodf64x -fno-builtin-fmodf128
 CFLAGS-s_fmull.c += -fno-builtin-f32mulf64x -fno-builtin-f32mulf128
 CFLAGS-s_frexpl.c += -fno-builtin-frexpf64x -fno-builtin-frexpf128
+CFLAGS-s_compat_fromfpl.c += -fno-builtin-fromfpf64x -fno-builtin-fromfpf128
+CFLAGS-s_compat_fromfpxl.c += -fno-builtin-fromfpxf64x -fno-builtin-fromfpxf128
 CFLAGS-s_fromfpl.c += -fno-builtin-fromfpf64x -fno-builtin-fromfpf128
 CFLAGS-s_fromfpxl.c += -fno-builtin-fromfpxf64x -fno-builtin-fromfpxf128
 CFLAGS-s_fsqrtl.c += -fno-builtin-f32sqrtf64x -fno-builtin-f32sqrtf128
@@ -83,7 +85,7 @@ CFLAGS-w_j1l.c += -fno-builtin-j1f64x -fno-builtin-j1f128
 CFLAGS-w_jnl.c += -fno-builtin-jnf64x -fno-builtin-jnf128
 CFLAGS-s_ldexpl.c += -fno-builtin-ldexpf64x -fno-builtin-ldexpf128
 CFLAGS-w_lgammal.c += -fno-builtin-lgammaf64x -fno-builtin-lgammaf128
-CFLAGS-w_lgammal_r.c += -fno-builtin-lgammaf64x_r
+CFLAGS-w_lgammal_r.c += -fno-builtin-lgammaf64x_r -fno-builtin-lgammaf128_r
 CFLAGS-w_llogbl.c += -fno-builtin-llogbf64x -fno-builtin-llogbf128
 CFLAGS-s_llrintl.c += -fno-builtin-llrintf64x -fno-builtin-llrintf128
 CFLAGS-s_llroundl.c += -fno-builtin-llroundf64x -fno-builtin-llroundf128
@@ -120,9 +122,15 @@ CFLAGS-w_tgammal.c += -fno-builtin-tgammaf64x -fno-builtin-tgammaf128
 CFLAGS-s_totalorderl.c += -fno-builtin-totalorderf64x -fno-builtin-totalorderf128
 CFLAGS-s_totalordermagl.c += -fno-builtin-totalordermagf64x -fno-builtin-totalordermagf128
 CFLAGS-s_truncl.c += -fno-builtin-truncf64x -fno-builtin-truncf128
+CFLAGS-s_compat_ufromfpl.c += -fno-builtin-ufromfpf64x -fno-builtin-ufromfpf128
+CFLAGS-s_compat_ufromfpxl.c += -fno-builtin-ufromfpxf64x -fno-builtin-ufromfpxf128
 CFLAGS-s_ufromfpl.c += -fno-builtin-ufromfpf64x -fno-builtin-ufromfpf128
 CFLAGS-s_ufromfpxl.c += -fno-builtin-ufromfpxf64x -fno-builtin-ufromfpxf128
 CFLAGS-s_y0l.c += -fno-builtin-y0f64x -fno-builtin-y0f128
 CFLAGS-s_y1l.c += -fno-builtin-y1f64x -fno-builtin-y1f128
 CFLAGS-s_ynl.c += -fno-builtin-ynf64x -fno-builtin-ynf128
+endif
+
+ifeq ($(subdir),stdio-common)
+fmt-xscanf-real-convs += ldouble
 endif

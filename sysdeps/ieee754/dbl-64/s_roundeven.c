@@ -1,5 +1,5 @@
 /* Round to nearest integer value, rounding halfway cases to even.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@
 #include <math_private.h>
 #include <libm-alias-double.h>
 #include <stdint.h>
-#include <math-use-builtins.h>
 
 #define BIAS 0x3ff
 #define MANT_DIG 53

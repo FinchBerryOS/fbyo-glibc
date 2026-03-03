@@ -1,5 +1,5 @@
 /* Common function for preadv2 and pwritev2 tests.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -40,8 +40,12 @@
 #ifndef RWF_ATOMIC
 # define RWF_ATOMIC 0
 #endif
+#ifndef RWF_DONTCACHE
+# define RWF_DONTCACHE 0
+#endif
 #define RWF_SUPPORTED	(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT \
-			 | RWF_APPEND | RWF_NOAPPEND | RWF_ATOMIC)
+			 | RWF_APPEND | RWF_NOAPPEND | RWF_ATOMIC \
+			 | RWF_DONTCACHE)
 
 /* Generic uio_lim.h does not define IOV_MAX.  */
 #ifndef IOV_MAX
@@ -109,9 +113,8 @@ do_test_with_invalid_iov (void)
 static void
 do_test_with_invalid_flags (void)
 {
-  /* Set the next bit from the mask of all supported flags.  */
-  int invalid_flag = RWF_SUPPORTED != 0 ? __builtin_clz (RWF_SUPPORTED) : 2;
-  invalid_flag = 0x1 << ((sizeof (int) * CHAR_BIT) - invalid_flag);
+  /* Set all the bits that are not used by the supported flags.  */
+  int invalid_flag = ~RWF_SUPPORTED;
 
   char buf[32];
   const struct iovec vec = { .iov_base = buf, .iov_len = sizeof (buf) };

@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2025 Free Software Foundation, Inc.
+# Copyright (C) 1995-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -60,6 +60,7 @@ routines_no_fortify += \
   iofgets_u \
   iofgetws \
   iofgetws_u \
+  iovdprintf \
   swprintf \
   vasprintf \
   vsnprintf \
@@ -101,6 +102,8 @@ tests = \
   tst-fclose-unopened \
   tst-fclose-unopened2 \
   tst-fdopen-seek-failure \
+  tst-fflush \
+  tst-fflush-NULL \
   tst-fgetc-after-eof \
   tst-fgetwc \
   tst-fgetws \
@@ -128,6 +131,7 @@ tests = \
   tst-sprintf-chk-ub \
   tst-sprintf-ub \
   tst-sscanf \
+  tst-stdio-static \
   tst-swscanf \
   tst-ungetwc1 \
   tst-ungetwc2 \
@@ -146,6 +150,8 @@ tests = \
   tst_wprintf2 \
   tst_wscanf \
   # tests
+
+tests-static += tst-stdio-static
 
 $(objpfx)tst-popen-fork: $(shared-thread-library)
 
@@ -193,18 +199,18 @@ CFLAGS-getchar.c += -fexceptions
 CFLAGS-getwc.c += -fexceptions
 CFLAGS-getwchar.c += -fexceptions
 CFLAGS-iofclose.c += -fexceptions
-CFLAGS-iofflush.c += -fexceptions $(config-cflags-wno-ignored-attributes)
+CFLAGS-iofflush.c += -fexceptions
 CFLAGS-iofgetpos64.c += -fexceptions
 CFLAGS-iofgetpos.c += -fexceptions
 CFLAGS-iofgets.c += -fexceptions
 CFLAGS-iofgetws.c += -fexceptions
-CFLAGS-iofputs.c += -fexceptions $(config-cflags-wno-ignored-attributes)
+CFLAGS-iofputs.c += -fexceptions
 CFLAGS-iofputws.c += -fexceptions
 CFLAGS-iofread.c += -fexceptions
 CFLAGS-iofsetpos64.c += -fexceptions
 CFLAGS-iofsetpos.c += -fexceptions
 CFLAGS-ioftell.c += -fexceptions
-CFLAGS-iofwrite.c += -fexceptions $(config-cflags-wno-ignored-attributes)
+CFLAGS-iofwrite.c += -fexceptions
 CFLAGS-iogetdelim.c += -fexceptions
 CFLAGS-iogetline.c += -fexceptions
 CFLAGS-iogets.c += -fexceptions
@@ -234,14 +240,6 @@ CFLAGS-oldiofopen.c += -fexceptions
 CFLAGS-iofopen.c += -fexceptions
 CFLAGS-iofopen64.c += -fexceptions
 CFLAGS-oldtmpfile.c += -fexceptions
-CFLAGS-fileno.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-feof_u.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-ferror_u.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-getc_u.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-iofflush_u.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-putc_u.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-iofgets_u.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-iofputs_u.c += $(config-cflags-wno-ignored-attributes)
 # XXX Do we need filedoalloc and wfiledoalloc?  Others?
 
 # Prevent fortification as these are built with -O0
@@ -443,3 +441,9 @@ $(objpfx)tst-bz22415-mem.out: $(objpfx)tst-bz22415.out
 $(objpfx)tst-bz24228-mem.out: $(objpfx)tst-bz24228.out
 	$(common-objpfx)malloc/mtrace $(objpfx)tst-bz24228.mtrace > $@; \
 	$(evaluate-test)
+
+# Test stdio.o with "strip --strip-unneeded".
+$(objpfx)tst-stdio-static: $(objpfx)stdio-stripped.o
+
+$(objpfx)stdio-stripped.o: $(objpfx)stdio.o
+	$(STRIP) --strip-unneeded -o $@ $<

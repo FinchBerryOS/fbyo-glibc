@@ -1,5 +1,5 @@
 /* Benchmark malloc and free functions.
-   Copyright (C) 2019-2025 Free Software Foundation, Inc.
+   Copyright (C) 2019-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,12 +30,12 @@
 #include "json-lib.h"
 
 /* Benchmark the malloc/free performance of a varying number of blocks of a
-   given size.  This enables performance tracking of the t-cache and fastbins.
+   given size.  This enables performance tracking of the t-cache.
    It tests 3 different scenarios: single-threaded using main arena,
    multi-threaded using thread-arena, and main arena with SINGLE_THREAD_P
    false.  */
 
-#define NUM_ITERS 200000
+#define NUM_ITERS 5000000
 #define NUM_ALLOCS 4
 #define MAX_ALLOCS 1600
 

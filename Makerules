@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2025 Free Software Foundation, Inc.
+# Copyright (C) 1991-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -508,7 +508,9 @@ ifeq ($(build-shared),yes)
 map-file = $(firstword $($(@F:.so=-map)) \
 		       $(addprefix $(common-objpfx), \
 				   $(filter $(@F:.so=.map),$(version-maps))))
-load-map-file = $(map-file:%=-Wl,--version-script=%)
+# The map version is created with multiple symbols that might not be
+# exported depending of the ABI.
+load-map-file = $(map-file:%=-Wl,--version-script=%) $(have-undefined-version)
 endif
 
 # Compiler arguments to use to link a shared object with libc and
@@ -587,7 +589,7 @@ endef
 build-module-helper-objlist = \
 	$(patsubst %_pic.a,$(whole-archive) %_pic.a $(no-whole-archive),\
 		   $(filter-out %.lds $(map-file) $(+preinit) $(+postinit) \
-				$(elf-objpfx)sofini.os \
+				$(elf-objpfx)sofini.os $(+nolink-deps) \
 				$(link-libc-deps),$^))
 
 build-module-objlist = $(build-module-helper-objlist) $(LDLIBS-$(@F:%.so=%).so)
@@ -1188,6 +1190,9 @@ check: tests
 .PHONY: xcheck
 xcheck: xtests
 
+# Also handle test inputs in sysdeps.
+vpath %.input $(sysdirs)
+
 # Handle tests-time64 and xtests-time64 that should built with LFS
 # and 64-bit time support.
 include $(o-iterator)
@@ -1397,7 +1402,7 @@ endif
 
 ifneq (,$(strip $(gpl2lgpl)))
 ifneq (,$(wildcard $(..)gpl2lgpl.sed))
-# Snarf from the master source and frob the copying notice.
+# Snarf from the original source and frob the copying notice.
 $(gpl2lgpl): %: $(..)gpl2lgpl.sed /home/gd/gnu/lib/%
 	sed -f $^ > $@-tmp
 # So I don't edit them by mistake.

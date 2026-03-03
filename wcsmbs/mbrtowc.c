@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -117,5 +117,5 @@ __mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
   return result;
 }
 libc_hidden_def (__mbrtowc)
-weak_alias (__mbrtowc, mbrtowc)
+static_weak_alias (__mbrtowc, mbrtowc)
 libc_hidden_weak (mbrtowc)

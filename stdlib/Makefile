@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2025 Free Software Foundation, Inc.
+# Copyright (C) 1991-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@ headers := \
   bits/time64.h \
   bits/timesize.h \
   bits/types/error_t.h \
+  bits/types/once_flag.h \
   bits/wordsize.h \
   errno.h \
   fmtmsg.h \
@@ -96,6 +97,7 @@ routines := \
   mblen \
   mbstowcs \
   mbtowc \
+  memalignment \
   mrand48 \
   mrand48_r \
   nrand48 \
@@ -211,6 +213,9 @@ routines := \
   strtoull_l \
   swapcontext \
   system \
+  uabs \
+  ulabs \
+  ullabs \
   wcstombs \
   wctomb  \
   xpg_basename \
@@ -275,6 +280,7 @@ tests := \
   tst-canon-bz26341 \
   tst-concurrent-exit \
   tst-concurrent-quick_exit \
+  tst-const \
   tst-cxa_atexit \
   tst-environ \
   tst-environ-change-1 \
@@ -282,6 +288,7 @@ tests := \
   tst-environ-change-3 \
   tst-environ-change-4 \
   tst-getenv-signal \
+  tst-getenv-static \
   tst-getenv-thread \
   tst-getenv-unsetenv \
   tst-getrandom \
@@ -294,11 +301,14 @@ tests := \
   tst-makecontext-align \
   tst-makecontext2 \
   tst-makecontext3 \
+  tst-memalignment \
   tst-on_exit \
   tst-qsort \
   tst-qsort2 \
   tst-qsort3 \
   tst-qsort6 \
+  tst-qsort7 \
+  tst-qsortx7 \
   tst-quick_exit \
   tst-rand-sequence \
   tst-rand48 \
@@ -360,11 +370,21 @@ tests := \
   tst-swapcontext2 \
   tst-thread-quick_exit \
   tst-tininess \
+  tst-uabs \
+  tst-ulabs \
+  tst-ullabs \
+  tst-umaxabs \
   tst-unsetenv1 \
   tst-width \
   tst-width-stdint \
   tst-xpg-basename \
   # tests
+
+ifeq ($(have-GLIBC_2.42)$(build-shared),yesyes)
+tests += \
+  tst-uimaxabs \
+  # tests
+endif
 
 tests-internal := \
   tst-qsort4 \
@@ -377,6 +397,7 @@ tests-internal := \
   # tests-internal
 
 tests-static := \
+  tst-getenv-static \
   tst-secure-getenv \
   # tests-static
 
@@ -408,6 +429,12 @@ CFLAGS-tst-abs.c += -fno-builtin
 CFLAGS-tst-labs.c += -fno-builtin
 CFLAGS-tst-llabs.c += -fno-builtin
 
+CFLAGS-tst-uabs.c += -fno-builtin
+CFLAGS-tst-uimaxabs.c += -fno-builtin
+CFLAGS-tst-ulabs.c += -fno-builtin
+CFLAGS-tst-ullabs.c += -fno-builtin
+CFLAGS-tst-umaxabs.c += -fno-builtin
+
 CFLAGS-tst-stdbit-Wconversion.c += -Wconversion -Werror
 CFLAGS-tst-stdc_trailing_zeros.c += -fno-builtin
 CFLAGS-tst-stdc_trailing_ones.c += -fno-builtin
@@ -423,6 +450,8 @@ CFLAGS-tst-stdc_count_ones.c += -fno-builtin
 CFLAGS-tst-stdc_bit_width.c += -fno-builtin
 CFLAGS-tst-stdc_bit_floor.c += -fno-builtin
 CFLAGS-tst-stdc_bit_ceil.c += -fno-builtin
+
+CFLAGS-tst-memalignment.c += -fno-builtin
 
 ifeq ($(have-cxx-thread_local),yes)
 CFLAGS-tst-quick_exit.o = -std=c++11
@@ -465,14 +494,12 @@ mpn-routines := \
   rshift \
   sub_n \
   submul_1 \
-  udiv_qrnnd \
   # mpn-routines
 mpn-headers = \
   asm-syntax.h \
   gmp-impl.h \
   gmp-mparam.h \
   gmp.h \
-  longlong.h \
   # mpn-headers
 
 routines := \
@@ -485,7 +512,6 @@ routines := \
   # routines
 aux += \
   fpioconst \
-  mp_clz_tab \
   # aux
 
 tests-extras += \
@@ -517,18 +543,6 @@ CFLAGS-strfromd.c += $(libio-mtsafe)
 CFLAGS-strfromf.c += $(libio-mtsafe)
 CFLAGS-strfroml.c += $(libio-mtsafe)
 
-CFLAGS-strtol.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-strtoul.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-strtoll.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-strtoull.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-strtof.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-strtof_l.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-strtod.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-strtod_l.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-strtold.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-strtold_l.c += $(config-cflags-wno-ignored-attributes)
-CFLAGS-secure-getenv.c += $(config-cflags-wno-ignored-attributes)
-
 CFLAGS-tst-bsearch.c += $(stack-align-test-flags)
 CFLAGS-tst-qsort.c += $(stack-align-test-flags)
 CFLAGS-tst-makecontext.c += -funwind-tables
@@ -551,7 +565,19 @@ tests-special += $(objpfx)isomac.out
 
 ifeq ($(run-built-tests),yes)
 tests-special += $(objpfx)tst-fmtmsg.out
-endif
+ifeq ($(build-shared),yes)
+ifneq ($(PERL),no)
+generated += \
+  tst-qsort7.mtrace \
+  tst-qsortx7.mtrace \
+  # generated
+tests-special += \
+  $(objpfx)tst-qsort7-mem.out \
+  $(objpfx)tst-qsortx7-mem.out \
+  # tests-special
+endif # $(build-shared) == yes
+endif # $(PERL) == yes
+endif # $(run-built-tests) == yes
 
 include ../Rules
 
@@ -638,10 +664,25 @@ $(objpfx)tst-setcontext3.out: tst-setcontext3.sh $(objpfx)tst-setcontext3
 		 $(common-objpfx)stdlib/; \
 	$(evaluate-test)
 
-$(objpfx)tst-qsort5: $(libm)
 $(objpfx)tst-concurrent-exit: $(shared-thread-library)
 $(objpfx)tst-concurrent-quick_exit: $(shared-thread-library)
 $(objpfx)tst-getrandom2: $(shared-thread-library)
 $(objpfx)tst-getenv-signal: $(shared-thread-library)
 $(objpfx)tst-getenv-thread: $(shared-thread-library)
 $(objpfx)tst-getenv-unsetenv: $(shared-thread-library)
+
+CFLAGS-tst-qsort7.c += -fno-exceptions -fno-asynchronous-unwind-tables
+LDLIBS-tst-qsort7 = $(shared-thread-library)
+tst-qsort7-ENV = MALLOC_TRACE=$(objpfx)tst-qsort7.mtrace \
+		 LD_PRELOAD=$(common-objpfx)/malloc/libc_malloc_debug.so
+$(objpfx)tst-qsort7-mem.out: $(objpfx)tst-qsort7.out
+	$(common-objpfx)malloc/mtrace $(objpfx)tst-qsort7.mtrace > $@; \
+	$(evaluate-test)
+
+CFLAGS-tst-qsortx7.c += -fexceptions
+LDLIBS-tst-qsortx7 = $(shared-thread-library)
+tst-qsortx7-ENV = MALLOC_TRACE=$(objpfx)tst-qsortx7.mtrace \
+		  LD_PRELOAD=$(common-objpfx)/malloc/libc_malloc_debug.so
+$(objpfx)tst-qsortx7-mem.out: $(objpfx)tst-qsortx7.out
+	$(common-objpfx)malloc/mtrace $(objpfx)tst-qsortx7.mtrace > $@; \
+	$(evaluate-test)

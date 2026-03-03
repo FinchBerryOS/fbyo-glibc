@@ -1,5 +1,5 @@
 /* Unlock I/O stream.  Singlethreaded version.
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,5 +25,6 @@ __funlockfile (FILE *stream)
 {
   _IO_lock_unlock (*stream->_lock);
 }
+libc_hidden_def(__funlockfile)
 weak_alias (__funlockfile, _IO_funlockfile)
 weak_alias (__funlockfile, funlockfile);

@@ -1,16 +1,32 @@
 /* Configure soft-fp for building sqrtf128.  Based on sfp-machine.h in
    libgcc, with soft-float and other irrelevant parts removed.  */
 
+#include <math-inline-asm.h>
+
+#if HAVE_X86_LIBGCC_CMP_RETURN_ATTR
 /* The type of the result of a floating point comparison.  This must
    match `__libgcc_cmp_return__' in GCC for the target.  */
-typedef int __gcc_CMPtype __attribute__ ((mode (__libgcc_cmp_return__)));
+typedef int __gcc_CMPtype_GCC __attribute__ ((mode (__libgcc_cmp_return__)));
+#else
+# ifdef __x86_64__
+typedef long long int __gcc_CMPtype;
+#else
+typedef long int __gcc_CMPtype;
+# endif
+#endif
 #define CMPtype __gcc_CMPtype
 
 #ifdef __x86_64__
 # define _FP_W_TYPE_SIZE	64
-# define _FP_W_TYPE		unsigned long long
-# define _FP_WS_TYPE		signed long long
-# define _FP_I_TYPE		long long
+# ifndef __ILP32__
+#  define _FP_W_TYPE		unsigned long
+#  define _FP_WS_TYPE		signed long
+#  define _FP_I_TYPE		long
+# else
+#  define _FP_W_TYPE		unsigned long long
+#  define _FP_WS_TYPE		signed long long
+#  define _FP_I_TYPE		long long
+# endif
 
 typedef int TItype __attribute__ ((mode (TI)));
 typedef unsigned int UTItype __attribute__ ((mode (TI)));
@@ -39,21 +55,15 @@ typedef unsigned int UTItype __attribute__ ((mode (TI)));
 
 # define FP_RND_MASK		0x6000
 
-# ifdef __AVX__
-#  define AVX_INSN_PREFIX	"v"
-# else
-#  define AVX_INSN_PREFIX	""
-# endif
-
 # define FP_INIT_ROUNDMODE					\
   do {								\
-    __asm__ __volatile__ (AVX_INSN_PREFIX "stmxcsr\t%0" : "=m" (_fcw)); \
+    stmxcsr_inline_asm (&_fcw);					\
   } while (0)
 #else
 # define _FP_W_TYPE_SIZE	32
-# define _FP_W_TYPE		unsigned int
-# define _FP_WS_TYPE		signed int
-# define _FP_I_TYPE		int
+# define _FP_W_TYPE		unsigned long int
+# define _FP_WS_TYPE		signed long int
+# define _FP_I_TYPE		long int
 
 # define __FP_FRAC_ADD_4(r3,r2,r1,r0,x3,x2,x1,x0,y3,y2,y1,y0)	\
   __asm__ ("add{l} {%11,%3|%3,%11}\n\t"				\

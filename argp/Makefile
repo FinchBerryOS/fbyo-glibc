@@ -1,4 +1,4 @@
-# Copyright (C) 1997-2025 Free Software Foundation, Inc.
+# Copyright (C) 1997-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -47,10 +47,9 @@ tests = \
   tst-ldbl-argp \
   # tests
 
-CFLAGS-argp-help.c += $(uses-callbacks) -fexceptions $(config-cflags-wno-ignored-attributes)
-CFLAGS-argp-parse.c += $(uses-callbacks) $(config-cflags-wno-ignored-attributes)
-CFLAGS-argp-fmtstream.c += -fexceptions $(config-cflags-wno-ignored-attributes)
-CFLAGS-argp-fs-xinl.c += $(config-cflags-wno-ignored-attributes)
+CFLAGS-argp-help.c += $(uses-callbacks) -fexceptions
+CFLAGS-argp-parse.c += $(uses-callbacks)
+CFLAGS-argp-fmtstream.c += -fexceptions
 
 bug-argp1-ARGS = -- --help
 bug-argp2-ARGS = -- -d 111 --dstaddr 222 -p 333 --peer 444

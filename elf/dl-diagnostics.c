@@ -1,5 +1,5 @@
 /* Print diagnostics data in ld.so.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 #include <dl-diagnostics.h>
 #include <dl-hwcaps.h>
 #include <dl-main.h>
-#include <dl-procinfo.h>
 #include <dl-sysdep.h>
 #include <ldsodefs.h>
 #include "trusted-dirs.h"

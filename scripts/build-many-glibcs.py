@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Build many configurations of glibc.
-# Copyright (C) 2016-2025 Free Software Foundation, Inc.
+# Copyright (C) 2016-2026 Free Software Foundation, Inc.
 # Copyright The GNU Toolchain Authors.
 # This file is part of the GNU C Library.
 #
@@ -33,6 +33,14 @@ check out (<component>-<version), for 'checkout', or, for actions
 other than 'checkout' and 'bot-cycle', name configurations for which
 compilers or glibc are to be built.
 
+It is possible to override the URL used to download tarballs during
+the checkout process using environment variable FTP_GNU_ORG_MIRROR
+that will replace default URL 'https://ftp.gnu.org'.
+
+It is also possible to use different Git URL for cloning sources
+from a Git repository using a <component>_GIT_MIRROR environment
+variable (<component> should be upper case, e.g. GLIBC).
+
 The 'list-compilers' command prints the name of each available
 compiler configuration, without building anything.  The 'list-glibcs'
 command prints the name of each glibc compiler configuration, followed
@@ -56,9 +64,11 @@ import sys
 import time
 import urllib.request
 
+REQUIRED_TOOLS = {}
+
 # This is a list of system utilities that are expected to be available
 # to this script, and, if a non-zero version is included, the minimum
-# version required to work with this sccript.
+# version required to work with this script.
 def get_list_of_required_tools():
     global REQUIRED_TOOLS
     REQUIRED_TOOLS = {
@@ -102,6 +112,23 @@ except:
 
     subprocess.run = _run
 
+def get_git_url(component):
+    """Return Git URL for the given component. Allow overrides via env var."""
+    git_urls = {
+        'binutils': 'https://sourceware.org/git/binutils-gdb.git',
+        'glibc': 'https://sourceware.org/git/glibc.git',
+        'gcc': 'https://gcc.gnu.org/git/gcc.git',
+        'gnumach': 'https://git.savannah.gnu.org/git/hurd/gnumach.git',
+        'mig': 'https://git.savannah.gnu.org/git/hurd/mig.git',
+        'hurd': 'https://git.savannah.gnu.org/git/hurd/hurd.git',
+    }
+    env_var = '%s_GIT_MIRROR' % component.upper()
+    if env_var in os.environ:
+        return os.environ[env_var]
+    if component in git_urls:
+        return git_urls[component]
+    else:
+        raise RuntimeError('unknown component')
 
 class Context(object):
     """The global state associated with builds in a given directory."""
@@ -109,6 +136,9 @@ class Context(object):
     def __init__(self, topdir, parallelism, keep, replace_sources, strip,
                  full_gcc, action, exclude, shallow=False):
         """Initialize the context."""
+        self.bot_config = None
+        self.build_state = None
+        self.versions = None
         self.topdir = topdir
         self.parallelism = parallelism
         self.keep = keep
@@ -233,13 +263,11 @@ class Context(object):
         self.add_config(arch='i686',
                         os_name='gnu')
         self.add_config(arch='loongarch64',
-                        os_name='linux-gnu',
-                        variant='lp64d',
-                        gcc_cfg=['--with-abi=lp64d','--disable-multilib'])
+                        os_name='linux-gnuf64',
+                        gcc_cfg=['--disable-multilib'])
         self.add_config(arch='loongarch64',
-                        os_name='linux-gnu',
-                        variant='lp64s',
-                        gcc_cfg=['--with-abi=lp64s','--disable-multilib'])
+                        os_name='linux-gnusf',
+                        gcc_cfg=['--disable-multilib'])
         self.add_config(arch='m68k',
                         os_name='linux-gnu',
                         gcc_cfg=['--disable-multilib'])
@@ -411,8 +439,7 @@ class Context(object):
                                  '--disable-multilib'])
         self.add_config(arch='s390x',
                         os_name='linux-gnu',
-                        glibcs=[{},
-                                {'arch': 's390', 'ccopts': '-m31'}],
+                        gcc_cfg=['--disable-multilib'],
                         extra_glibcs=[{'variant': 'O3',
                                        'cflags': '-O3'},
                                       {'variant': 'zEC12',
@@ -742,7 +769,13 @@ class Context(object):
         logsdir = os.path.join(self.logsdir, 'host-libraries')
         self.remove_recreate_dirs(installdir, builddir, logsdir)
         cmdlist = CommandList('host-libraries', self.keep)
-        self.build_host_library(cmdlist, 'gmp')
+        # This CFLAGS setting works around GMP 6.3.0's configure
+        # script being incompatible with compilers defaulting to C23
+        # and should be removed when this script is updated to use a
+        # release of GMP from after that configure test was fixed in
+        # Jan 2025.
+        self.build_host_library(cmdlist, 'gmp',
+                                ['CFLAGS=-Wall -O2 -std=gnu17'])
         self.build_host_library(cmdlist, 'mpfr',
                                 ['--with-gmp=%s' % installdir])
         self.build_host_library(cmdlist, 'mpc',
@@ -762,7 +795,7 @@ class Context(object):
                    '--prefix=%s' % installdir,
                    '--disable-shared']
         if extra_opts:
-            cfg_cmd.extend (extra_opts)
+            cfg_cmd.extend(extra_opts)
         cmdlist.add_command('configure', cfg_cmd)
         cmdlist.add_command('build', ['make'])
         cmdlist.add_command('check', ['make', 'check'])
@@ -827,13 +860,13 @@ class Context(object):
 
     def checkout(self, versions):
         """Check out the desired component versions."""
-        default_versions = {'binutils': 'vcs-2.43',
-                            'gcc': 'vcs-14',
+        default_versions = {'binutils': 'vcs-2.45',
+                            'gcc': 'vcs-15',
                             'glibc': 'vcs-mainline',
                             'gmp': '6.3.0',
-                            'linux': '6.12',
+                            'linux': '6.18',
                             'mpc': '1.3.1',
-                            'mpfr': '4.2.1',
+                            'mpfr': '4.2.2',
                             'mig': 'vcs-mainline',
                             'gnumach': 'vcs-mainline',
                             'hurd': 'vcs-mainline'}
@@ -892,7 +925,7 @@ class Context(object):
         """Check out the given version of the given component from version
         control.  Return a revision identifier."""
         if component == 'binutils':
-            git_url = 'https://sourceware.org/git/binutils-gdb.git'
+            git_url = get_git_url(component)
             if version == 'mainline':
                 git_branch = 'master'
             else:
@@ -906,7 +939,7 @@ class Context(object):
                 branch = 'releases/gcc-%s' % version
             return self.gcc_checkout(branch, update)
         elif component == 'glibc':
-            git_url = 'https://sourceware.org/git/glibc.git'
+            git_url = get_git_url(component)
             if version == 'mainline':
                 git_branch = 'master'
             else:
@@ -915,21 +948,21 @@ class Context(object):
             self.fix_glibc_timestamps()
             return r
         elif component == 'gnumach':
-            git_url = 'git://git.savannah.gnu.org/hurd/gnumach.git'
+            git_url = get_git_url(component)
             git_branch = 'master'
             r = self.git_checkout(component, git_url, git_branch, update)
             subprocess.run(['autoreconf', '-i'],
                            cwd=self.component_srcdir(component), check=True)
             return r
         elif component == 'mig':
-            git_url = 'git://git.savannah.gnu.org/hurd/mig.git'
+            git_url = get_git_url(component)
             git_branch = 'master'
             r = self.git_checkout(component, git_url, git_branch, update)
             subprocess.run(['autoreconf', '-i'],
                            cwd=self.component_srcdir(component), check=True)
             return r
         elif component == 'hurd':
-            git_url = 'git://git.savannah.gnu.org/hurd/hurd.git'
+            git_url = get_git_url(component)
             git_branch = 'master'
             r = self.git_checkout(component, git_url, git_branch, update)
             subprocess.run(['autoconf'],
@@ -945,8 +978,20 @@ class Context(object):
             subprocess.run(['git', 'remote', 'prune', 'origin'],
                            cwd=self.component_srcdir(component), check=True)
             if self.replace_sources:
+                subprocess.run(['git', 'remote', 'set-url', 'origin', git_url],
+                               cwd=self.component_srcdir(component), check=True)
                 subprocess.run(['git', 'clean', '-dxfq'],
                                cwd=self.component_srcdir(component), check=True)
+            else:
+                r = subprocess.run(['git', 'remote', 'get-url', 'origin'],
+                                   cwd=self.component_srcdir(component),
+                                   stdout=subprocess.PIPE,
+                                   check=True, universal_newlines=True).stdout
+                if r.rstrip() != git_url:
+                    print('error: origin url has changed from %s to %s, '
+                          'use --replace-sources to check out again' %
+                          (r.rstrip(), git_url))
+                    exit(1)
             subprocess.run(['git', 'pull', '-q'],
                            cwd=self.component_srcdir(component), check=True)
         else:
@@ -995,7 +1040,7 @@ class Context(object):
             shutil.rmtree(self.component_srcdir('gcc'))
             update = False
         if not update:
-            self.git_checkout('gcc', 'https://gcc.gnu.org/git/gcc.git',
+            self.git_checkout('gcc', get_git_url('gcc'),
                               branch, update)
         subprocess.run(['contrib/gcc_update', '--silent'],
                        cwd=self.component_srcdir('gcc'), check=True)
@@ -1010,23 +1055,29 @@ class Context(object):
         tarball."""
         if update:
             return
-        url_map = {'binutils': 'https://ftp.gnu.org/gnu/binutils/binutils-%(version)s.tar.bz2',
-                   'gcc': 'https://ftp.gnu.org/gnu/gcc/gcc-%(version)s/gcc-%(version)s.tar.gz',
-                   'gmp': 'https://ftp.gnu.org/gnu/gmp/gmp-%(version)s.tar.xz',
-                   'linux': 'https://www.kernel.org/pub/linux/kernel/v%(major)s.x/linux-%(version)s.tar.xz',
-                   'mpc': 'https://ftp.gnu.org/gnu/mpc/mpc-%(version)s.tar.gz',
-                   'mpfr': 'https://ftp.gnu.org/gnu/mpfr/mpfr-%(version)s.tar.xz',
-                   'mig': 'https://ftp.gnu.org/gnu/mig/mig-%(version)s.tar.bz2',
-                   'gnumach': 'https://ftp.gnu.org/gnu/gnumach/gnumach-%(version)s.tar.bz2',
-                   'hurd': 'https://ftp.gnu.org/gnu/hurd/hurd-%(version)s.tar.bz2'}
+        url_map = {
+            'binutils': '%(baseurl)s/gnu/binutils/binutils-%(version)s.tar.bz2',
+            'gcc': '%(baseurl)s/gnu/gcc/gcc-%(version)s/gcc-%(version)s.tar.gz',
+            'gmp': '%(baseurl)s/gnu/gmp/gmp-%(version)s.tar.xz',
+            'linux': 'https://www.kernel.org/pub/linux/kernel/v%(major)s.x/linux-%(version)s.tar.xz',
+            'mpc': '%(baseurl)s/gnu/mpc/mpc-%(version)s.tar.gz',
+            'mpfr': '%(baseurl)s/gnu/mpfr/mpfr-%(version)s.tar.xz',
+            'mig': '%(baseurl)s/gnu/mig/mig-%(version)s.tar.bz2',
+            'gnumach': '%(baseurl)s/gnu/gnumach/gnumach-%(version)s.tar.bz2',
+            'hurd': '%(baseurl)s/gnu/hurd/hurd-%(version)s.tar.bz2',
+        }
         if component not in url_map:
             print('error: component %s coming from tarball' % component)
             exit(1)
         version_major = version.split('.')[0]
-        url = url_map[component] % {'version': version, 'major': version_major}
+        baseurl = os.environ.get('FTP_GNU_ORG_MIRROR' , 'https://ftp.gnu.org').rstrip('/')
+        url = url_map[component] % {'version': version, 'major': version_major, 'baseurl': baseurl}
         filename = os.path.join(self.srcdir, url.split('/')[-1])
-        response = urllib.request.urlopen(url)
-        data = response.read()
+        try:
+            with urllib.request.urlopen(url) as response:
+                data = response.read()
+        except:
+            raise IOError('downloading ' + repr(url))
         with open(filename, 'wb') as f:
             f.write(data)
         subprocess.run(['tar', '-C', self.srcdir, '-x', '-f', filename],
@@ -1914,7 +1965,7 @@ def get_version_common(progname,line,word,arg1):
         v = re.match(r'[0-9]+(.[0-9]+)*', v).group()
         return [int(x) for x in v.split('.')]
     except:
-        return 'missing';
+        return 'missing'
 
 def get_version_common_stderr(progname,line,word,arg1):
     try:
@@ -1927,16 +1978,16 @@ def get_version_common_stderr(progname,line,word,arg1):
         v = re.match(r'[0-9]+(.[0-9]+)*', v).group()
         return [int(x) for x in v.split('.')]
     except:
-        return 'missing';
+        return 'missing'
 
 def get_version(progname):
-    return get_version_common(progname, 0, -1, '--version');
+    return get_version_common(progname, 0, -1, '--version')
 
 def get_version_awk(progname):
-    return get_version_common(progname, 0, 2, '--version');
+    return get_version_common(progname, 0, 2, '--version')
 
 def get_version_bzip2(progname):
-    return get_version_common_stderr(progname, 0, 6, '-h');
+    return get_version_common_stderr(progname, 0, 6, '-h')
 
 def check_version(ver, req):
     for v, r in zip(ver, req):
@@ -1947,7 +1998,7 @@ def check_version(ver, req):
     return True
 
 def version_str(ver):
-    return '.'.join([str (x) for x in ver])
+    return '.'.join([str(x) for x in ver])
 
 def check_for_required_tools():
     get_list_of_required_tools()
@@ -1959,7 +2010,7 @@ def check_for_required_tools():
         if version == 'missing':
             ok = 'missing'
         else:
-            ok = 'ok' if check_version (version, v[1]) else 'old'
+            ok = 'ok' if check_version(version, v[1]) else 'old'
         if ok == 'old':
             if count_old_tools == 0:
                 print("One or more required tools are too old:")
@@ -1974,11 +2025,11 @@ def check_for_required_tools():
                     version_str(v[1])))
 
     if count_old_tools > 0 or count_missing_tools > 0:
-        exit (1);
+        exit(1)
 
 def main(argv):
     """The main entry point."""
-    check_for_required_tools();
+    check_for_required_tools()
     parser = get_parser()
     opts = parser.parse_args(argv)
     topdir = os.path.abspath(opts.topdir)

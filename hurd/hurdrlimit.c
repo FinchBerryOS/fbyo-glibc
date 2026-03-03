@@ -1,5 +1,5 @@
 /* Resource limits.
-   Copyright (C) 1994-2025 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -36,6 +36,15 @@ init_rlimit (void)
   int i;
 
   __mutex_init (&_hurd_rlimit_lock);
+
+#ifdef HAVE_MACH_VM_GET_SIZE_LIMIT
+  vm_size_t current, max;
+  if (__vm_get_size_limit (__mach_task_self (), &current, &max) == KERN_SUCCESS)
+    {
+      _hurd_rlimits[RLIMIT_AS].rlim_cur = current;
+      _hurd_rlimits[RLIMIT_AS].rlim_max = max;
+    }
+#endif
 
   for (i = 0; i < RLIM_NLIMITS; ++i)
     {

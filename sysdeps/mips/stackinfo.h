@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@
 /* On MIPS the stack grows down.  */
 #define _STACK_GROWS_DOWN	1
 
-/* Default to an executable stack.  PF_X can be overridden if PT_GNU_STACK is
- * present, but it is presumed absent.  */
-#define DEFAULT_STACK_PERMS (PF_R|PF_W|PF_X)
+/* Default to an executable stack.  PROT_EXEC can be overridden if PT_GNU_STACK
+ * is present, but it is presumed absent.  */
+#define DEFAULT_STACK_PROT_PERMS (PROT_READ|PROT_WRITE|PROT_EXEC)
 
 #endif	/* stackinfo.h */

@@ -1,5 +1,5 @@
 /* Resolve function pointers to VDSO functions.
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@
   ({                                                     \
     static Elf64_FuncDesc vdso_opd = { .fd_toc = ~0x0 }; \
     vdso_opd.fd_func = (Elf64_Addr)value;                \
-    &vdso_opd;                                           \
+    (void *) &vdso_opd;                                  \
   })
 
 #else

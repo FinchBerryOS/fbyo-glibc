@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,6 @@
 #include <shlib-compat.h>
 #include "semaphoreP.h"
 #include <kernel-features.h>
-#include <futex-internal.h>
 
 
 int
@@ -34,19 +33,12 @@ __new_sem_init (sem_t *sem, int pshared, unsigned int value)
       __set_errno (EINVAL);
       return -1;
     }
-  pshared = pshared != 0 ? PTHREAD_PROCESS_SHARED : PTHREAD_PROCESS_PRIVATE;
-  int err = futex_supports_pshared (pshared);
-  if (err != 0)
-    {
-      __set_errno (err);
-      return -1;
-    }
 
   /* Map to the internal type.  */
   struct new_sem *isem = (struct new_sem *) sem;
 
   /* Use the values the caller provided.  */
-#if __HAVE_64B_ATOMICS
+#if USE_64B_ATOMICS_ON_SEM_T
   isem->data = value;
 #else
   isem->value = value << SEM_VALUE_SHIFT;
@@ -55,8 +47,7 @@ __new_sem_init (sem_t *sem, int pshared, unsigned int value)
   isem->nwaiters = 0;
 #endif
 
-  isem->private = (pshared == PTHREAD_PROCESS_PRIVATE
-		   ? FUTEX_PRIVATE : FUTEX_SHARED);
+  isem->private = (pshared == 0 ? FUTEX_PRIVATE : FUTEX_SHARED);
 
   return 0;
 }

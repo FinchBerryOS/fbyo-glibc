@@ -1,5 +1,5 @@
 /* Common declarations for the setenv/getenv family of functions.
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ __environ_is_from_array_list (char **ep)
    but given that counter wrapround is probably impossible to hit
    (2**32 operations in unsetenv concurrently with getenv), using
    <atomic_wide_counter.h> seems unnecessary.  */
-#if __HAVE_64B_ATOMICS
+#if HAVE_64B_ATOMICS
 typedef uint64_t environ_counter;
 #else
 typedef uint32_t environ_counter;

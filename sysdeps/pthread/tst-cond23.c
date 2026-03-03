@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <support/test-driver.h>
 
 #if defined _POSIX_CLOCK_SELECTION && _POSIX_CLOCK_SELECTION >= 0
 static int
@@ -151,7 +152,7 @@ do_test (void)
 #if !defined _POSIX_CLOCK_SELECTION || _POSIX_CLOCK_SELECTION == -1
 
   puts ("_POSIX_CLOCK_SELECTION not supported, test skipped");
-  return 0;
+  return EXIT_UNSUPPORTED;
 
 #else
 

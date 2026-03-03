@@ -1,5 +1,5 @@
 /* Test fegetexceptflag and fesetexceptflag: exception traps enabled.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ do_test (void)
 
   _Static_assert (!(EXCEPTION_SET_FORCES_TRAP && !EXCEPTION_TESTS(float)),
 		  "EXCEPTION_SET_FORCES_TRAP only makes sense if the "
-		  "architecture suports exceptions");
+		  "architecture supports exceptions");
   {
     int exc_before = fegetexcept ();
     ret = fesetexceptflag (&saved, FE_ALL_EXCEPT);

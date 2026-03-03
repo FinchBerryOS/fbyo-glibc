@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -52,5 +52,5 @@ __wmemset (wchar_t *s, wchar_t c, size_t n)
   return s;
 }
 libc_hidden_def (__wmemset)
-weak_alias (__wmemset, wmemset)
+static_weak_alias (__wmemset, wmemset)
 libc_hidden_weak (wmemset)

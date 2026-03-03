@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -59,10 +59,6 @@ static inline short max_adaptive_count (void)
 enum
 {
   PTHREAD_MUTEX_KIND_MASK_NP = 3,
-
-  PTHREAD_MUTEX_ELISION_NP    = 256,
-  PTHREAD_MUTEX_NO_ELISION_NP = 512,
-
   PTHREAD_MUTEX_ROBUST_NORMAL_NP = 16,
   PTHREAD_MUTEX_ROBUST_RECURSIVE_NP
   = PTHREAD_MUTEX_ROBUST_NORMAL_NP | PTHREAD_MUTEX_RECURSIVE_NP,
@@ -95,14 +91,7 @@ enum
   PTHREAD_MUTEX_PP_ERRORCHECK_NP
   = PTHREAD_MUTEX_PRIO_PROTECT_NP | PTHREAD_MUTEX_ERRORCHECK_NP,
   PTHREAD_MUTEX_PP_ADAPTIVE_NP
-  = PTHREAD_MUTEX_PRIO_PROTECT_NP | PTHREAD_MUTEX_ADAPTIVE_NP,
-  PTHREAD_MUTEX_ELISION_FLAGS_NP
-  = PTHREAD_MUTEX_ELISION_NP | PTHREAD_MUTEX_NO_ELISION_NP,
-
-  PTHREAD_MUTEX_TIMED_ELISION_NP =
-	  PTHREAD_MUTEX_TIMED_NP | PTHREAD_MUTEX_ELISION_NP,
-  PTHREAD_MUTEX_TIMED_NO_ELISION_NP =
-	  PTHREAD_MUTEX_TIMED_NP | PTHREAD_MUTEX_NO_ELISION_NP,
+  = PTHREAD_MUTEX_PRIO_PROTECT_NP | PTHREAD_MUTEX_ADAPTIVE_NP
 };
 #define PTHREAD_MUTEX_PSHARED_BIT 128
 
@@ -110,11 +99,6 @@ enum
    in sysdeps/nptl/bits/thread-shared-types.h.  */
 #define PTHREAD_MUTEX_TYPE(m) \
   (atomic_load_relaxed (&((m)->__data.__kind)) & 127)
-/* Don't include NO_ELISION, as that type is always the same
-   as the underlying lock type.  */
-#define PTHREAD_MUTEX_TYPE_ELISION(m) \
-  (atomic_load_relaxed (&((m)->__data.__kind))	\
-   & (127 | PTHREAD_MUTEX_ELISION_NP))
 
 #if LLL_PRIVATE == 0 && LLL_SHARED == 128
 # define PTHREAD_MUTEX_PSHARED(m) \
@@ -232,8 +216,11 @@ libc_hidden_proto (__pthread_current_priority)
 /* This will not catch all invalid descriptors but is better than
    nothing.  And if the test triggers the thread descriptor is
    guaranteed to be invalid.  */
-#define INVALID_TD_P(pd) __builtin_expect ((pd)->tid <= 0, 0)
-#define INVALID_NOT_TERMINATED_TD_P(pd) __builtin_expect ((pd)->tid < 0, 0)
+static inline bool
+__pthread_descriptor_valid (struct pthread *pd)
+{
+  return atomic_load_relaxed (&pd->joinstate) != THREAD_STATE_EXITED;
+}
 
 extern void __pthread_unwind (__pthread_unwind_buf_t *__buf)
      __cleanup_fct_attribute __attribute ((__noreturn__))
@@ -268,7 +255,20 @@ __do_cancel (void *result)
   self->result = result;
 
   /* Make sure we get no more cancellations.  */
-  atomic_fetch_or_relaxed (&self->cancelhandling, EXITING_BITMASK);
+  int oldval = atomic_load_relaxed (&self->cancelhandling);
+  int newval;
+  do
+    {
+      /* It is required by POSIX XSH 2.9.5 Thread Cancellation under the
+	 heading Thread Cancellation Cleanup Handlers and also prevents
+	 further cancellation points from acting on cancellation.  */
+      newval = oldval | CANCELSTATE_BITMASK | EXITING_BITMASK;
+      newval = newval & ~CANCELTYPE_BITMASK;
+      if (oldval == newval)
+	break;
+    }
+  while (!atomic_compare_exchange_weak_acquire (&self->cancelhandling,
+						&oldval, newval));
 
   __pthread_unwind ((__pthread_unwind_buf_t *)
 		    THREAD_GETMEM (self, cleanup_jmp_buf));
@@ -405,6 +405,7 @@ extern int __pthread_rwlock_wrlock (pthread_rwlock_t *__rwlock);
 libc_hidden_proto (__pthread_rwlock_wrlock)
 extern int __pthread_rwlock_trywrlock (pthread_rwlock_t *__rwlock);
 extern int __pthread_rwlock_unlock (pthread_rwlock_t *__rwlock);
+libc_hidden_proto (__pthread_rwlock_unlock)
 extern int __pthread_cond_broadcast (pthread_cond_t *cond);
 libc_hidden_proto (__pthread_cond_broadcast)
 extern int __pthread_cond_destroy (pthread_cond_t *cond);
@@ -526,11 +527,6 @@ extern int __pthread_clockjoin_ex (pthread_t, void **, clockid_t,
 extern int __pthread_sigmask (int, const sigset_t *, sigset_t *);
 libc_hidden_proto (__pthread_sigmask);
 
-
-#if IS_IN (libpthread)
-hidden_proto (__pthread_rwlock_unlock)
-#endif
-
 extern int __pthread_cond_broadcast_2_0 (pthread_cond_2_0_t *cond);
 extern int __pthread_cond_destroy_2_0 (pthread_cond_2_0_t *cond);
 extern int __pthread_cond_init_2_0 (pthread_cond_2_0_t *cond,
@@ -588,10 +584,10 @@ struct __pthread_cleanup_combined_frame
 
 /* Special cleanup macros which register cleanup both using
    __pthread_cleanup_{push,pop} and using cleanup attribute.  This is needed
-   for pthread_once, so that it supports both throwing exceptions from the
-   pthread_once callback (only cleanup attribute works there) and cancellation
-   of the thread running the callback if the callback or some routines it
-   calls don't have unwind information.  */
+   for pthread_once and qsort, so that it supports both throwing exceptions
+   from the pthread_once or caller sort function callback (only cleanup
+   attribute works there) and cancellation of the thread running the callback
+   if the callback or some routines it calls don't have unwind information.  */
 
 static __always_inline void
 __pthread_cleanup_combined_routine (struct __pthread_cleanup_combined_frame
@@ -718,9 +714,11 @@ check_stacksize_attr (size_t st)
   _Static_assert (sizeof (type) == size,				\
 		  "sizeof (" #type ") != " #size)
 
-#define ASSERT_PTHREAD_INTERNAL_SIZE(type, internal) 			\
-  _Static_assert (sizeof ((type) { { 0 } }).__size >= sizeof (internal),\
-		  "sizeof (" #type ".__size) < sizeof (" #internal ")")
+#define ASSERT_PTHREAD_INTERNAL_SIZE(type, internal) 			    \
+  { _Static_assert (sizeof ((type) { { 0 } }).__size >= sizeof (internal),  \
+		    "sizeof (" #type ".__size) < sizeof (" #internal ")");  \
+    _Static_assert (_Alignof (type) >= _Alignof (internal),		    \
+		    "_Aignof (" #type ") < _Alignof (" #internal ")"); }
 
 #define ASSERT_PTHREAD_STRING(x) __STRING (x)
 #define ASSERT_PTHREAD_INTERNAL_OFFSET(type, member, offset)		\

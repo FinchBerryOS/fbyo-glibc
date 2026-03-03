@@ -3,7 +3,7 @@
    from the limb vector pointed to by RES_PTR.  Return the most significant
    limb of the product, adjusted for carry-out from the subtraction.
 
-Copyright (C) 1992-2025 Free Software Foundation, Inc.
+Copyright (C) 1992-2026 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -23,7 +23,6 @@ along with the GNU MP Library; see the file COPYING.LIB.  If not, see
 
 #include <gmp.h>
 #include "gmp-impl.h"
-#include "longlong.h"
 
 mp_limb_t
 mpn_submul_1 (register mp_ptr res_ptr, register mp_srcptr s1_ptr,

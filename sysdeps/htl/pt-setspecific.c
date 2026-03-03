@@ -1,5 +1,5 @@
 /* pthread_setspecific.  Generic version.
-   Copyright (C) 2002-2025 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,6 +19,8 @@
 #include <pthread.h>
 
 #include <pt-internal.h>
+#include <shlib-compat.h>
+#include <string.h>
 
 int
 __pthread_setspecific (pthread_key_t key, const void *value)
@@ -68,5 +70,9 @@ __pthread_setspecific (pthread_key_t key, const void *value)
   self->thread_specifics[key] = (void *) value;
   return 0;
 }
-weak_alias (__pthread_setspecific, pthread_setspecific);
-hidden_def (__pthread_setspecific)
+libc_hidden_def (__pthread_setspecific)
+versioned_symbol (libc, __pthread_setspecific, pthread_setspecific, GLIBC_2_42);
+
+#if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_12, GLIBC_2_42)
+compat_symbol (libpthread, __pthread_setspecific, pthread_setspecific, GLIBC_2_12);
+#endif

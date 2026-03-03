@@ -1,7 +1,7 @@
 #!/bin/bash
 # Test for some known iconv(1) hangs from bug 19519, and miscellaneous
 # iconv(1) program error conditions.
-# Copyright (C) 2020-2025 Free Software Foundation, Inc.
+# Copyright (C) 2020-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -21,13 +21,15 @@
 codir=$1
 test_wrapper_env="$2"
 run_program_env="$3"
+# Remove the last space to allow concatenate extra paths.
+library_path="$(echo $4)"
 
 # We have to have some directories in the library path.
 LIBPATH=$codir:$codir/iconvdata
 
 # How the start the iconv(1) program.  $from is not defined/expanded yet.
 ICONV='
-$codir/elf/ld.so --library-path $LIBPATH --inhibit-rpath ${from}.so
+$codir/elf/ld.so --library-path $library_path:$LIBPATH --inhibit-rpath ${from}.so
 $codir/iconv/iconv_prog
 '
 ICONV="$test_wrapper_env $run_program_env $ICONV"

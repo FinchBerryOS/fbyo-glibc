@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  nptl/x86_64 version.
-   Copyright (C) 2002-2025 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -168,22 +168,9 @@ _Static_assert (offsetof (tcbhead_t, __glibc_unused2) == 0x80,
      THREAD_GETMEM (__pd, header.dtv); })
 
 
-/* Return the thread descriptor for the current thread.
-
-   The contained asm must *not* be marked volatile since otherwise
-   assignments like
-	pthread_descr self = thread_self();
-   do not get optimized away.  */
-# if __GNUC_PREREQ (6, 0)
-#  define THREAD_SELF \
-  (*(struct pthread *__seg_fs *) offsetof (struct pthread, header.self))
-# else
-#  define THREAD_SELF \
-  ({ struct pthread *__self;						      \
-     asm ("mov %%fs:%c1,%0" : "=r" (__self)				      \
-	  : "i" (offsetof (struct pthread, header.self)));	 	      \
-     __self;})
-# endif
+/* Return the thread descriptor for the current thread.  */
+# define THREAD_SELF \
+  (*(struct pthread *__seg_fs *)&((struct pthread __seg_fs *)0)->header.self)
 
 /* Magic for libthread_db to know how to do THREAD_SELF.  */
 # define DB_THREAD_SELF_INCLUDE  <sys/reg.h> /* For the FS constant.  */
@@ -211,12 +198,20 @@ _Static_assert (offsetof (tcbhead_t, __glibc_unused2) == 0x80,
 # define THREAD_GSCOPE_FLAG_UNUSED 0
 # define THREAD_GSCOPE_FLAG_USED   1
 # define THREAD_GSCOPE_FLAG_WAIT   2
+
+/* clang does not support __seg_fs in asm constraint.  */
+# ifdef __clang__
+#  define FS_ASM "%%fs:"
+# else
+#  define FS_ASM
+# endif
+
 # define THREAD_GSCOPE_RESET_FLAG() \
   do									      \
     { int __res;							      \
-      asm volatile ("xchgl %0, %%fs:%P1"				      \
+      asm volatile ("xchgl " FS_ASM "%1, %0"				      \
 		    : "=r" (__res)					      \
-		    : "i" (offsetof (struct pthread, header.gscope_flag)),    \
+		    : "m" (((struct pthread __seg_fs *)0)->header.gscope_flag), \
 		      "0" (THREAD_GSCOPE_FLAG_UNUSED));			      \
       if (__res == THREAD_GSCOPE_FLAG_WAIT)				      \
 	lll_futex_wake (&THREAD_SELF->header.gscope_flag, 1, LLL_PRIVATE);    \

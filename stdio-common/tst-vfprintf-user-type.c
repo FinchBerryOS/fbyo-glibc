@@ -1,5 +1,5 @@
 /* Test for user-defined types in vfprintf.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -183,7 +183,9 @@ do_test (void)
 #else
   extern int asprintf_alias (char **, const char *, ...) __asm__ ("asprintf");
 #endif
-  TEST_VERIFY (asprintf_alias == asprintf);
+  static __typeof (asprintf) * volatile asprintf_indirect = asprintf;
+  TEST_VERIFY (asprintf_alias == asprintf_indirect);
+
   char *str = NULL;
   TEST_VERIFY (asprintf_alias (&str, "[[%P]]", 123L, 456.0) >= 0);
   TEST_COMPARE_STRING (str, "[[(123, 456.000000)]]");

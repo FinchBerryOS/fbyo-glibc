@@ -1,9 +1,424 @@
 GNU C Library NEWS -- history of user-visible changes.
-Copyright (C) 1992-2025 Free Software Foundation, Inc.
+Copyright (C) 1992-2026 Free Software Foundation, Inc.
 See the end for copying conditions.
 
 Please send GNU C library bug reports via <https://sourceware.org/bugzilla/>
 using `glibc' in the "product" field.
+
+Version 2.43
+
+Major new features:
+
+* The ISO C23 free_sized, free_aligned_sized, memset_explicit, and
+  memalignment functions have been added.
+
+* As specified in ISO C23, the assert macro is defined to take variable
+  arguments to support expressions with a comma inside a compound
+  literal initializer not surrounded by parentheses.
+
+* For ISO C23, the functions bsearch, memchr, strchr, strpbrk, strrchr,
+  strstr, wcschr, wcspbrk, wcsrchr, wcsstr and wmemchr that return
+  pointers into their input arrays now have definitions as macros that
+  return a pointer to a const-qualified type when the input argument is
+  a pointer to a const-qualified type.
+
+* The ISO C23 typedef names long_double_t, _Float32_t, _Float64_t, and
+  (on platforms supporting _Float128) _Float128_t, introduced in TS
+  18661-3:2015, have been added to <math.h>.
+
+* The ISO C23 optional time bases TIME_MONOTONIC, TIME_ACTIVE, and
+  TIME_THREAD_ACTIVE have been added.
+
+* On Linux, the mseal function has been added.  It allows for sealing
+  memory mappings to prevent further changes during process execution,
+  such as changes to protection permissions, unmapping, relocation to
+  another location, or shrinking the size.
+
+* Additional optimized and correctly rounded mathematical functions have
+  been imported from the CORE-MATH project, in particular acosh, asinh,
+  atanh, erf, erfc, lgamma, and tgamma.
+
+* Optimized implementations for fma, fmaf, remainder, remaindef, frexpf,
+  frexp, frexpl (binary128), and frexpl (intel96) have been added.
+
+* The SVID handling for acosf, acoshf, asinhf, atan2f, atanhf, coshf, fmodf,
+  lgammaf/lgammaf_r, log10f, remainderf, sinhf, sqrtf, tgammaf, y0/j0,
+  y1/j1, and yn/jn was moved to compat symbols, allowing improvements in
+  performance.
+
+* Experimental support for building with clang has been added.  It requires
+  at least clang version 18, aarch64-linux-gnu or x86_64-linux-gnu
+  targets, and a libgcc compatible runtime (including libgcc_s.so for
+  pthread cancellation and backtrace runtime support).
+
+* On Linux, the openat2 function has been added.  It is an extension of
+  openat and provides a superset of its functionality.  It is supported only
+  in LFS mode and is a cancellable entrypoint.
+
+* On AArch64, support for 2MB transparent huge pages has been enabled by
+  default in malloc (similar to setting glibc.malloc.hugetlb=1 tunable).
+
+* On AArch64 Linux targets supporting the Scalable Matrix Extension
+  (SME), the clone() system call wrapper will disable the ZA state of the
+  SME.
+
+* On AArch64 targets supporting the Branch Target Identification (BTI)
+  extension, it is possible to enforce that all binaries in the process
+  support BTI using the glibc.cpu.aarch64_bti tunable.
+
+* On AArch64 Linux targets supporting at least one of the branch protection
+  extensions (e.g. Branch Target Identification or Guarded Control Stack), it
+  is possible to use LD_DEBUG=security to make the dynamic linker show
+  warning messages about loaded binaries that do not support the
+  corresponding security feature.
+
+* On AArch64, vector variants of the new C23 exp2m1, exp10m1, log10p1,
+  log2p1, and rsqrt routines have been added.
+
+* On RISC-V, an RVV-optimized implementation of memset has been added.
+
+* On x86, support for the Intel Nova Lake and Wildcat Lake processors
+  has been added.
+
+* The test suite has seen significant improvements in particular around
+  the scanf, strerror, strsignal functions and multithreaded testing.
+
+* Unicode support has been updated to Unicode 17.0.0.
+
+* The manual has been updated and modernized, in particular also regarding
+  many of its code examples.
+
+Deprecated and removed features, and other changes affecting compatibility:
+
+* Support for dumped heaps has been removed.  malloc_set_state() now always
+  returns the error code -1.
+
+* The aforementioned change in ISO C23 of the declaration of bsearch,
+  memchr, strchr, strpbrk, strrchr, strstr, wcschr, wcspbrk, wcsrchr,
+  wcsstr, and wmemchr as const-preserving macros can lead to compilation
+  issues in code not set up for it. In particular, gnulib snapshots may need
+  to be updated.
+
+* The uimaxabs function has been renamed to umaxabs, following a change
+  to the name of that function in ISO C2Y.  The old function continues
+  to exist as a compatibility symbol for old binaries.
+
+* The fromfp, fromfpx, ufromfp and ufromfpx functions, and the
+  corresponding functions for other floating-point types, now return
+  their result in the same type as their floating-point argument, rather
+  than intmax_t or uintmax_t, in accordance with a change to the
+  definition of these functions in ISO C23.  Existing binaries that use
+  the versions returning intmax_t or uintmax_t will continue to work.
+
+* The support for TX lock elision of pthread mutexes has been removed on all
+  architectures (powerpc, s390x, x86_64).
+
+* The next linux 6.19 release will remove support for compat syscalls on s390x.
+  Therefore the s390-linux-gnu (31bit) configuration is deprecated in the
+  glibc 2.43 release and will then be removed with glibc 2.44 release.
+  Note that s390x-linux-gnu (64bit) remains supported.
+
+Changes to build and runtime requirements:
+
+* The LD_PROFILE functionality no longer has a default directory for the
+  profile data it writes.  Instead, developers are required to set a
+  directory explicitly using the LD_PROFILE_OUTPUT environment variable.
+  To restore the previous, insecure behavior, processes can be run with
+  LD_PROFILE_OUTPUT=/var/tmp.
+
+Security related changes:
+
+The following CVEs were fixed in this release, details of which can be
+found in the advisories directory of the release tarball:
+
+  GLIBC-SA-2026-0001:
+    Integer overflow in memalign leads to heap corruption
+    (CVE-2026-0861)
+
+  GLIBC-SA-2026-0002:
+    getnetbyaddr and getnetbyaddr_r leak stack contents to DNS resovler
+    (CVE-2026-0915)
+
+  GLIBC-SA-2026-0003:
+    wordexp with WRDE_REUSE and WRDE_APPEND may return uninitialized
+    memory (CVE-2025-15281)
+
+The following bugs were resolved with this release:
+
+  [15503] math: [arm] Support ARM VFPv4 VFMA instruction in fma
+  [20473] manual: Missing word in stack allocation documentation.
+  [24657] manual: Two mistakes in manual index
+  [25669] dynamic-link: Provide extra information when a found library
+    file is not suitable
+  [28038] stdio: getdelim()/getline() does not add NUL terminator if
+    first character is EOF.
+  [28267] nptl: nptl: pthread_exit should set cancellation type and
+    state
+  [28327] math: Wrong return type for {,u}fromfp{,x} functions
+  [28376] libc: [meta] Build glibc with Clang
+  [29326] math: Usage of double in sqrtf
+  [30635] glob: stack-overflow /build/glibc-
+    SzIz7B/glibc-2.31/posix/../posix/glob.c:546:9 in glob64
+  [31470] libc: inttypes.h provides incorrect macro definitions
+  [31664] libc: rfe: please provide openat2()
+  [31943] dynamic-link: _dl_find_object can fail if ld.so contains gaps
+    between load segments
+  [32339] build: iconv functions do not follow symlinks
+  [32378] libc: Implement memset_explicit
+  [32583] libc: setup_vdso doesn't support two PT_LOAD segments if one
+    of them has zero-vaddr
+  [32994] libc: pthread_rwlock_init reinitialisation during calls to
+    fork()
+  [33093] manual: Typo in section 16.9.8 Out-of-Band Data of the manual
+  [33129] dynamic-link: Need a version tag to indicate that glibc has
+    working GNU2 TLS support
+  [33182] build: Some tests leave random directories under /tmp
+  [33190] localedata: localedata: Add en_SE for ISO8601 date and time
+  [33212] dynamic-link: Add GLIBC_ABI_DT_X86_64_PLT version to indicate
+    x86_64 psABI compliance for DT_X86_64_PLT* support
+  [33221] dynamic-link: Add GLIBC_ABI_GNU_TLS version to indicate the
+    working GNU TLS run-time
+  [33227] network: namespace violation in inet-fortified.h
+  [33234] libc: s390: Test tst-locale1 fails on s390 32-bit
+  [33245] nptl: nptl: error in internal cancellation syscall handling,
+    corrupting copy_file_range syscall return value
+  [33254] libc: tst-freopen4-mem and tst-freopen64-4-mem FAIL
+  [33286] build: Test failure with glibc built with -mno-direct-extern-
+    access
+  [33289] localedata: Update locale data to Unicode 17.0.0
+  [33300] stdio: strip --strip-unneeded "breaks" libc.a (causing
+    segfault in Rust programs linked libc statically)
+  [33311] build: Testing failure with clang
+  [33312] build: Disable -Wimplicit-fallthrough for clang
+  [33318] build: -c shouldn't be passed to LIBC_TRY_TEST_CC_OPTION
+  [33325] libc: ISO C2y renamed s/uimaxabs/umaxabs/
+  [33340] libc: Possible regression in 2.42 termios refactoring re non-
+    standard baud rate
+  [33356] nptl: creating thread stack with guardsize 0 can erroneously
+    conclude MADV_GUARD_INSTALL is available
+  [33361] nss: Group merge does not handle ERANGE during merge
+  [33376] build: GCC 16 fails to build glibc when configured with
+    --disable-default-pie --enable-profile
+  [33404] dynamic-link: ld.so crashes when compiled with -Os and
+    configured with --enable-stack-protector=all
+  [33405] math: Optimize modf/modff for x86_64-v2 aren't compiled with
+    -fsignaling-nans
+  [33411] math: powl() raises spurious overflow
+  [33425] build: setfpucw.c:25:17: error: variable ‘cw’ set but not used
+    [-Werror=unused-but-set-variable=]
+  [33519] nss: getXXX API fails for turkish locale if nsswitch.conf
+    contains "i"
+  [33542] libc: x86: wmemset ifunc: stray '!' causing SSE2
+  [33547] libc: microblaze: wrong __syscall_cancel_arch after
+    89b53077d2a58f00e7debdfe58afabe953dac60d
+  [33563] math: powf() fails for 0x1p+8192 ^ 1.0
+  [33586] math: [2.43 Regression] FAIL: math/test-float64x-pow
+  [33619] math: [2.43 Regression] Many math test failures on x86-64
+  [33627] libc: execvp reads uninitialized memory
+  [33632] nptl: Incorrect USE_64B_ATOMICS usage on struct new_sem
+  [33653] time: __fts64_children_time64 Does Not Support 2038 Problem
+  [33677] math: [2.43 Regression] Many math test failures
+  [33715] nptl: nptl: pthread_create might act as a cancellation
+    entrypoint
+  [33717] nptl: nptl:
+    pthread_join/pthread_timedjoin_np/pthread_clockjoin_np might not act
+    as cancellation entrypoint
+  [33752] manual: Doc incorrectly says double and long double may not be
+    distinct
+  [33814] glob: wordexp with WRDE_REUSE and WRDE_APPEND may return
+    uninitialized memory
+
+Version 2.42
+
+Major new features:
+
+* The following ISO C23 function families (introduced in TS
+  18661-4:2015) are now supported in <math.h>.  Each family includes
+  functions for float, double, long double, _FloatN and _FloatNx, and a
+  type-generic macro in <tgmath.h>.
+
+  - Power and absolute-value functions: compoundn, pown, powr, rootn,
+    rsqrt.
+
+* On Linux, the pthread_gettid_np function has been added.
+
+* The ISO C2Y family of unsigned abs functions, i.e. uabs, ulabs,
+  ullabs, and uimaxabs, is now supported.
+
+* On Linux, the <termios.h> interface now supports arbitrary baud rates;
+  speed_t is redefined to simply be the baud rate specified as an
+  unsigned int, which matches the kernel interface.
+
+* The thread-local cache in malloc (tcache) now supports caching of
+  large blocks.  This feature can be enabled by setting the tunable
+  glibc.malloc.tcache_max to a larger value (max 4194304). Tcache is
+  also significantly faster for small sizes.
+
+* A new configure option, "--enable-sframe", can be used to enable
+  SFrame support of the GNU C Libraries.  SFrame is a new stack trace
+  information format which can be used by backtrace.  It requires
+  binutils with a minimum version of 2.45.
+
+* Support for lightweight stack guard pages via madvise and the
+  MADV_GUARD_INSTALL flag has been added to pthread_create.
+
+* Additional optimized and correctly rounded mathematical functions have
+  been imported from the CORE-MATH project, in particular acospif,
+  asinpif, atanpif, atan2pif, cospif, sinpif, tanpif.
+
+* The testsuite has been significantly extended, including coverage of
+  the functionality of the printf and scanf function families in many
+  variants.
+
+* The manual has been significantly extended and updated, particularly
+  the threads, terminal, filesystem, resource, and math chapters.
+
+* Code has been added to detect the x86-64 Intel Arrow Lake, Panther
+  Lake, Clearwater Forest, and Diamond Rapids microarchitectures.
+
+* Regarding S390, support for the new z17 platform has been added.
+
+Deprecated and removed features, and other changes affecting compatibility:
+
+* The glibc.rtld.execstack tunable now supports a compatibility mode to
+  allow programs that require an executable stack through dynamically
+  loaded shared libraries.
+
+* On Linux, the <termio.h> header and the definition of struct termio
+  in <sys/ioctl.h> have been removed. The termio interface has been
+  obsolete since the very first version of POSIX.1 in 1988, replaced
+  with <termios.h>.
+
+* The support for TX lock elision of pthread mutexes has been deprecated
+  on all architectures and will be removed in the next release.
+
+* On AArch64 Linux targets supporting the Scalable Matrix Extension
+  (SME), setjmp and sigsetjmp will disable the ZA state of SME.
+
+Changes to build and runtime requirements:
+
+* GCC 12.1 or later is now required to build the GNU C Library.
+
+* GNU Binutils 2.39 or later is now required to build the GNU C Library.
+
+Security related changes:
+
+The following CVEs were fixed in this release, details of which can be
+found in the advisories directory of the release tarball:
+
+  GLIBC-SA-2025-0001:
+    assert: Buffer overflow when printing assertion failure message
+    (CVE-2025-0395)
+
+  GLIBC-SA-2025-0003:
+    power10: strcmp fails to save and restore nonvolatile vector
+    registers (CVE-2025-5702)
+
+  GLIBC-SA-2025-0004:
+    power10: strncmp fails to save and restore nonvolatile vector
+    registers (CVE-2025-5745)
+
+  GLIBC-SA-2025-0005:
+    posix: Fix double-free after allocation failure in regcomp
+    (CVE-2025-8058)
+
+The following bugs were resolved with this release:
+
+  [5994] stdio: fflush after ungetc on seekable input stream
+  [12724] stdio: fclose violates POSIX 2008 on seekable input streams
+  [25263] dynamic-link: ldd and ld.so fail to resolve $ORIGIN with cross
+    dir symlink
+  [27880] nptl: Please provide a pthread pid accessor
+  [29190] dynamic-link: Symbols with version hash zero lead to crashes,
+    not matched correctly
+  [29459] stdio: fwrite does not return EPIPE when underlying write
+    fails with EPIPE.
+  [31791] nss: [Regression] nss: memory for >8 elements in nsswitch.conf
+    is not freed
+  [32058] libc: qsort leaks memory if C++ exception is thrown from
+    comparison function
+  [32269] dynamic-link: RISC-V IFUNC resolver cannot access gp pointer
+  [32369] stdio: fflush(NULL) doesn't properly flush files opened in
+    read mode
+  [32411] math: THREEp96 seems wrong
+  [32412] dynamic-link: Initial DTV is reallocated using main realloc in
+    auditing mode
+  [32483] locale: ctype.h macros segfault in multithreaded programs with
+    multiple libc.so
+  [32529] stdio: fseek failure on file opened with "rm" mode after
+    ungetc
+  [32535] stdio: fflush failure on file opened with "rm" mode after
+    ungetc
+  [32541] libc: getenv cannot be overridden in static builds
+  [32574] libc: pthread_attr_getstacksize/pthread_attr_getstack return
+    incorrect main stack size
+  [32612] dynamic-link: [aarch64 PAC] _dl_tlsdesc_dynamic can't be
+    unwound through with _Unwind_Backtrace
+  [32626] math: math: log10p1f is not correctly rounded
+  [32627] math: math: sinhf is not correctly rounded
+  [32630] math: math: tanf is not correctly rounded for all rounding
+    modes
+  [32653] dynamic-link: Review options for improving both security and
+    backwards compatibility of glibc 2.41 dlopen / execstack handling
+  [32694] math: wrong clang version 3.4 prereq checks in bits/floatn.h
+    for __float128 support, should be 3.9
+  [32708] libc: Inclusion of sys/mount.h triggers many gcc warnings
+    using -Wshift-overflow=2 -Wsystem-headers
+  [32711] math: math: remainder incorrect sign of zero result
+  [32717] libc: glibc tests fail when bfd is built with --enable-error-
+    execstack=yes
+  [32723] math: [2.41 Regression] /usr/include/bits/floatn.h doesn't
+    work with Intel SYCL compiler
+  [32763] dynamic-link: Static PIE with more than one PT_LOAD segments
+    at offset 0 segfault
+  [32777] crypt: The performance of the rand() function degradation
+  [32781] libc: Inccorect attribute access for sched_getattr
+  [32782] nptl: Race conditions in pthread cancellation causing crash
+  [32786] nptl: pthread_cond_* symbols should probably have had a
+    version bump in 2.41
+  [32795] nptl: aio_suspend_time64 confuses CLOCK_MONOTONIC and
+    CLOCK_REALTIME
+  [32810] dynamic-link: Immediate crash on x86-64 when running with
+    GLIBC_TUNABLES=glibc.cpu.hwcaps=-XSAVEC
+  [32823] libc: make[2]: *** [../Rules:248:
+    /home/dave/gnu/glibc/objdir/elf/tst-origin] Error 1
+  [32897] dynamic-link: pthread_getattr_np fails when executable stack
+    tunable is set
+  [32918] math: math: atanhf triggers UB
+  [32919] math: math: coshf triggers UB
+  [32920] math: math: logf triggers UB
+  [32921] math: math: sinhf triggers UB
+  [32922] math: math: cbrtf triggers UB
+  [32923] math: math: cospif triggers UB
+  [32924] math: math: erfcf triggers UB
+  [32925] math: math: sinpif triggers UB
+  [32932] libc: riscv: __riscv_hwprobe function attributes are incorrect
+  [32947] libc: stdlib: wrong iovec array size on __libc_message_impl
+  [32980] manual: getopt_long_only does not check long options first, as
+    the manual claims
+  [32981] ports: elf/tst-execstack-prog-static-tunable fails on
+    sparc64-linux-gnu
+  [32987] libc: New tst-dlopen-sgid test FAILs
+  [32996] malloc: i386 TLS helper functions don't preserve XMM registers
+  [33035] libc: [2.27 regression] Linux: __close_nocancel_nostatus
+    clobbers errno
+  [33056] string: Power 10 strcmp clobbers nonvolatile vector registers
+    (CVE-2025-5702)
+  [33059] string: Power 10 memchr clobbers v20
+  [33060] string: Power 10 strncmp clobbers nonvolatile vector registers
+    (CVE-2025-5745)
+  [33088] dynamic-link: __ehdr_start may need run-time relocation
+  [33089] build: [2.42 Regression] GCC 14.2.1 failed to build glibc
+  [33134] libc: mcount_internal shouldn't use vector/r16-r31 registers
+    nor call memcpy/memset
+  [33139] stdio: %n after static dlopen is unreliable if file
+    descriptors are exhausted
+  [33165] build: [2.42 Regression] FAIL: elf/check-localplt
+  [33173] math: Wrong IFUNC selector is used for modf/modff
+  [33185] regex: Double-free after memory allocation failure in regcomp
+    bracket expression parsing (CVE-2025-8058)
+  [33224] dynamic-link: _dl_debug_state hook no longer works (since
+    8329939a37f483a16013dd8af8303cbcb86d92cb)
 
 Version 2.41
 
@@ -8107,7 +8522,7 @@ Version 1.06
   `make dvi' will produce a DVI file of the printed manual.
   `make info' will produce Info files that you can read on line using C-h i
   in Emacs or the `info' program.
-  Please send comments on the manual to bug-glibc-manual@gnu.org.
+  Please send comments on the manual to libc-alpha@sourceware.org.
 
 * The library now supports SVR4 on i386s (i386-unknown-sysv4).
 

@@ -20,6 +20,9 @@
 #include <fenv_private.h>
 #include <math-underflow.h>
 #include <libm-alias-finite.h>
+#include <libm-alias-float.h>
+#include <math-svid-compat.h>
+#include "math_config.h"
 
 static const float
 two   =  2.0000000000e+00, /* 0x40000000 */
@@ -28,7 +31,7 @@ one   =  1.0000000000e+00; /* 0x3F800000 */
 static const float zero  =  0.0000000000e+00;
 
 float
-__ieee754_jnf(int n, float x)
+__jnf(int n, float x)
 {
     float ret;
     {
@@ -61,7 +64,8 @@ __ieee754_jnf(int n, float x)
 	    b = __ieee754_j1f(x);
 	    for(i=1;i<n;i++){
 		temp = b;
-		b = b*((double)(i+i)/x) - a; /* avoid underflow */
+                /* the following computation should be done in double precision */
+		b = (double)b*((double)(i+i)/(double)x) - (double)a; /* avoid underflow */
 		a = temp;
 	    }
 	} else {
@@ -181,10 +185,17 @@ __ieee754_jnf(int n, float x)
 	math_check_force_underflow (ret);
     return ret;
 }
+strong_alias (__jnf, __ieee754_jnf)
+#if LIBM_SVID_COMPAT
+versioned_symbol (libm, __jnf, jnf, GLIBC_2_43);
+libm_alias_float_other (__jn, jn)
+#else
+libm_alias_float (__jn, jn)
+#endif
 libm_alias_finite (__ieee754_jnf, __jnf)
 
 float
-__ieee754_ynf(int n, float x)
+__ynf(int n, float x)
 {
     float ret;
     {
@@ -196,16 +207,21 @@ __ieee754_ynf(int n, float x)
 	GET_FLOAT_WORD(hx,x);
 	ix = 0x7fffffff&hx;
     /* if Y(n,NaN) is NaN */
-	if(__builtin_expect(ix>0x7f800000, 0)) return x+x;
+	if(ix>=0x7f800000)
+	  {
+	    if (hx==0xFF800000)
+	      return __math_invalidf (1);
+	    return one/(x+x*x);
+	  }
 	sign = 1;
 	if(n<0){
 		n = -n;
 		sign = 1 - ((n&1)<<1);
 	}
 	if(n==0) return(__ieee754_y0f(x));
-	if(__builtin_expect(ix==0, 0))
-		return -sign/zero;
-	if(__builtin_expect(hx<0, 0)) return zero/(zero*x);
+	if(ix==0)
+		return __math_divzerof (sign == 1 ? 1 : 0);
+	if(hx<0) return __math_invalidf (x);
 	SET_RESTORE_ROUNDF (FE_TONEAREST);
 	if(n==1) {
 	    ret = sign*__ieee754_y1f(x);
@@ -219,7 +235,8 @@ __ieee754_ynf(int n, float x)
 	GET_FLOAT_WORD(ib,b);
 	for(i=1;i<n&&ib!=0xff800000;i++){
 	    temp = b;
-	    b = ((double)(i+i)/x)*b - a;
+            /* the following computation should be done in double precision */
+	    b = ((double)(i+i)/(double)x)*(double)b - (double)a;
 	    GET_FLOAT_WORD(ib,b);
 	    a = temp;
 	}
@@ -233,4 +250,11 @@ __ieee754_ynf(int n, float x)
 	ret = copysignf (FLT_MAX, ret) * FLT_MAX;
     return ret;
 }
+strong_alias (__ynf, __ieee754_ynf)
+#if LIBM_SVID_COMPAT
+versioned_symbol (libm, __ynf, ynf, GLIBC_2_43);
+libm_alias_float_other (__yn, yn)
+#else
+libm_alias_float (__yn, yn)
+#endif
 libm_alias_finite (__ieee754_ynf, __ynf)

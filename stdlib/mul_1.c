@@ -1,7 +1,7 @@
 /* mpn_mul_1 -- Multiply a limb vector with a single limb and
    store the product in a second limb vector.
 
-Copyright (C) 1991-2025 Free Software Foundation, Inc.
+Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -21,7 +21,6 @@ along with the GNU MP Library; see the file COPYING.LIB.  If not, see
 
 #include <gmp.h>
 #include "gmp-impl.h"
-#include "longlong.h"
 
 mp_limb_t
 mpn_mul_1 (register mp_ptr res_ptr, register mp_srcptr s1_ptr,

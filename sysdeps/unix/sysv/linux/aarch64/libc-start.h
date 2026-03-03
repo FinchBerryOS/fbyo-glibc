@@ -1,5 +1,5 @@
 /* AArch64 definitions for libc main startup.
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -41,9 +41,10 @@ aarch64_libc_setup_tls (void)
     if (ph->p_type == PT_GNU_PROPERTY)
       {
 	_dl_process_pt_gnu_property (main_map, -1, ph);
-	_rtld_main_check (main_map, _dl_argv[0]);
 	break;
       }
+
+  _rtld_main_check (main_map, _dl_argv[0]);
 
   if (GL(dl_aarch64_gcs) != 0)
     {

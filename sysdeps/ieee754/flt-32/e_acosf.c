@@ -29,7 +29,10 @@ SOFTWARE.
 #include <math_private.h>
 #include <libm-alias-finite.h>
 #include <math-barriers.h>
+#include <libm-alias-float.h>
+#include <math-svid-compat.h>
 #include "math_config.h"
+#include "s_asincosf_data.h"
 
 static __attribute__ ((noinline)) float
 as_special (float x)
@@ -65,7 +68,7 @@ poly12 (double z, const double *c)
 }
 
 float
-__ieee754_acosf (float x)
+__acosf (float x)
 {
   double pi2 = 0x1.921fb54442d18p+0;
   static const double o[] = { 0, 0x1.921fb54442d18p+1 };
@@ -110,34 +113,27 @@ __ieee754_acosf (float x)
   /* accurate path  */
   if (ax < (0x7eu << 24))
     {
-      static const double c[] =
-	{
-	  0x1.555555555529cp-3,  0x1.333333337e0ddp-4, 0x1.6db6db3b4465ep-5,
-	  0x1.f1c72e13ac306p-6,  0x1.6e89cebe06bc4p-6, 0x1.1c6dcf5289094p-6,
-	  0x1.c6dbbcc7c6315p-7,  0x1.8f8dc2615e996p-7, 0x1.a5833b7bf15e8p-8,
-	  0x1.43f44ace1665cp-6, -0x1.0fb17df881c73p-6, 0x1.07520c026b2d6p-5
-	};
       if (t == 0x328885a3u)
-	return 0x1.921fb6p+0f + 0x1p-25;
+	return 0x1.921fb6p+0f + 0x1p-25f;
       if (t == 0x39826222u)
-	return 0x1.920f6ap+0f + 0x1p-25;
+	return 0x1.920f6ap+0f + 0x1p-25f;
       double x2 = xs * xs;
-      r = (pi2 - xs) - (xs * x2) * poly12 (x2, c);
+      r = (pi2 - xs) - (xs * x2) * poly12 (x2, C0);
     }
   else
     {
-      static const double c[] =
-	{
-	  0x1.6a09e667f3bcbp+0,   0x1.e2b7dddff2db9p-4,  0x1.b27247ab42dbcp-6,
-	  0x1.02995cc4e0744p-7,   0x1.5ffb0276ec8eap-9,  0x1.033885a928decp-10,
-	  0x1.911f2be23f8c7p-12,  0x1.4c3c55d2437fdp-13, 0x1.af477e1d7b461p-15,
-	  0x1.abd6bdff67dcbp-15, -0x1.1717e86d0fa28p-16, 0x1.6ff526de46023p-16
-	};
       double bx = fabs (xs);
       double z = 1.0 - bx;
       double s = copysign (sqrt (z), xs);
-      r = o[t >> 31] + s * poly12 (z, c);
+      r = o[t >> 31] + s * poly12 (z, C1);
     }
   return r;
 }
+strong_alias (__acosf, __ieee754_acosf)
+#if LIBM_SVID_COMPAT
+versioned_symbol (libm, __acosf, acosf, GLIBC_2_43);
+libm_alias_float_other (__acos, acos)
+#else
+libm_alias_float (__acos, acos)
+#endif
 libm_alias_finite (__ieee754_acosf, __acosf)

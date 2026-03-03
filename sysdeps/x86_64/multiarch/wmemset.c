@@ -1,6 +1,6 @@
 /* Multiple versions of wmemset.
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ weak_alias (__wmemset, wmemset)
 # ifdef SHARED
 __hidden_ver1 (__wmemset, __GI___wmemset, __redirect___wmemset)
   __attribute__ ((visibility ("hidden")));
-__hidden_ver1 (wmemset, __GI_wmemset, __redirect_wmemset)
+__hidden_ver1 (__wmemset, __GI_wmemset, __redirect_wmemset)
   __attribute__ ((visibility ("hidden")));
 # endif
 #endif

@@ -1,5 +1,5 @@
 /* Run a test case in an isolated namespace.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -273,7 +273,7 @@ devmount (const char *new_root_path, const char *which)
 {
   int fd;
   fd = open (concat (new_root_path, "/dev/", which, NULL),
-	     O_CREAT | O_TRUNC | O_RDWR, 0777);
+	     O_CREAT | O_TRUNC | O_RDWR, 0666);
   xclose (fd);
 
   trymount (concat ("/dev/", which, NULL),
@@ -705,6 +705,7 @@ check_for_unshare_hints (int require_pidns)
 
       val = -1; /* Sentinel.  */
       int cnt = fscanf (f, "%d", &val);
+      fclose (f);
       if (cnt == 1 && val != files[i].bad_value)
 	continue;
 
@@ -740,7 +741,7 @@ main (int argc, char **argv)
   char *command_basename;
   char *so_base;
   int do_postclean = 0;
-  bool do_ldconfig = false;
+  bool do_ldconfig = true;
   char *change_cwd = NULL;
 
   int pipes[2];
@@ -1151,6 +1152,9 @@ main (int argc, char **argv)
   devmount (new_root_path, "null");
   devmount (new_root_path, "zero");
   devmount (new_root_path, "urandom");
+#ifdef __linux__
+  devmount (new_root_path, "ptmx");
+#endif
 
   /* We're done with the "old" root, switch to the new one.  */
   if (chroot (new_root_path) < 0)
@@ -1216,6 +1220,14 @@ main (int argc, char **argv)
   setenv ("PID_OUTSIDE_CONTAINER", pid_buf, 0);
 
   maybe_xmkdir ("/tmp", 0755);
+
+#ifdef __linux__
+  maybe_xmkdir ("/dev/pts", 0777);
+  if (mount ("/dev/pts", "/dev/pts", "devpts", 0, "newinstance,ptmxmode=0666,mode=0666") < 0)
+    FAIL_EXIT1 ("can't mount /dev/pts: %m\n");
+  if (mount ("/dev/pts/ptmx", "/dev/ptmx", "", MS_BIND | MS_REC, NULL) < 0)
+    FAIL_EXIT1 ("can't mount /dev/ptmx\n");
+#endif
 
   if (require_pidns)
     {

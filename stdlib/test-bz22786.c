@@ -1,5 +1,5 @@
 /* Bug 22786: test for buffer overflow in realpath.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -60,8 +60,11 @@ do_test (void)
   *(p++) = '/';
   p[path_len - (p - path) - 1] = '\0';
 
-  /* This call crashes before the fix for bz22786 on 32-bit platforms.  */
+  /* This call crashes before the fix for bz22786 on 32-bit platforms.
+     It may trigger an OOM event. */
+  support_accept_oom (true);
   p = realpath (path, NULL);
+  support_accept_oom (false);
   TEST_VERIFY (p == NULL);
   /* For 64-bit platforms readlink return ENAMETOOLONG, while for 32-bit
      realpath will try to allocate a buffer larger than PTRDIFF_MAX.  */

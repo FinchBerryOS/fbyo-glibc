@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ __pthread_setschedprio (pthread_t threadid, int prio)
   struct pthread *pd = (struct pthread *) threadid;
 
   /* Make sure the descriptor is valid.  */
-  if (INVALID_TD_P (pd))
+  if (!__pthread_descriptor_valid (pd))
     /* Not a valid thread handle.  */
     return ESRCH;
 

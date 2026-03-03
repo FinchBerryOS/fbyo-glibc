@@ -1,5 +1,5 @@
 /* Stack executability handling for GNU dynamic linker.  Linux version.
-   Copyright (C) 2003-2025 Free Software Foundation, Inc.
+   Copyright (C) 2003-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,12 +17,13 @@
    <https://www.gnu.org/licenses/>.  */
 
 #include <ldsodefs.h>
+#include <stackinfo.h>
 
 int
-_dl_make_stack_executable (void **stack_endp)
+_dl_make_stack_executable (const void *stack_endp)
 {
   /* This gives us the highest/lowest page that needs to be changed.  */
-  uintptr_t page = ((uintptr_t) *stack_endp
+  uintptr_t page = ((uintptr_t) stack_endp
 		    & -(intptr_t) GLRO(dl_pagesize));
 
   if (__mprotect ((void *) page, GLRO(dl_pagesize),
@@ -35,11 +36,8 @@ _dl_make_stack_executable (void **stack_endp)
 		  ) != 0)
     return errno;
 
-  /* Clear the address.  */
-  *stack_endp = NULL;
-
   /* Remember that we changed the permission.  */
-  GL(dl_stack_flags) |= PF_X;
+  GL(dl_stack_prot_flags) |= PROT_EXEC;
 
   return 0;
 }

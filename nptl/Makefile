@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2025 Free Software Foundation, Inc.
+# Copyright (C) 2002-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -42,11 +42,6 @@ routines = \
   cleanup_defer \
   cleanup_defer_compat \
   cleanup_routine \
-  elision-conf \
-  elision-lock \
-  elision-timed \
-  elision-trylock \
-  elision-unlock \
   events \
   futex-internal \
   libc-cleanup \
@@ -63,7 +58,6 @@ routines = \
   old_pthread_cond_signal \
   old_pthread_cond_timedwait \
   old_pthread_cond_wait \
-  pthread_atfork \
   pthread_attr_copy \
   pthread_attr_destroy \
   pthread_attr_extension \
@@ -124,6 +118,7 @@ routines = \
   pthread_getname \
   pthread_getschedparam \
   pthread_getspecific \
+  pthread_gettid_np \
   pthread_join \
   pthread_join_common \
   pthread_key_create \
@@ -210,7 +205,6 @@ routines = \
   vars \
   # routines
 
-static-only-routines = pthread_atfork
 libpthread-routines = libpthread-compat
 libpthread-shared-only-routines = libpthread-compat
 
@@ -283,12 +277,16 @@ tests = \
   tst-cancel17 \
   tst-cancel24 \
   tst-cancel31 \
+  tst-cancel33 \
+  tst-cancel34 \
+  tst-cleanup5 \
   tst-cond26 \
   tst-context1 \
   tst-default-attr \
   tst-dlsym1 \
   tst-exec4 \
   tst-exec5 \
+  tst-guard1 \
   tst-initializers1 \
   tst-initializers1-c11 \
   tst-initializers1-c89 \
@@ -325,6 +323,7 @@ tests = \
   tst-pthread-timedlock-lockloop \
   tst-pthread_exit-nothreads \
   tst-pthread_exit-nothreads-static \
+  tst-pthread_gettid_np \
   tst-robust-fork \
   tst-robustpi1 \
   tst-robustpi2 \
@@ -374,6 +373,7 @@ tests-container =  tst-pthread-getattr
 tests-internal := \
   tst-barrier5 \
   tst-cond22 \
+  tst-dl-debug-tid \
   tst-mutex8 \
   tst-mutex8-static \
   tst-mutexpi8 \
@@ -572,6 +572,7 @@ xtests-static += tst-setuid1-static
 
 ifeq ($(run-built-tests),yes)
 tests-special += \
+  $(objpfx)tst-dl-debug-tid.out \
   $(objpfx)tst-oddstacklimit.out \
   # tests-special
 ifeq ($(build-shared),yes)
@@ -701,19 +702,25 @@ $(objpfx)tst-execstack-threads.out: $(objpfx)tst-execstack-threads-mod.so
 LDFLAGS-tst-execstack-threads = -Wl,-z,noexecstack
 LDFLAGS-tst-execstack-threads-mod.so = -Wl,-z,execstack
 CFLAGS-tst-execstack-threads-mod.c += -Wno-trampolines
+ifeq ($(have-no-error-execstack),yes)
+LDFLAGS-tst-execstack-threads-mod.so += -Wl,--no-error-execstack
+endif
 
 tst-stackguard1-ARGS = --command "$(host-test-program-cmd) --child"
 tst-stackguard1-static-ARGS = --command "$(objpfx)tst-stackguard1-static --child"
 
 ifeq ($(run-built-tests),yes)
+$(objpfx)tst-dl-debug-tid.out: tst-dl-debug-tid.sh $(objpfx)tst-dl-debug-tid
+	$(SHELL) $< $(common-objpfx) '$(test-wrapper-env)' '$(rtld-prefix)' \
+	  '$(run-program-env)' \
+	  $(objpfx)tst-dl-debug-tid > $@; $(evaluate-test)
+
 $(objpfx)tst-oddstacklimit.out: $(objpfx)tst-oddstacklimit $(objpfx)tst-basic1
 	$(test-program-prefix) $< --command '$(host-test-program-cmd)' > $@; \
 	$(evaluate-test)
 endif
 
 $(objpfx)tst-compat-forwarder: $(objpfx)tst-compat-forwarder-mod.so
-
-tst-mutex10-ENV = GLIBC_TUNABLES=glibc.elision.enable=1
 
 # Protect against a build using -Wl,-z,now.
 LDFLAGS-tst-audit-threads-mod1.so = -Wl,-z,lazy

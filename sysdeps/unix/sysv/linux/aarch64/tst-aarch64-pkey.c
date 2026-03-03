@@ -1,5 +1,5 @@
 /* AArch64 tests for memory protection keys.
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -55,6 +55,10 @@ do_test (void)
       if (errno == ENOSYS || errno == EINVAL)
         FAIL_UNSUPPORTED
           ("kernel or CPU does not support memory protection keys");
+      if (errno == ENOSPC)
+        FAIL_UNSUPPORTED
+          ("no keys available or kernel does not support memory"
+           " protection keys");
       FAIL_EXIT1 ("pkey_alloc: %m");
     }
 

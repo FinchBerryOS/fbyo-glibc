@@ -1,6 +1,6 @@
 /* Double-precision vector (Advanced SIMD) atanh function
 
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -52,20 +52,12 @@ float64x2_t V_NAME_D1 (atanh) (float64x2_t x)
   uint64x2_t ia = vreinterpretq_u64_f64 (ax);
   uint64x2_t special = vcgeq_u64 (ia, d->one);
 
-#if WANT_SIMD_EXCEPT
-  ax = v_zerofy_f64 (ax, special);
-#endif
-
   float64x2_t y;
   y = vaddq_f64 (ax, ax);
   y = vdivq_f64 (y, vsubq_f64 (vreinterpretq_f64_u64 (d->one), ax));
 
   if (__glibc_unlikely (v_any_u64 (special)))
-#if WANT_SIMD_EXCEPT
-    return special_case (x, halfsign, y, special, d);
-#else
     return special_case (ax, halfsign, y, special, d);
-#endif
 
   y = log1p_inline (y, &d->log1p_consts);
   return vmulq_f64 (y, halfsign);

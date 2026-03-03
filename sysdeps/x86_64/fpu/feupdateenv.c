@@ -1,5 +1,5 @@
 /* Install given floating-point environment and raise exceptions.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
    <https://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
+#include <math-inline-asm.h>
 
 int
 __feupdateenv (const fenv_t *envp)
@@ -25,7 +26,8 @@ __feupdateenv (const fenv_t *envp)
   unsigned int xtemp;
 
   /* Save current exceptions.  */
-  __asm__ ("fnstsw %0\n\tstmxcsr %1" : "=m" (*&temp), "=m" (xtemp));
+  asm volatile ("fnstsw %0" : "=m" (temp));
+  stmxcsr_inline_asm (&xtemp);
   temp = (temp | xtemp) & FE_ALL_EXCEPT;
 
   /* Install new environment.  */

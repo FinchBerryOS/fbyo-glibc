@@ -1,5 +1,5 @@
 /* RSEQ_* accessors.  Generic version.
-   Copyright (C) 2002-2025 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 
 /* Static assert for types that can't be loaded/stored atomically on the
    current architecture.  */
-#if __HAVE_64B_ATOMICS
+#if HAVE_64B_ATOMICS
 #define __RSEQ_ASSERT_ATOMIC(member) \
    _Static_assert (sizeof (RSEQ_SELF()->member) == 1			      \
 		   || sizeof (RSEQ_SELF()->member) == 4			      \

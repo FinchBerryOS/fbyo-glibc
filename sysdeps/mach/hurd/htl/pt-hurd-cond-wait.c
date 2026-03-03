@@ -1,5 +1,5 @@
 /* pthread_hurd_cond_wait.  Hurd-specific wait on a condition.
-   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+   Copyright (C) 2012-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include <hurd/signal.h>
 
 #include <pt-internal.h>
+#include <shlib-compat.h>
 
 /* Implemented in pt-hurd-cond-timedwait.c.  */
 extern int __pthread_hurd_cond_timedwait_internal (pthread_cond_t *cond,
@@ -37,4 +38,8 @@ __pthread_hurd_cond_wait_np (pthread_cond_t *cond, pthread_mutex_t *mutex)
   return err == EINTR;
 }
 
-strong_alias (__pthread_hurd_cond_wait_np, pthread_hurd_cond_wait_np);
+versioned_symbol (libc, __pthread_hurd_cond_wait_np, pthread_hurd_cond_wait_np, GLIBC_2_43);
+
+#if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_21, GLIBC_2_43)
+compat_symbol (libpthread, __pthread_hurd_cond_wait_np, pthread_hurd_cond_wait_np, GLIBC_2_21);
+#endif

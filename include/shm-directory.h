@@ -1,5 +1,5 @@
 /* Header for directory for shm/sem files.
-   Copyright (C) 2014-2025 Free Software Foundation, Inc.
+   Copyright (C) 2014-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@
 struct shmdir_name
 {
   /* The combined prefix/name.  The sizeof includes the terminating
-     NUL byte.  4 bytes are needed for the optional "sem." prefix.  */
-  char name[sizeof (SHMDIR) + 4 + NAME_MAX];
+     NUL byte.  */
+  char name[sizeof (SHMDIR) + NAME_MAX];
 };
 
 /* Sets RESULT->name to the constructed name and returns 0 on success,

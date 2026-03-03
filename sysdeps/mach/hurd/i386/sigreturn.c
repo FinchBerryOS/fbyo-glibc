@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,6 +20,8 @@
 #include <hurd/msg.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <cpuid.h>
 
 /* This is run on the thread stack after restoring it, to be able to
    unlock SS off sigstack.  */
@@ -87,9 +89,20 @@ __sigreturn (struct sigcontext *scp)
 {
   struct hurd_sigstate *ss;
   struct hurd_userlink *link = (void *) &scp[1];
+  int *usp;
+
+  /* Stack usage while trampolining back:
+   * register dump, parameters, and rough estimation of usage in __sigreturn2
+   * before unlocking ss.  */
+  size_t tramp_usage = 18 * sizeof (uintptr_t) + 32;
 
   if (__glibc_unlikely (scp == NULL || (scp->sc_mask & _SIG_CANT_MASK)))
     return __hurd_fail (EINVAL);
+
+  usp = (int *) scp->sc_uesp;
+
+  /* If we are to segfault, do it now before locking the ss.  */
+  memset ((void*) usp - tramp_usage, 0, tramp_usage);
 
   ss = _hurd_self_sigstate ();
   _hurd_sigstate_lock (ss);
@@ -123,17 +136,42 @@ __sigreturn (struct sigcontext *scp)
   if (scp->sc_onstack)
     ss->sigaltstack.ss_flags &= ~SS_ONSTACK;
 
-  if (scp->sc_fpused)
-    /* Restore the FPU state.  Mach conveniently stores the state
-       in the format the i387 `frstor' instruction uses to restore it.  */
-    asm volatile ("frstor %0" : : "m" (scp->sc_fpsave));
+#ifdef i386_XFLOAT_STATE
+  if (scp->xstate)
+    {
+      if (scp->xstate->initialized)
+	{
+	  unsigned eax, ebx, ecx, edx;
+	  __cpuid_count(0xd, 0, eax, ebx, ecx, edx);
+	  switch (scp->xstate->fp_save_kind)
+	    {
+	    case 0: // FNSAVE
+	      asm volatile("frstor %0" : : "m" (scp->xstate->hw_state));
+	      break;
+	    case 1: // FXSAVE
+	      asm volatile("fxrstor %0" : : "m" (scp->xstate->hw_state),    \
+			   "a" (eax), "d" (edx));
+	      break;
+	    default: // XSAVE, XSAVEOPT, XSAVEC, XSAVES
+	      asm volatile("xrstor %0" : : "m" (scp->xstate->hw_state),     \
+			   "a" (eax), "d" (edx));
+	      break;
+	    }
+	}
+    }
+  else
+#endif
+    if (scp->sc_fpused)
+      /* Restore the FPU state.  Mach conveniently stores the state
+         in the format the i387 `frstor' instruction uses to restore it.  */
+      asm volatile ("frstor %0" : : "m" (scp->sc_fpsave));
 
   {
     /* There are convenient instructions to pop state off the stack, so we
        copy the registers onto the user's stack, switch there, pop and
        return.  */
 
-    int usp_arg, *usp = (int *) scp->sc_uesp;
+    int usp_arg;
 
     *--usp = scp->sc_eip;
     *--usp = scp->sc_efl;

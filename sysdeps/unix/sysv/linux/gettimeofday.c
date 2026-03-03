@@ -1,5 +1,5 @@
 /* gettimeofday - set time.  Linux version.
-   Copyright (C) 2020-2025 Free Software Foundation, Inc.
+   Copyright (C) 2020-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ __gettimeofday_syscall (struct timeval *restrict tv, void *restrict tz)
 libc_ifunc (__gettimeofday,
 	    GLRO(dl_vdso_gettimeofday) != NULL
 	    ? VDSO_IFUNC_RET (GLRO(dl_vdso_gettimeofday))
-	    : (void *) __gettimeofday_syscall)
+	    : __gettimeofday_syscall)
 
 # else
 int

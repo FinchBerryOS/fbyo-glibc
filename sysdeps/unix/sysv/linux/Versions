@@ -332,6 +332,17 @@ libc {
     sched_getattr;
     sched_setattr;
   }
+  GLIBC_2.42 {
+    cfgetospeed;
+    cfgetispeed;
+    cfsetospeed;
+    cfsetispeed;
+    cfsetspeed;
+  }
+  GLIBC_2.43 {
+    mseal;
+    openat2;
+  }
   GLIBC_PRIVATE {
     # functions used in other libraries
     __syscall_rt_sigqueueinfo;
@@ -339,6 +350,7 @@ libc {
     __read_nocancel;
     __pread64_nocancel;
     __close_nocancel;
+    __close_nocancel_nostatus;
     __sigtimedwait;
     # functions used by nscd
     __netlink_assert_response;

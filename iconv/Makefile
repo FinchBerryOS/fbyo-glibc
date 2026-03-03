@@ -1,4 +1,4 @@
-# Copyright (C) 1997-2025 Free Software Foundation, Inc.
+# Copyright (C) 1997-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -85,6 +85,7 @@ tests-special += \
 	$(objpfx)tst-iconv_prog-buffer-tiny.out \
 	$(objpfx)tst-iconv_prog-buffer.out \
 	$(objpfx)tst-iconv_prog.out \
+	$(objpfx)tst-iconvconfig.out \
 	$(objpfx)tst-translit-mchar.out \
 	# tests-special
 endif
@@ -140,7 +141,7 @@ $(objpfx)test-iconvconfig.out: $(objpfx)iconvconfig
 
 $(objpfx)tst-iconv_prog.out: tst-iconv_prog.sh $(objpfx)iconv_prog
 	$(BASH) $< $(common-objdir) '$(test-wrapper-env)' \
-		 '$(run-program-env)' > $@; \
+		 '$(run-program-env)' '$(rpath-link)' > $@; \
 	$(evaluate-test)
 
 $(objpfx)tst-translit-mchar.out: tst-translit-mchar.sh \
@@ -164,3 +165,8 @@ $(objpfx)tst-iconv_prog-buffer-large.out: \
   tst-iconv_prog-buffer.sh $(objpfx)iconv_prog
 	$(BASH) $< $(common-objdir) '$(run-program-prefix)' '' '22' > $@; \
 	$(evaluate-test)
+
+$(objpfx)tst-iconvconfig.out: tst-iconvconfig.sh $(objpfx)iconvconfig
+	$(BASH) $< $(common-objdir) '$(test-wrapper-env)' \
+		'$(run-program-env)' '$(rpath-link)' > $@; \
+    $(evaluate-test)

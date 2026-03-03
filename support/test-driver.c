@@ -1,5 +1,5 @@
 /* Main function for test programs.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -166,6 +166,14 @@ main (int argc, char **argv)
   test_config.optstring = "+" CMDLINE_OPTSTRING;
 #else
   test_config.optstring = "+";
+#endif
+
+#ifdef TEST_IN_THREAD
+  test_config.test_in_thread = TEST_IN_THREAD;
+  test_config.test_in_thread_wrapper = support_test_in_thread_wrapper;
+#else
+  test_config.test_in_thread = 0;
+  test_config.test_in_thread_wrapper = NULL;
 #endif
 
   return support_test_main (argc, argv, &test_config);

@@ -1,5 +1,5 @@
 /* Test compilation of tgmath macros.
-   Copyright (C) 2003-2025 Free Software Foundation, Inc.
+   Copyright (C) 2003-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,8 +30,6 @@ DIAG_IGNORE_NEEDS_COMMENT_CLANG (13, "-Wunneeded-internal-declaration");
 static float fx;
 static double dx;
 static long double lx;
-static int rm = FP_INT_UPWARD;
-static unsigned int width = 64;
 static int errors = 0;
 DIAG_POP_NEEDS_COMMENT_CLANG;
 
@@ -70,10 +68,6 @@ CHECK_RET_CONST(lrint, long)
 CHECK_RET_CONST(lround, long)
 CHECK_RET_CONST(llrint, long long)
 CHECK_RET_CONST(llround, long long)
-CHECK_RET_CONST(fromfp, intmax_t, rm, width)
-CHECK_RET_CONST(ufromfp, uintmax_t, rm, width)
-CHECK_RET_CONST(fromfpx, intmax_t, rm, width)
-CHECK_RET_CONST(ufromfpx, uintmax_t, rm, width)
 
 static int
 do_test (void)
@@ -84,10 +78,6 @@ do_test (void)
   check_return_lround ();
   check_return_llrint ();
   check_return_llround ();
-  check_return_fromfp ();
-  check_return_ufromfp ();
-  check_return_fromfpx ();
-  check_return_ufromfpx ();
 
   printf ("%zd\n", sizeof (carg (lx)));
 

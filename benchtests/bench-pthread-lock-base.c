@@ -1,5 +1,5 @@
 /* Measure lock functions for different threads and critical sections.
-   Copyright (C) 2022-2025 Free Software Foundation, Inc.
+   Copyright (C) 2022-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <sys/time.h>
 #include <sys/sysinfo.h>
 #include "bench-timing.h"
+#include "bench-util.h"
 #include "json-lib.h"
 
 static bench_lock_t lock;
@@ -36,10 +37,8 @@ static pthread_barrier_t barrier;
 
 #define START_ITERS 1000
 
-#pragma GCC push_options
-#pragma GCC optimize(1)
-
-static int __attribute__ ((noinline)) fibonacci (int i)
+static int __attribute__ ((noinline)) attribute_optimize (1)
+fibonacci (int i)
 {
   asm("");
   if (i > 2)
@@ -48,6 +47,7 @@ static int __attribute__ ((noinline)) fibonacci (int i)
 }
 
 static void
+attribute_optimize (1)
 do_filler (void)
 {
   char buf1[512], buf2[512];
@@ -56,14 +56,13 @@ do_filler (void)
 }
 
 static void
+attribute_optimize (1)
 do_filler_shared (void)
 {
   static char buf1[512], buf2[512];
   int f = fibonacci (4);
   memcpy (buf1, buf2, f);
 }
-
-#pragma GCC pop_options
 
 #define UNIT_WORK_CRT do_filler_shared ()
 #define UNIT_WORK_NON_CRT do_filler ()

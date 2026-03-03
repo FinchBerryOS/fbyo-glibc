@@ -1,5 +1,5 @@
 /* Get enabled floating-point exceptions.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ fegetexcept (void)
   unsigned short int exc;
 
   /* Get the current control word.  */
-  __asm__ ("fstcw %0" : "=m" (*&exc));
+  __asm__ ("fstcw %0" : "=m" (exc));
 
   return (~exc) & FE_ALL_EXCEPT;
 }

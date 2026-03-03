@@ -1,5 +1,5 @@
 /* Start thread.  Mach version.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -51,3 +51,4 @@ __pthread_thread_start (struct __pthread *thread)
 
   return 0;
 }
+libc_hidden_def (__pthread_thread_start)

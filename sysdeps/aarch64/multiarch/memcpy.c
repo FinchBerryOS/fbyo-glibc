@@ -1,5 +1,5 @@
 /* Multiple versions of memcpy. AARCH64 version.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    Copyright The GNU Toolchain Authors.
    This file is part of the GNU C Library.
 
@@ -43,7 +43,7 @@ select_memcpy_ifunc (void)
   if (mops)
     return __memcpy_mops;
 
-  if (sve && HAVE_AARCH64_SVE_ASM)
+  if (sve)
     {
       if (IS_A64FX (midr))
 	return __memcpy_a64fx;

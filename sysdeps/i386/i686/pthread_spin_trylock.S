@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,4 +16,4 @@
    <https://www.gnu.org/licenses/>.  */
 
 #define HAVE_CMOV	1
-#include <sysdeps/i386/pthread_spin_trylock.S>
+#include <sysdeps/i386/nptl/pthread_spin_trylock.S>

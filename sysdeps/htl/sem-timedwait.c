@@ -1,5 +1,5 @@
 /* Wait on a semaphore with a timeout.  Generic version.
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,8 +25,9 @@
 #include <sysdep-cancel.h>
 
 #include <pt-internal.h>
+#include <shlib-compat.h>
 
-#if !__HAVE_64B_ATOMICS
+#if !USE_64B_ATOMICS_ON_SEM_T
 static void
 __sem_wait_32_finish (struct new_sem *isem);
 #endif
@@ -36,7 +37,7 @@ __sem_wait_cleanup (void *arg)
 {
   struct new_sem *isem = arg;
 
-#if __HAVE_64B_ATOMICS
+#if USE_64B_ATOMICS_ON_SEM_T
   atomic_fetch_add_relaxed (&isem->data, -((uint64_t) 1 << SEM_NWAITERS_SHIFT));
 #else
   __sem_wait_32_finish (isem);
@@ -59,7 +60,7 @@ __sem_timedwait_internal (sem_t *restrict sem,
 
   int cancel_oldtype = LIBC_CANCEL_ASYNC();
 
-#if __HAVE_64B_ATOMICS
+#if USE_64B_ATOMICS_ON_SEM_T
   uint64_t d = atomic_fetch_add_relaxed (&isem->data,
 		 (uint64_t) 1 << SEM_NWAITERS_SHIFT);
 
@@ -169,7 +170,7 @@ error:
   return ret;
 }
 
-#if !__HAVE_64B_ATOMICS
+#if !USE_64B_ATOMICS_ON_SEM_T
 /* Stop being a registered waiter (non-64b-atomics code only).  */
 static void
 __sem_wait_32_finish (struct new_sem *isem)
@@ -196,7 +197,12 @@ __sem_clockwait (sem_t *sem, clockid_t clockid,
 {
   return __sem_timedwait_internal (sem, clockid, timeout);
 }
-weak_alias (__sem_clockwait, sem_clockwait);
+
+libc_hidden_def (__sem_clockwait)
+versioned_symbol (libc, __sem_clockwait, sem_clockwait, GLIBC_2_43);
+# if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_32, GLIBC_2_43)
+compat_symbol (libpthread, __sem_clockwait, sem_clockwait, GLIBC_2_32);
+#endif
 
 int
 __sem_timedwait (sem_t *restrict sem, const struct timespec *restrict timeout)
@@ -204,4 +210,8 @@ __sem_timedwait (sem_t *restrict sem, const struct timespec *restrict timeout)
   return __sem_timedwait_internal (sem, CLOCK_REALTIME, timeout);
 }
 
-weak_alias (__sem_timedwait, sem_timedwait);
+libc_hidden_def (__sem_timedwait)
+versioned_symbol (libc, __sem_timedwait, sem_timedwait, GLIBC_2_43);
+# if OTHER_SHLIB_COMPAT (libpthread, GLIBC_2_12, GLIBC_2_43)
+compat_symbol (libpthread, __sem_timedwait, sem_timedwait, GLIBC_2_12);
+#endif

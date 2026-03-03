@@ -1,5 +1,5 @@
 /* POSIX.2 wordexp implementation.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -783,7 +783,7 @@ parse_arith (char **word, size_t *word_length, size_t *max_length,
 
 	case '(':
 	  ++paren_depth;
-	  /* Fall through.  */
+	  [[fallthrough]];
 	default:
 	  expr = w_addchar (expr, &expr_length, &expr_maxlen, words[*offset]);
 	  if (expr == NULL)
@@ -2103,7 +2103,7 @@ parse_backtick (char **word, size_t *word_length, size_t *max_length,
 
 	case '\'':
 	  squoting = 1 - squoting;
-	  /* Fall through.  */
+	  [[fallthrough]];
 	default:
 	  comm = w_addchar (comm, &comm_length, &comm_maxlen, words[*offset]);
 	  if (comm == NULL)
@@ -2216,7 +2216,9 @@ wordexp (const char *words, wordexp_t *pwordexp, int flags)
     {
       /* Minimal implementation of WRDE_REUSE for now */
       wordfree (pwordexp);
+      old_word.we_wordc = 0;
       old_word.we_wordv = NULL;
+      pwordexp->we_wordc = 0;
     }
 
   if ((flags & WRDE_APPEND) == 0)

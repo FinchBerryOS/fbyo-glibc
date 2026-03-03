@@ -1,5 +1,5 @@
 /* Map in a shared object's segments from the file.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    Copyright The GNU Toolchain Authors.
    This file is part of the GNU C Library.
 
@@ -240,13 +240,18 @@ _dl_dst_count (const char *input)
 
       ++input;
       /* All DSTs must follow ELF gABI rules, see is_dst ().  */
-      if ((len = is_dst (input, "ORIGIN")) != 0
-	  || (len = is_dst (input, "PLATFORM")) != 0
-	  || (len = is_dst (input, "LIB")) != 0)
+	  if ((len = is_dst (input, "ORIGIN")) != 0
+          || (len = is_dst (input, "PLATFORM")) != 0
+          || (len = is_dst (input, "LIB")) != 0
+          /* FBOS Erweiterungen */
+          || (len = is_dst (input, "executable_path")) != 0
+          || (len = is_dst (input, "loader_path")) != 0
+          || (len = is_dst (input, "rpath")) != 0)
 	++cnt;
 
       /* There may be more than one DST in the input.  */
-      input = strchr (input + len, '$');
+      /* Falls len 0 war (unbekanntes Wort), müssen wir trotzdem weitersuchen */
+      input = strchr (input + (len > 0 ? len : 1), '$');
     }
   while (input != NULL);
 
@@ -277,69 +282,90 @@ _dl_dst_substitute (struct link_map *l, const char *input, char *result)
   do
     {
       if (__glibc_unlikely (*input == '$'))
-	{
-	  const char *repl = NULL;
-	  size_t len;
+		{
+		const char *repl = NULL;
+		size_t len;
 
-	  ++input;
-	  if ((len = is_dst (input, "ORIGIN")) != 0)
-	    {
-	      /* For SUID/GUID programs we normally ignore the path with
-		 $ORIGIN in DT_RUNPATH, or DT_RPATH.  However, there is
-		 one exception to this rule, and it is:
+		++input;
+		if ((len = is_dst (input, "ORIGIN")) != 0)
+			{
+			/* For SUID/GUID programs we normally ignore the path with
+			$ORIGIN in DT_RUNPATH, or DT_RPATH.  However, there is
+			one exception to this rule, and it is:
 
-		   * $ORIGIN appears as the first path element, and is
-		     the only string in the path or is immediately
-		     followed by a path separator and the rest of the
-		     path,
+			* $ORIGIN appears as the first path element, and is
+				the only string in the path or is immediately
+				followed by a path separator and the rest of the
+				path,
 
-		   and ...
+			and ...
 
-		   * The path is rooted in a trusted directory.
+			* The path is rooted in a trusted directory.
 
-		 This exception allows such programs to reference
-		 shared libraries in subdirectories of trusted
-		 directories.  The use case is one of general
-		 organization and deployment flexibility.
-		 Trusted directories are usually such paths as "/lib64"
-		 or "/usr/lib64", and the usual RPATHs take the form of
-		 [$ORIGIN/../$LIB/somedir].  */
-	      if (__glibc_unlikely (__libc_enable_secure)
-		  && !(input == start + 1
-		       && (input[len] == '\0' || input[len] == '/')))
-		repl = (const char *) -1;
-	      else
-	        repl = l->l_origin;
+			This exception allows such programs to reference
+			shared libraries in subdirectories of trusted
+			directories.  The use case is one of general
+			organization and deployment flexibility.
+			Trusted directories are usually such paths as "/lib64"
+			or "/usr/lib64", and the usual RPATHs take the form of
+			[$ORIGIN/../$LIB/somedir].  */
+			if (__glibc_unlikely (__libc_enable_secure)
+			&& !(input == start + 1
+				&& (input[len] == '\0' || input[len] == '/')))
+			repl = (const char *) -1;
+			else
+				repl = l->l_origin;
 
-	      check_for_trusted = (__libc_enable_secure
-				   && l->l_type == lt_executable);
-	    }
-	  else if ((len = is_dst (input, "PLATFORM")) != 0)
-	    repl = GLRO(dl_platform);
-	  else if ((len = is_dst (input, "LIB")) != 0)
-	    repl = DL_DST_LIB;
+			check_for_trusted = (__libc_enable_secure
+					&& l->l_type == lt_executable);
+			}
+		else if ((len = is_dst (input, "PLATFORM")) != 0)
+			repl = GLRO(dl_platform);
+		else if ((len = is_dst (input, "LIB")) != 0)
+			repl = DL_DST_LIB;
+		/* --- START FBOS BUNDLE PATCH --- */
+		else if ((len = is_dst (input, "executable_path")) != 0)
+			{
+			/* Wir greifen auf das Hauptprogramm des aktuellen Namespaces zu.
+				l->l_ns gibt uns die Namespace-ID (normalerweise LM_ID_BASE). */
+			struct link_map *main_map = GL(dl_ns)[l->l_ns]._ns_loaded;
+			
+			/* Wir nutzen den Pfad, den wir in rtld.c gespeichert haben */
+			repl = main_map->l_executable_path;
+			
+			/* Sicherheits-Check: Falls executable_path aus irgendeinem Grund 
+				NULL ist (z.B. kein Bundle), nimm l_origin als Fallback */
+			if (repl == NULL)
+				repl = main_map->l_origin;
+			}
+		else if ((len = is_dst (input, "loader_path")) != 0)
+			{
+			/* loader_path verhält sich exakt wie $ORIGIN */
+			repl = l->l_origin;
+			}
+		/* --- ENDE FBOS BUNDLE PATCH --- */
 
-	  if (repl != NULL && repl != (const char *) -1)
-	    {
-	      wp = __stpcpy (wp, repl);
-	      input += len;
-	    }
-	  else if (len != 0)
-	    {
-	      /* We found a valid DST that we know about, but we could
-	         not find a replacement value for it, therefore we
-		 cannot use this path and discard it.  */
-	      *result = '\0';
-	      return result;
-	    }
-	  else
-	    /* No DST we recognize.  */
-	    *wp++ = '$';
-	}
+		if (repl != NULL && repl != (const char *) -1)
+			{
+			wp = __stpcpy (wp, repl);
+			input += len;
+			}
+		else if (len != 0)
+			{
+			/* We found a valid DST that we know about, but we could
+				not find a replacement value for it, therefore we
+			cannot use this path and discard it.  */
+			*result = '\0';
+			return result;
+			}
+		else
+			/* No DST we recognize.  */
+			*wp++ = '$';
+		}
       else
-	{
-	  *wp++ = *input++;
-	}
+		{
+		*wp++ = *input++;
+		}
     }
   while (*input != '\0');
 
@@ -921,8 +947,7 @@ _dl_notify_new_object (int mode, Lmid_t nsid, struct link_map *l)
       /* Notify the debugger we have added some objects.  We need to
 	 call _dl_debug_initialize in a static program in case dynamic
 	 linking has not been used before.  */
-      r->r_state = RT_ADD;
-      _dl_debug_state ();
+      _dl_debug_change_state (r, RT_ADD);
       LIBC_PROBE (map_start, 2, nsid, r);
     }
   else
@@ -945,7 +970,7 @@ struct link_map *
 _dl_map_object_from_fd (const char *name, const char *origname, int fd,
 			struct filebuf *fbp, char *realname,
 			struct link_map *loader, int l_type, int mode,
-			void **stack_endp, Lmid_t nsid)
+			const void *stack_endp, Lmid_t nsid)
 {
   struct link_map *l = NULL;
   const ElfW(Ehdr) *header;
@@ -965,6 +990,12 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
     {
       assert (nsid == LM_ID_BASE);
       memset (&id, 0, sizeof (id));
+      char *realname_can = _dl_canonicalize (fd);
+      if (realname_can != NULL)
+	{
+	  free (realname);
+	  realname = realname_can;
+	}
     }
   else
     {
@@ -1090,7 +1121,7 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
    /* On most platforms presume that PT_GNU_STACK is absent and the stack is
     * executable.  Other platforms default to a nonexecutable stack and don't
     * need PT_GNU_STACK to do so.  */
-   unsigned int stack_flags = DEFAULT_STACK_PERMS;
+   unsigned int stack_flags = DEFAULT_STACK_PROT_PERMS;
 
   {
     /* Scan the program header table, collecting its load commands.  */
@@ -1156,7 +1187,7 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
 	     ‘(((char *)loadcmds.113_68 + _933 + 16))[329406144173384849].mapend’ may be used uninitialized [-Wmaybe-uninitialized]
 	     See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=106008
 	   */
-	  DIAG_IGNORE_NEEDS_COMMENT (11, "-Wmaybe-uninitialized");
+	  DIAG_IGNORE_NEEDS_COMMENT_GCC (11, "-Wmaybe-uninitialized");
 #endif
 	  /* Determine whether there is a gap between the last segment
 	     and this one.  */
@@ -1165,18 +1196,7 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
 	  DIAG_POP_NEEDS_COMMENT;
 
 	  /* Optimize a common case.  */
-#if (PF_R | PF_W | PF_X) == 7 && (PROT_READ | PROT_WRITE | PROT_EXEC) == 7
-	  c->prot = (PF_TO_PROT
-		     >> ((ph->p_flags & (PF_R | PF_W | PF_X)) * 4)) & 0xf;
-#else
-	  c->prot = 0;
-	  if (ph->p_flags & PF_R)
-	    c->prot |= PROT_READ;
-	  if (ph->p_flags & PF_W)
-	    c->prot |= PROT_WRITE;
-	  if (ph->p_flags & PF_X)
-	    c->prot |= PROT_EXEC;
-#endif
+	  c->prot = pf_to_prot (ph->p_flags);
 	  break;
 
 	case PT_TLS:
@@ -1213,7 +1233,7 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
 	  break;
 
 	case PT_GNU_STACK:
-	  stack_flags = ph->p_flags;
+	  stack_flags = pf_to_prot (ph->p_flags);
 	  break;
 
 	case PT_GNU_RELRO:
@@ -1313,7 +1333,7 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
     /* Adjust the PT_PHDR value by the runtime load address.  */
     l->l_phdr = (ElfW(Phdr) *) ((ElfW(Addr)) l->l_phdr + l->l_addr);
 
-  if (__glibc_unlikely ((stack_flags &~ GL(dl_stack_flags)) & PF_X))
+  if (__glibc_unlikely ((stack_flags &~ GL(dl_stack_prot_flags)) & PROT_EXEC))
     {
       /* The stack is presently not executable, but this module
 	 requires that it be executable.  Only tries to change the
@@ -1334,7 +1354,7 @@ cannot enable executable stack as shared object requires");
 
   /* Adjust the address of the TLS initialization image.  */
   if (l->l_tls_initimage != NULL)
-    l->l_tls_initimage = (char *) l->l_tls_initimage + l->l_addr;
+    l->l_tls_initimage = (void*)((uintptr_t)l->l_tls_initimage + l->l_addr);
 
   /* Process program headers again after load segments are mapped in
      case processing requires accessing those segments.  Scan program
@@ -1421,10 +1441,8 @@ cannot enable executable stack as shared object requires");
 
   /* When we profile the SONAME might be needed for something else but
      loading.  Add it right away.  */
-  if (__glibc_unlikely (GLRO(dl_profile) != NULL)
-      && l->l_info[DT_SONAME] != NULL)
-    add_name_to_object (l, ((const char *) D_PTR (l, l_info[DT_STRTAB])
-			    + l->l_info[DT_SONAME]->d_un.d_val));
+  if (__glibc_unlikely (GLRO(dl_profile) != NULL) && l_soname (l) != NULL)
+    add_name_to_object (l, l_soname (l));
 #else
   /* Audit modules only exist when linking is dynamic so ORIGNAME
      cannot be non-NULL.  */
@@ -1434,9 +1452,7 @@ cannot enable executable stack as shared object requires");
   /* If we have newly loaded libc.so, update the namespace
      description.  */
   if (GL(dl_ns)[nsid].libc_map == NULL
-      && l->l_info[DT_SONAME] != NULL
-      && strcmp (((const char *) D_PTR (l, l_info[DT_STRTAB])
-		  + l->l_info[DT_SONAME]->d_un.d_val), LIBC_SO) == 0)
+      && l_soname (l) != NULL && strcmp (l_soname(l), LIBC_SO) == 0)
     GL(dl_ns)[nsid].libc_map = l;
 
   /* _dl_close can only eventually undo the module ID assignment (via
@@ -1643,6 +1659,8 @@ open_verify (const char *name, int fd,
 		 32-bit and 64-bit binaries can be run this might
 		 happen.  */
 	      *found_other_class = true;
+	      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+		_dl_debug_printf ("    (incompatible ELF class)\n");
 	      __close_nocancel (fd);
 	      __set_errno (ENOENT);
 	      return -1;
@@ -1681,6 +1699,8 @@ open_verify (const char *name, int fd,
 	}
       if (! __glibc_likely (elf_machine_matches_host (ehdr)))
 	{
+	  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+	    _dl_debug_printf ("    (incompatible ELF machine)\n");
 	  __close_nocancel (fd);
 	  __set_errno (ENOENT);
 	  return -1;
@@ -1716,11 +1736,18 @@ open_verify (const char *name, int fd,
 			    (phdr, ehdr->e_phnum, fbp->buf, fbp->len,
 			     loader, fd)))
 	{
+	  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+	    _dl_debug_printf ("    (incompatible ELF headers with the host)\n");
 	  __close_nocancel (fd);
 	  __set_errno (ENOENT);
 	  return -1;
 	}
 
+    }
+  else
+    {
+      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+	_dl_debug_printf ("    (no such file)\n");
     }
 
   return fd;
@@ -1832,6 +1859,11 @@ open_path (const char *name, size_t namelen, int mode,
 		  /* The shared object cannot be tested for being SUID
 		     or this bit is not set.  In this case we must not
 		     use this object.  */
+		  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+		    _dl_debug_printf ("  refusing to load file=%s, the shared "
+				      "object cannot be tested for being "
+				      "SUID or the bit is not set\n",
+				      buf);
 		  __close_nocancel (fd);
 		  fd = -1;
 		  /* We simply ignore the file, signal this by setting
@@ -1887,24 +1919,14 @@ open_path (const char *name, size_t namelen, int mode,
   return -1;
 }
 
-/* Map in the shared object file NAME.  */
-
 struct link_map *
-_dl_map_object (struct link_map *loader, const char *name,
-		int type, int trace_mode, int mode, Lmid_t nsid)
+_dl_lookup_map (Lmid_t nsid, const char *name)
 {
-  int fd;
-  const char *origname = NULL;
-  char *realname;
-  char *name_copy;
-  struct link_map *l;
-  struct filebuf fb;
-
   assert (nsid >= 0);
   assert (nsid < GL(dl_nns));
 
   /* Look for this name among those already loaded.  */
-  for (l = GL(dl_ns)[nsid]._ns_loaded; l; l = l->l_next)
+  for (struct link_map *l = GL(dl_ns)[nsid]._ns_loaded; l; l = l->l_next)
     {
       /* If the requested name matches the soname of a loaded object,
 	 use that object.  Elide this check for names that have not
@@ -1913,19 +1935,12 @@ _dl_map_object (struct link_map *loader, const char *name,
 	continue;
       if (!_dl_name_match_p (name, l))
 	{
-	  const char *soname;
-
-	  if (__glibc_likely (l->l_soname_added)
-	      || l->l_info[DT_SONAME] == NULL)
-	    continue;
-
-	  soname = ((const char *) D_PTR (l, l_info[DT_STRTAB])
-		    + l->l_info[DT_SONAME]->d_un.d_val);
-	  if (strcmp (name, soname) != 0)
+	  if (__glibc_likely (l->l_soname_added) || l_soname (l) == NULL
+	      || strcmp (name, l_soname (l)) != 0)
 	    continue;
 
 	  /* We have a match on a new name -- cache it.  */
-	  add_name_to_object (l, soname);
+	  add_name_to_object (l, l_soname (l));
 	  l->l_soname_added = 1;
 	}
 
@@ -1933,6 +1948,39 @@ _dl_map_object (struct link_map *loader, const char *name,
       return l;
     }
 
+  return NULL;
+}
+
+/* Map in the shared object file NAME.  */
+
+struct link_map *
+_dl_map_new_object (struct link_map *loader, const char *name,
+		    int type, int trace_mode, int mode, Lmid_t nsid)
+{
+  int fd;
+  const char *origname = NULL;
+  char *realname;
+  char *name_copy;
+  struct link_map *l;
+  struct filebuf fb;
+
+   /* --- FBOS $rpath REDIRECTION START --- */
+  if (strncmp (name, "$rpath/", 7) == 0)
+    {
+      /* 1. Wir schneiden den Präfix "$rpath/" ab, damit der Name 
+         keinen Slash mehr enthält und in die Suchlogik läuft. */
+      name += 7;
+
+      /* 2. Wir biegen den loader auf das Hauptprogramm um.
+         Dadurch erbt diese Suche die RUNPATH/RPATH-Liste der App. */
+      loader = GL(dl_ns)[nsid]._ns_loaded;
+
+      /* Debug-Hinweis für die Entwicklung auf dem Raspi */
+      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES))
+        _dl_debug_printf ("FBOS: $rpath detected. Switching search context to main executable.\n");
+    }
+  /* --- FBOS $rpath REDIRECTION END --- */
+  
   /* Display information if we are debugging.  */
   if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES)
       && loader != NULL)
@@ -2180,8 +2228,19 @@ _dl_map_object (struct link_map *loader, const char *name,
 
   void *stack_end = __libc_stack_end;
   return _dl_map_object_from_fd (name, origname, fd, &fb, realname, loader,
-				 type, mode, &stack_end, nsid);
+				 type, mode, stack_end, nsid);
 }
+
+struct link_map *
+_dl_map_object (struct link_map *loader, const char *name,
+		int type, int trace_mode, int mode, Lmid_t nsid)
+{
+  struct link_map *l = _dl_lookup_map (nsid, name);
+  if (l != NULL)
+    return l;
+  return _dl_map_new_object (loader, name, type, trace_mode, mode, nsid);
+}
+
 
 struct add_path_state
 {

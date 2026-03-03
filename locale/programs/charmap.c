@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This program is free software; you can redistribute it and/or modify
@@ -548,7 +548,7 @@ character sets with locking states are not supported"));
 	      state = 4;
 	      continue;
 	    }
-	  /* FALLTHROUGH */
+	  [[fallthrough]];
 
 	case 5:
 	  if (nowtok != tok_charcode)
@@ -712,7 +712,7 @@ only WIDTH definitions are allowed to follow the CHARMAP definition"));
 	      state = 95;
 	      continue;
 	    }
-	  /* Fall through.  */
+	  [[fallthrough]];
 
 	case 96:
 	  if (nowtok != tok_number)

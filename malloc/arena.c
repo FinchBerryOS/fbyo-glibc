@@ -1,5 +1,5 @@
 /* Malloc implementation for multiple threads without lock contention.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -40,19 +40,20 @@
    mmap threshold, so that requests with a size just below that
    threshold can be fulfilled without creating too many heaps.  */
 
-/* When huge pages are used to create new arenas, the maximum and minimum
-   size are based on the runtime defined huge page size.  */
+/* HEAP_MAX_SIZE should be larger than the huge page size, otherwise heaps will
+   use not huge pages.  It is a constant so arena_for_chunk() is efficient.  */
 
-static inline size_t
+static __always_inline size_t
 heap_min_size (void)
 {
-  return mp_.hp_pagesize == 0 ? HEAP_MIN_SIZE : mp_.hp_pagesize;
+  return mp_.hp_pagesize == 0 || mp_.hp_pagesize > HEAP_MAX_SIZE
+	  ? HEAP_MIN_SIZE : mp_.hp_pagesize;
 }
 
-static inline size_t
+static __always_inline size_t
 heap_max_size (void)
 {
-  return mp_.hp_pagesize == 0 ? HEAP_MAX_SIZE : mp_.hp_pagesize * 4;
+  return HEAP_MAX_SIZE;
 }
 
 /***************************************************************************/
@@ -112,9 +113,6 @@ static mstate free_list;
    acquired.  */
 __libc_lock_define_initialized (static, list_lock);
 
-/* Already initialized? */
-static bool __malloc_initialized = false;
-
 /**************************************************************************/
 
 
@@ -140,14 +138,14 @@ static bool __malloc_initialized = false;
 
 /* find the heap and corresponding arena for a given ptr */
 
-static inline heap_info *
+static __always_inline heap_info *
 heap_for_ptr (void *ptr)
 {
   size_t max_size = heap_max_size ();
   return PTR_ALIGN_DOWN (ptr, max_size);
 }
 
-static inline struct malloc_state *
+static __always_inline struct malloc_state *
 arena_for_chunk (mchunkptr ptr)
 {
   return chunk_main_arena (ptr) ? &main_arena : heap_for_ptr (ptr)->ar_ptr;
@@ -167,9 +165,6 @@ arena_for_chunk (mchunkptr ptr)
 void
 __malloc_fork_lock_parent (void)
 {
-  if (!__malloc_initialized)
-    return;
-
   /* We do not acquire free_list_lock here because we completely
      reconstruct free_list in __malloc_fork_unlock_child.  */
 
@@ -187,9 +182,6 @@ __malloc_fork_lock_parent (void)
 void
 __malloc_fork_unlock_parent (void)
 {
-  if (!__malloc_initialized)
-    return;
-
   for (mstate ar_ptr = &main_arena;; )
     {
       __libc_lock_unlock (ar_ptr->mutex);
@@ -203,9 +195,6 @@ __malloc_fork_unlock_parent (void)
 void
 __malloc_fork_unlock_child (void)
 {
-  if (!__malloc_initialized)
-    return;
-
   /* Push all arenas to the free list, except thread_arena, which is
      attached to the current thread.  */
   __libc_lock_init (free_list_lock);
@@ -231,8 +220,8 @@ __malloc_fork_unlock_child (void)
 }
 
 #define TUNABLE_CALLBACK_FNDECL(__name, __type) \
-static inline int do_ ## __name (__type value);				      \
-static void									      \
+static __always_inline int do_ ## __name (__type value);		      \
+static void								      \
 TUNABLE_CALLBACK (__name) (tunable_val_t *valp)				      \
 {									      \
   __type value = (__type) (valp)->numval;				      \
@@ -251,21 +240,15 @@ TUNABLE_CALLBACK_FNDECL (set_tcache_max, size_t)
 TUNABLE_CALLBACK_FNDECL (set_tcache_count, size_t)
 TUNABLE_CALLBACK_FNDECL (set_tcache_unsorted_limit, size_t)
 #endif
-TUNABLE_CALLBACK_FNDECL (set_mxfast, size_t)
 TUNABLE_CALLBACK_FNDECL (set_hugetlb, size_t)
 
 #if USE_TCACHE
 static void tcache_key_initialize (void);
 #endif
 
-static void
-ptmalloc_init (void)
+void
+__ptmalloc_init (void)
 {
-  if (__malloc_initialized)
-    return;
-
-  __malloc_initialized = true;
-
 #if USE_TCACHE
   tcache_key_initialize ();
 #endif
@@ -310,10 +293,9 @@ ptmalloc_init (void)
   TUNABLE_GET (tcache_unsorted_limit, size_t,
 	       TUNABLE_CALLBACK (set_tcache_unsorted_limit));
 # endif
-  TUNABLE_GET (mxfast, size_t, TUNABLE_CALLBACK (set_mxfast));
   TUNABLE_GET (hugetlb, size_t, TUNABLE_CALLBACK (set_hugetlb));
 
-  if (mp_.hp_pagesize > 0)
+  if (mp_.hp_pagesize > 0 && mp_.hp_pagesize <= heap_max_size ())
     {
       /* Force mmap for main arena instead of sbrk, so MAP_HUGETLB is always
          tried.  Also tune the mmap threshold, so allocation smaller than the
@@ -460,10 +442,13 @@ alloc_new_heap  (size_t size, size_t top_pad, size_t pagesize,
 static heap_info *
 new_heap (size_t size, size_t top_pad)
 {
-  if (__glibc_unlikely (mp_.hp_pagesize != 0))
+  bool use_hugepage = mp_.hp_pagesize != 0;
+  size_t pagesize = use_hugepage ? mp_.hp_pagesize : mp_.thp_pagesize;
+
+  if (pagesize != 0 && pagesize <= heap_max_size ())
     {
-      heap_info *h = alloc_new_heap (size, top_pad, mp_.hp_pagesize,
-				     mp_.hp_flags);
+      heap_info *h = alloc_new_heap (size, top_pad, pagesize,
+				     use_hugepage ? mp_.hp_flags : 0);
       if (h != NULL)
 	return h;
     }
@@ -494,6 +479,11 @@ grow_heap (heap_info *h, long diff)
 
       h->mprotect_size = new_size;
     }
+
+  /* mprotect preserves MADV_HUGEPAGE semantics - this means that if the old
+     region was marked with MADV_HUGEPAGE, the new region will retain that.  */
+  if (h->size < mp_.thp_pagesize)
+    madvise_thp (h, new_size);
 
   h->size = new_size;
   LIBC_PROBE (memory_heap_more, 2, h, h->size);
@@ -852,11 +842,11 @@ arena_get2 (size_t size, mstate avoid_arena)
          enough address space to create that many arenas.  */
       if (__glibc_unlikely (n <= narenas_limit - 1))
         {
-          if (catomic_compare_and_exchange_bool_acq (&narenas, n + 1, n))
+          if (atomic_compare_and_exchange_bool_acq (&narenas, n + 1, n))
             goto repeat;
           a = _int_new_arena (size);
 	  if (__glibc_unlikely (a == NULL))
-            catomic_decrement (&narenas);
+            atomic_fetch_add_relaxed (&narenas, -1);
         }
       else
         a = reused_arena (avoid_arena);
@@ -872,15 +862,14 @@ static mstate
 arena_get_retry (mstate ar_ptr, size_t bytes)
 {
   LIBC_PROBE (memory_arena_retry, 2, bytes, ar_ptr);
+  __libc_lock_unlock (ar_ptr->mutex);
   if (ar_ptr != &main_arena)
     {
-      __libc_lock_unlock (ar_ptr->mutex);
       ar_ptr = &main_arena;
       __libc_lock_lock (ar_ptr->mutex);
     }
   else
     {
-      __libc_lock_unlock (ar_ptr->mutex);
       ar_ptr = arena_get2 (bytes, ar_ptr);
     }
 

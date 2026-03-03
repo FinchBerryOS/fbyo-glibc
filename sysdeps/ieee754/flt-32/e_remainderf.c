@@ -1,62 +1,78 @@
-/* e_remainderf.c -- float version of e_remainder.c.
- */
+/* Remainder function, float version.
+   Copyright (C) 2008-2026 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
 
-/*
- * ====================================================
- * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
- *
- * Developed at SunPro, a Sun Microsystems, Inc. business.
- * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice
- * is preserved.
- * ====================================================
- */
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <https://www.gnu.org/licenses/>.  */
 
 #include <math.h>
-#include <math_private.h>
 #include <libm-alias-finite.h>
-
-static const float zero = 0.0;
-
+#include <libm-alias-float.h>
+#include <math-svid-compat.h>
+#include "math_config.h"
 
 float
 __ieee754_remainderf(float x, float p)
 {
-	int32_t hx,hp;
-	uint32_t sx;
-	float p_half;
+  uint32_t hx = asuint (x);
+  uint32_t hp = asuint (p);
+  uint32_t sx = hx >> 31;
 
-	GET_FLOAT_WORD(hx,x);
-	GET_FLOAT_WORD(hp,p);
-	sx = hx&0x80000000;
-	hp &= 0x7fffffff;
-	hx &= 0x7fffffff;
+  hp &= ~SIGN_MASK;
+  hx &= ~SIGN_MASK;
 
-    /* purge off exception values */
-	if(hp==0) return (x*p)/(x*p);		/* p = 0 */
-	if((hx>=0x7f800000)||			/* x not finite */
-	  ((hp>0x7f800000)))			/* p is NaN */
-	    return (x*p)/(x*p);
-
-
-	if (hp<=0x7effffff) x = __ieee754_fmodf(x,p+p);	/* now x < 2p */
-	if ((hx-hp)==0) return zero*x;
-	x  = fabsf(x);
-	p  = fabsf(p);
-	if (hp<0x01000000) {
-	    if(x+x>p) {
-		x-=p;
-		if(x+x>=p) x -= p;
-	    }
-	} else {
-	    p_half = (float)0.5*p;
-	    if(x>p_half) {
-		x-=p;
-		if(x>=p_half) x -= p;
-	    }
+  /* |y| < DBL/MAX / 2 ? */
+  p = fabsf (p);
+  if (__glibc_likely (hp < 0x7f000000))
+    {
+      x = fabs (__fmodf (x, p + p)); /* now x < 2p */
+      if (isgreater (x + x, p))
+	{
+	  x -= p;
+	  if (x + x >= p)
+	    x -= p;
+	  /* Make sure x is not -0. This can occur only when x = p
+	     and rounding direction is towards negative infinity. */
+	  else if (x == 0.0f)
+	    x = 0.0;
 	}
-	GET_FLOAT_WORD(hx,x);
-	SET_FLOAT_WORD(x,hx^sx);
-	return x;
+    }
+  else
+    {
+      /* |x| not finite or |y| is NaN */
+      if (__glibc_unlikely (hx >= EXPONENT_MASK || hp > EXPONENT_MASK))
+	return __math_invalidf (x * p);
+
+      x = fabsf (x);
+      float p_half = 0.5f * p;
+      if (x > p_half)
+	{
+	  x -= p;
+	  if (x >= p_half)
+	    x -= p;
+	  else if (x == 0.0f)
+	    x = 0.0f;
+	}
+    }
+
+  return sx ? -x : x;
 }
 libm_alias_finite (__ieee754_remainderf, __remainderf)
+#if LIBM_SVID_COMPAT
+versioned_symbol (libm, __ieee754_remainderf, remainderf, GLIBC_2_43);
+libm_alias_float_other (__ieee754_remainder, remainder)
+#else
+libm_alias_float (__ieee754_remainder, remainder)
+weak_alias (__ieee754_remainderf, dremf)
+#endif

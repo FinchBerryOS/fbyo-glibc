@@ -1,5 +1,5 @@
 /* memcpy for RISC-V, ignoring buffer alignment
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -57,9 +57,7 @@ ENTRY (__memcpy_noalignment)
 	add	a5, a0, a4
 	add	a1, a1, a4
 	bleu	a2, a3, L(word_copy_adjust)
-	addi	a7, a2, -BLOCK_SIZE
-	andi	a7, a7, -BLOCK_SIZE
-	addi	a7, a7, BLOCK_SIZE
+	andi	a7, a2, -BLOCK_SIZE
 	add	a3, a5, a7
 	mv	a4, a1
 L(block_copy):
@@ -106,25 +104,23 @@ L(word_copy):
 	li	a5, SZREG-1
 	/* if LEN < SZREG jump to tail handling.  */
 	bleu	a2, a5, L(tail_adjust)
-	addi	a7, a2, -SZREG
-	andi	a7, a7, -SZREG
-	addi	a7, a7, SZREG
+	andi	a7, a2, -SZREG
 	add	a6, a3, a7
 	mv	a5, a1
 L(word_copy_loop):
 	REG_L	a4, 0(a5)
-	addi	a3, a3, SZREG
 	addi	a5, a5, SZREG
-	REG_S	a4, -SZREG(a3)
+	REG_S	a4, 0(a3)
+	addi	a3, a3, SZREG
 	bne	a3, a6, L(word_copy_loop)
 	add	a1, a1, a7
 	andi	a2, a2, SZREG-1
 
 	/* Copy the last word unaligned.  */
-	add	a3, a1, a2
-	add	a4, a6, a2
-	REG_L	t0, -SZREG(a3)
-	REG_S	t0, -SZREG(a4)
+	add	a1, a1, a2
+	add	a2, a6, a2
+	REG_L	a3, -SZREG(a1)
+	REG_S	a3, -SZREG(a2)
 	ret
 
 L(tail):
@@ -133,24 +129,24 @@ L(tail):
 	add	a3, a1, a2
 	add	a4, a6, a2
 	beq	a5, zero, L(copy_0_3)
-	lw	t0, 0(a1)
+	lw	a2, 0(a1)
 	lw	t1, -4(a3)
-	sw	t0, 0(a6)
+	sw	a2, 0(a6)
 	sw	t1, -4(a4)
 	ret
 
 	/* Copy 0-3 bytes.  */
 L(copy_0_3):
 	beq	a2, zero, L(ret)
-	srli    a2, a2, 1
-	add     t4, a1, a2
-	add     t5, a6, a2
-	lbu     t0, 0(a1)
-	lbu     t1, -1(a3)
-	lbu     t2, 0(t4)
-	sb      t0, 0(a6)
-	sb      t1, -1(a4)
-	sb      t2, 0(t5)
+	lbu	a3, -1(a3)
+	srli	a2, a2, 1
+	add	a5, a1, a2
+	lbu	a1, 0(a1)
+	sb	a3, -1(a4)
+	lbu	a4, 0(a5)
+	add 	a2, a6, a2
+	sb	a1, 0(a6)
+	sb	a4, 0(a2)
 L(ret):
 	ret
 L(tail_adjust):

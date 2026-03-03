@@ -1,5 +1,5 @@
 /* Install given floating-point control modes.  i386 version.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 #include <fpu_control.h>
 #include <unistd.h>
 #include <ldsodefs.h>
-#include <dl-procinfo.h>
+#include <math-inline-asm.h>
 
 /* All exceptions, including the x86-specific "denormal operand"
    exception.  */
@@ -38,7 +38,8 @@ fesetmode (const femode_t *modep)
   if (CPU_FEATURE_USABLE (SSE))
     {
       unsigned int mxcsr;
-      __asm__ ("stmxcsr %0" : "=m" (mxcsr));
+
+      stmxcsr_inline_asm (&mxcsr);
       /* Preserve SSE exception flags but restore other state in
 	 MXCSR.  */
       mxcsr &= FE_ALL_EXCEPT_X86;
@@ -48,7 +49,7 @@ fesetmode (const femode_t *modep)
 	mxcsr |= FE_ALL_EXCEPT_X86 << 7;
       else
 	mxcsr |= modep->__mxcsr & ~FE_ALL_EXCEPT_X86;
-      __asm__ ("ldmxcsr %0" : : "m" (mxcsr));
+      ldmxcsr_inline_asm (&mxcsr);
     }
   return 0;
 }

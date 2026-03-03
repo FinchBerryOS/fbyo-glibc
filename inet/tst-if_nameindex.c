@@ -1,5 +1,5 @@
 /* Tests for if_nameindex et al.
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -72,6 +72,8 @@ do_test (void)
       if (strlen (ifp->if_name) + 1 > buflen)
 	buflen = strlen (ifp->if_name) + 1;
     }
+  if (buflen < IF_NAMESIZE)
+    buflen = IF_NAMESIZE;
   buffer = (char *) xmalloc (buflen);
 
   /* Check normal operation.  */

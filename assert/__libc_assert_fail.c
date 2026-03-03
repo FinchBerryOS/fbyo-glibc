@@ -1,5 +1,5 @@
 /* libc-internal assert that calls __libc_message.
-   Copyright (C) 2022-2025 Free Software Foundation, Inc.
+   Copyright (C) 2022-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@ __libc_assert_fail (const char *assertion, const char *file, unsigned int line,
   char linebuf[INT_BUFSIZE_BOUND (unsigned int)];
   array_end (linebuf)[-1] = '\0';
   char *linestr = _itoa_word (line, array_end (linebuf) - 1, 10, 0);
-  __libc_message ("Fatal glibc error: %s:%s (%s): assertion failed: %s\n",
-                  file, linestr, function, assertion);
+  __libc_assert (
+      "Fatal glibc error: %s:%s (%s): assertion failed: %s\n", file, linestr,
+      function, assertion);
 }

@@ -1,5 +1,5 @@
 /* Measure strcoll execution time in different locales.
-   Copyright (C) 2015-2025 Free Software Foundation, Inc.
+   Copyright (C) 2015-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -245,7 +245,7 @@ main (void)
   result_t result = OK;
   for (i = 0; i < (sizeof (input_files) / sizeof (input_files[0])); i++)
     {
-      char *locale = strchr (input_files[i], '#');
+      const char *locale = strchr (input_files[i], '#');
       if (locale == NULL)
 	{
 	  printf ("Failed to get locale from filename %s, aborting!\n",

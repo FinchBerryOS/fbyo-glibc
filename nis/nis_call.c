@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -324,7 +324,7 @@ __do_niscall3 (dir_binding *dbp, u_long prog, xdrproc_t xargs, caddr_t req,
 		}
 	      /* Yes, the missing break is correct. If we doesn't have to
 		 start a callback, look if we have to search another server */
-	      /* Fall through.  */
+	      [[fallthrough]];
 	    case NIS_LOOKUP:
 	    case NIS_ADD:
 	    case NIS_MODIFY:

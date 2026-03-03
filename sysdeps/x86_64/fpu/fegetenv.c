@@ -1,5 +1,5 @@
 /* Store current floating-point environment.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,19 +17,21 @@
    <https://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
+#include <math-inline-asm.h>
 
 int
 __fegetenv (fenv_t *envp)
 {
-  __asm__ ("fnstenv %0\n"
-	   /* fnstenv changes the exception mask, so load back the
-	      stored environment.  */
-	   "fldenv %0\n"
-	   "stmxcsr %1" : "=m" (*envp), "=m" (envp->__mxcsr));
+  asm volatile ("fnstenv %0\n"
+		/* fnstenv changes the exception mask, so load back the
+		   stored environment.  */
+		"fldenv %0"
+		: "=m" (*envp));
+  stmxcsr_inline_asm (&envp->__mxcsr);
 
   /* Success.  */
   return 0;
 }
 libm_hidden_def (__fegetenv)
-weak_alias (__fegetenv, fegetenv)
+static_weak_alias (__fegetenv, fegetenv)
 libm_hidden_weak (fegetenv)

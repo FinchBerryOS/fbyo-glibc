@@ -1,4 +1,4 @@
-# Copyright (C) 1993-2025 Free Software Foundation, Inc.
+# Copyright (C) 1993-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -32,15 +32,23 @@ ifeq ($(subdir),string)
 sysdep_routines += stxcpy stxncpy
 endif
 
+ifeq ($(subdir),stdlib)
+sysdep_routines += udiv_qrnnd
+endif
+
 ifeq ($(subdir),elf)
 # The ld.so startup code cannot use literals until it self-relocates.
 CFLAGS-rtld.c = -mbuild-constants
 endif
 
 ifeq ($(subdir),math)
-# The fma routines rely on inexact being raised for correct results.
+# The following routines rely on inexact being raised for correct results.
 CFLAGS-s_fma.c = -mieee-with-inexact
 CFLAGS-s_fmaf.c = -mieee-with-inexact
+CFLAGS-s_llrintf.c += -mieee-with-inexact
+CFLAGS-s_llrint.c += -mieee-with-inexact
+CFLAGS-s_lrintf.c += -mieee-with-inexact
+CFLAGS-s_lrint.c += -mieee-with-inexact
 # This test tries to check for inexact being raised by arithmetic.
 CFLAGS-test-misc.c += -mieee-with-inexact
 # Avoid "conflicting types for built-in function" warnings

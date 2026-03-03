@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -576,7 +576,8 @@ static const uint8_t jump_table[] =
 
 /* Handle positional format specifiers.  */
 static void printf_positional (struct Xprintf_buffer *buf,
-			       const CHAR_T *format, int readonly_format,
+			       const CHAR_T *format,
+			       enum readonly_error_type readonly_format,
 			       va_list ap, va_list *ap_savep,
 			       int nspecs_done, const UCHAR_T *lead_str_end,
 			       CHAR_T *work_buffer, int save_errno,
@@ -626,9 +627,7 @@ Xprintf_buffer (struct Xprintf_buffer *buf, const CHAR_T *format,
   /* For the %m format we may need the current `errno' value.  */
   int save_errno = errno;
 
-  /* 1 if format is in read-only memory, -1 if it is in writable memory,
-     0 if unknown.  */
-  int readonly_format = 0;
+  enum readonly_error_type readonly_format = readonly_noerror;
 
   /* Initialize local variables.  */
   grouping = (const char *) -1;
@@ -1045,7 +1044,7 @@ do_positional:
 
 static void
 printf_positional (struct Xprintf_buffer * buf, const CHAR_T *format,
-		   int readonly_format,
+		   enum readonly_error_type readonly_format,
 		   va_list ap, va_list *ap_savep, int nspecs_done,
 		   const UCHAR_T *lead_str_end,
 		   CHAR_T *work_buffer, int save_errno,
@@ -1338,7 +1337,12 @@ printf_positional (struct Xprintf_buffer * buf, const CHAR_T *format,
       /* Process format specifiers.  */
       do
 	{
-	  if (spec <= UCHAR_MAX
+# ifdef COMPILE_WPRINTF
+#  define CHECK_SPEC(spec) ((spec) <= UCHAR_MAX)
+# else
+#  define CHECK_SPEC(spec) (true)
+# endif
+	  if (CHECK_SPEC (spec)
 	      && __printf_function_table != NULL
 	      && __printf_function_table[(size_t) spec] != NULL)
 	    {

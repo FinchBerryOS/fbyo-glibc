@@ -1,5 +1,5 @@
 /* Install given floating-point environment.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <ldsodefs.h>
-#include <dl-procinfo.h>
+#include <math-inline-asm.h>
 
 
 /* All exceptions, including the x86-specific "denormal operand"
@@ -41,7 +41,7 @@ __fesetenv (const fenv_t *envp)
      values which we do not want to come from the saved environment.
      Therefore, we get the current environment and replace the values
      we want to use from the environment specified by the parameter.  */
-  __asm__ ("fnstenv %0" : "=m" (*&temp));
+  __asm__ ("fnstenv %0" : "=m" (temp));
 
   if (envp == FE_DFL_ENV)
     {
@@ -81,7 +81,7 @@ __fesetenv (const fenv_t *envp)
   if (CPU_FEATURE_USABLE (SSE))
     {
       unsigned int mxcsr;
-      __asm__ ("stmxcsr %0" : "=m" (mxcsr));
+      stmxcsr_inline_asm (&mxcsr);
 
       if (envp == FE_DFL_ENV)
 	{
@@ -112,7 +112,7 @@ __fesetenv (const fenv_t *envp)
       else
 	mxcsr = envp->__eip;
 
-      __asm__ ("ldmxcsr %0" : : "m" (mxcsr));
+      ldmxcsr_inline_asm (&mxcsr);
     }
 
   /* Success.  */

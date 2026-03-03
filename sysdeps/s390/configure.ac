@@ -1,32 +1,6 @@
 GLIBC_PROVIDES dnl See aclocal.m4 in the top level source directory.
 # Local configure fragment for sysdeps/s390.
 
-AC_CACHE_CHECK(for __builtin_tbegin, libc_cv_gcc_builtin_tbegin, [dnl
-cat > conftest.c <<\EOF
-#include <htmintrin.h>
-void testtransaction ()
-{
-  if (__builtin_tbegin (0) == _HTM_TBEGIN_STARTED)
-    {
-      __builtin_tend ();
-    }
-}
-EOF
-dnl
-dnl test, if the tbegin instruction is used by __builtin_tbegin
-if AC_TRY_COMMAND([${CC-cc} -mhtm -O2 -S conftest.c -o - | grep -w tbegin > /dev/null]) ;
-then
-  libc_cv_gcc_builtin_tbegin=yes
-else
-  libc_cv_gcc_builtin_tbegin=no
-fi
-rm -f conftest* ])
-
-if test "$libc_cv_gcc_builtin_tbegin" = no ; then
-   critic_missing="$critic_missing The used GCC has no support for __builtin_tbegin, which is needed for lock-elision on target S390."
-fi
-
-
 AC_CACHE_CHECK([for S390 vector instruction support], libc_cv_asm_s390_vx, [
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 void testvecinsn ()
@@ -159,24 +133,6 @@ void testinsn (char *buf)
 if test "$libc_cv_asm_s390_min_arch13_zarch" = yes ;
 then
   AC_DEFINE(HAVE_S390_MIN_ARCH13_ZARCH_ASM_SUPPORT)
-fi
-
-
-dnl test if GCC is new enough. See gcc "Bug 98269 - gcc 6.5.0
-dnl __builtin_add_overflow() with small uint32_t values incorrectly detects
-dnl overflow
-dnl (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=98269)
-AC_CACHE_CHECK([if $CC is sufficient to build libc on s390x],
-libc_cv_compiler_ok_on_s390x, [
-AC_PREPROC_IFELSE([AC_LANG_PROGRAM([[]], [[
-#if !defined __GNUC__ || __GNUC__ < 7 || (__GNUC__ == 7 && __GNUC_MINOR__ < 1)
-#error insufficient compiler for building on s390x
-#endif
-]])],
-	[libc_cv_compiler_ok_on_s390x=yes],
-	[libc_cv_compiler_ok_on_s390x=no])])
-if test "$libc_cv_compiler_ok_on_s390x" != yes; then
-   critic_missing="$critic_missing On s390x, GCC >= 7.1.0 is required."
 fi
 
 test -n "$critic_missing" && AC_MSG_ERROR([

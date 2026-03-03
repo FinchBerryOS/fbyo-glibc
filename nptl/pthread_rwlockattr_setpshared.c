@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
 
 #include <errno.h>
 #include "pthreadP.h"
-#include <futex-internal.h>
 #include <shlib-compat.h>
 
 int
@@ -25,9 +24,8 @@ __pthread_rwlockattr_setpshared (pthread_rwlockattr_t *attr, int pshared)
 {
   struct pthread_rwlockattr *iattr;
 
-  int err = futex_supports_pshared (pshared);
-  if (err != 0)
-    return err;
+  if (pshared != PTHREAD_PROCESS_PRIVATE && pshared != PTHREAD_PROCESS_SHARED)
+    return EINVAL;
 
   iattr = (struct pthread_rwlockattr *) attr;
 

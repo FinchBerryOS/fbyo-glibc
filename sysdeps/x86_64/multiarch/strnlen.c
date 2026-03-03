@@ -1,6 +1,6 @@
 /* Multiple versions of strnlen.
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ weak_alias (__strnlen, strnlen);
 # ifdef SHARED
 __hidden_ver1 (__strnlen, __GI___strnlen, __redirect___strnlen)
   __attribute__((visibility ("hidden"))) __attribute_copy__ (strnlen);
-__hidden_ver1 (strnlen, __GI_strnlen, __redirect_strnlen)
+__hidden_ver1 (__strnlen, __GI_strnlen, __redirect_strnlen)
   __attribute__((weak, visibility ("hidden"))) __attribute_copy__ (strnlen);
 # endif
 #endif

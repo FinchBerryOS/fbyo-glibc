@@ -1,5 +1,5 @@
 /* Waiting for Input or Output
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -16,11 +16,12 @@
 */
 
 /*@group*/
+#define _GNU_SOURCE 1
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/time.h>
+#include <sys/select.h>
 /*@end group*/
 
 /*@group*/

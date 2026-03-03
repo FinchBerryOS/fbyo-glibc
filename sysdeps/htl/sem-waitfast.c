@@ -1,5 +1,5 @@
 /* Lock a semaphore if it does not require blocking.  Generic version.
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 int
 __sem_waitfast (struct new_sem *isem, int definitive_result)
 {
-#if __HAVE_64B_ATOMICS
+#if USE_64B_ATOMICS_ON_SEM_T
   uint64_t d = atomic_load_relaxed (&isem->data);
 
   do

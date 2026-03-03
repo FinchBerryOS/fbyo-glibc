@@ -1,5 +1,5 @@
 /* _Float128 overrides for building ldbl-128 as _Float128.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -142,7 +142,6 @@
 #define libm_alias_ldouble_narrow(from, to)	\
   libm_alias_float128_narrow (from, to)
 
-#include <math-use-builtins.h>
 #undef USE_NEARBYINTL_BUILTIN
 #define USE_NEARBYINTL_BUILTIN USE_NEARBYINTF128_BUILTIN
 #undef USE_RINTL_BUILTIN

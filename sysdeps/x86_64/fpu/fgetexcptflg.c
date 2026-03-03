@@ -1,5 +1,5 @@
 /* Store current representation for exceptions.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
    <https://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
+#include <math-inline-asm.h>
 
 int
 fegetexceptflag (fexcept_t *flagp, int excepts)
@@ -25,8 +26,8 @@ fegetexceptflag (fexcept_t *flagp, int excepts)
   unsigned int mxscr;
 
   /* Get the current exceptions for the x87 FPU and SSE unit.  */
-  __asm__ ("fnstsw %0\n"
-	   "stmxcsr %1" : "=m" (*&temp), "=m" (*&mxscr));
+  __asm__ ("fnstsw %0" : "=m" (temp));
+  stmxcsr_inline_asm (&mxscr);
 
   *flagp = (temp | mxscr) & FE_ALL_EXCEPT & excepts;
 

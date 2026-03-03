@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2025 Free Software Foundation, Inc.
+# Copyright (C) 1991-2026 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -253,7 +253,8 @@ tests := \
   tst-boost \
   tst-chmod \
   tst-cpucount \
-  tst-cpuset \
+  tst-cpuset-dynamic \
+  tst-cpuset-static \
   tst-dir \
   tst-execl1 \
   tst-execl2 \
@@ -287,6 +288,7 @@ tests := \
   tst-fork \
   tst-gai_strerror \
   tst-getopt_long1 \
+  tst-glob-bz30635 \
   tst-glob-tilde \
   tst-glob_symlinks \
   tst-gnuglob \
@@ -303,6 +305,7 @@ tests := \
   tst-posix_spawn-setsid \
   tst-preadwrite \
   tst-preadwrite64 \
+  tst-regcomp-bracket-free \
   tst-regcomp-truncated \
   tst-regex \
   tst-regex2 \
@@ -325,6 +328,7 @@ tests := \
   tst-wait4 \
   tst-waitid \
   tst-wordexp-nocmd \
+  tst-wordexp-reuse \
   tstgetopt \
   # tests
 
@@ -347,6 +351,7 @@ tests-internal := \
   bug-regex5 \
   bug-regex20 \
   bug-regex33 \
+  tst-libc-message \
   # tests-internal
 
 tests-container := \
@@ -390,6 +395,7 @@ endif
 
 tests-static = \
   tst-exec-static \
+  tst-libc-message \
   tst-spawn-static \
   # tests-static
 
@@ -453,6 +459,8 @@ generated += \
   tst-rxspencer-no-utf8.mtrace \
   tst-vfork3-mem.out \
   tst-vfork3.mtrace \
+  tst-wordexp-reuse-mem.out \
+  tst-wordexp-reuse.mtrace \
   # generated
 endif
 endif
@@ -471,7 +479,10 @@ endif
 # XXX Please note that for now we ignore the result of this test.
 tests-special += $(objpfx)annexc.out
 ifeq ($(run-built-tests),yes)
-tests-special += $(objpfx)tst-getconf.out
+tests-special += \
+  $(objpfx)tst-getconf-limits.out \
+  $(objpfx)tst-getconf.out \
+  # tests-special
 ifeq (yes,$(build-shared))
 ifneq ($(PERL),no)
 tests-special += \
@@ -488,6 +499,7 @@ tests-special += \
   $(objpfx)tst-pcre-mem.out \
   $(objpfx)tst-rxspencer-no-utf8-mem.out \
   $(objpfx)tst-vfork3-mem.out \
+  $(objpfx)tst-wordexp-reuse.out \
   # tests-special
 endif
 endif
@@ -563,9 +575,9 @@ $(objpfx)config-name.h: $(..)scripts/config-uname.sh $(common-objpfx)config.make
 
 CFLAGS-pause.c += -fexceptions -fasynchronous-unwind-tables
 CFLAGS-pread.c += -fexceptions -fasynchronous-unwind-tables
-CFLAGS-pread64.c += -fexceptions -fasynchronous-unwind-tables $(config-cflags-wno-ignored-attributes)
+CFLAGS-pread64.c += -fexceptions -fasynchronous-unwind-tables
 CFLAGS-pwrite.c += -fexceptions -fasynchronous-unwind-tables
-CFLAGS-pwrite64.c += -fexceptions -fasynchronous-unwind-tables $(config-cflags-wno-ignored-attributes)
+CFLAGS-pwrite64.c += -fexceptions -fasynchronous-unwind-tables
 CFLAGS-sleep.c += -fexceptions
 CFLAGS-wait.c += -fexceptions -fasynchronous-unwind-tables
 CFLAGS-waitid.c += -fexceptions -fasynchronous-unwind-tables
@@ -594,7 +606,7 @@ CFLAGS-execl.os = -fomit-frame-pointer
 CFLAGS-execvp.os = -fomit-frame-pointer
 CFLAGS-execlp.os = -fomit-frame-pointer
 CFLAGS-nanosleep.c += -fexceptions -fasynchronous-unwind-tables
-CFLAGS-fork.c = $(libio-mtsafe) $(config-cflags-wno-ignored-attributes)
+CFLAGS-fork.c = $(libio-mtsafe)
 
 tstgetopt-ARGS = -a -b -cfoobar --required foobar --optional=bazbug \
 		--none random --col --color --colour
@@ -724,6 +736,16 @@ $(objpfx)tst-getconf.out: tst-getconf.sh $(objpfx)getconf
 	$(SHELL) $< $(common-objpfx) '$(built-program-cmd)'; \
 	$(evaluate-test)
 
+$(objpfx)tst-getconf-limits.out: tst-getconf-limits.py $(objpfx)getconf
+	PYTHONPATH=../scripts \
+	$(PYTHON) tst-getconf-limits.py \
+		   --cc="$(CC) $(patsubst -DMODULE_NAME=%, \
+					  -DMODULE_NAME=testsuite, \
+					  $(CPPFLAGS)) -D_ISOMAC" \
+		   '$(built-program-cmd)' \
+	< /dev/null > $@ 2>&1; $(evaluate-test)
+
+
 $(objpfx)bug-ga2-mem.out: $(objpfx)bug-ga2.out
 	{ test -r $(objpfx)bug-ga2.mtrace \
 	|| ( echo "bug-ga2.mtrace does not exist"; exit 77; ) \
@@ -771,3 +793,10 @@ $(objpfx)posix-conf-vars-def.h: $(..)scripts/gen-posix-conf-vars.awk \
 	$(make-target-directory)
 	$(AWK) -f $(filter-out Makefile, $^) > $@.tmp
 	mv -f $@.tmp $@
+
+tst-wordexp-reuse-ENV += MALLOC_TRACE=$(objpfx)tst-wordexp-reuse.mtrace \
+			 LD_PRELOAD=$(common-objpfx)/malloc/libc_malloc_debug.so
+
+$(objpfx)tst-wordexp-reuse-mem.out: $(objpfx)tst-wordexp-reuse.out
+	$(common-objpfx)malloc/mtrace $(objpfx)tst-wordexp-reuse.mtrace > $@; \
+	$(evaluate-test)

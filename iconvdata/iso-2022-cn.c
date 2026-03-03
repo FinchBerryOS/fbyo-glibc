@@ -1,5 +1,5 @@
 /* Conversion module for ISO-2022-CN.
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -326,7 +326,7 @@ enum
 		  }							      \
 									      \
 		assert ((used >> 3) >= 1 && (used >> 3) <= 3);		      \
-		escseq = ")A)G*H" + ((used >> 3) - 1) * 2;		      \
+		escseq = &")A)G*H"[((used >> 3) - 1) * 2];		      \
 		*outptr++ = ESC;					      \
 		*outptr++ = '$';					      \
 		*outptr++ = *escseq++;					      \

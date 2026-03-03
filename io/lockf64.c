@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -58,5 +58,5 @@ __lockf64 (int fd, int cmd, off64_t len64)
 }
 weak_alias (__lockf64, lockf64)
 #ifdef __OFF_T_MATCHES_OFF64_T
-weak_alias (lockf64, lockf)
+weak_alias (__lockf64, lockf)
 #endif
