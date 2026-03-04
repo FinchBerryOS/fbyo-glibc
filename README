@@ -10,25 +10,31 @@ changes how dynamic linking and application packaging are handled.
 FBYO EXCLUSIVE MODIFICATIONS: MACOS-STYLE APP BUNDLES & FRAMEWORKS
 =============================================================================
 
-While standard Linux relies on a flat filesystem hierarchy (e.g., /usr/lib), 
-this modified linker (ld.so) introduces a macOS-style bundle architecture. 
+While standard Linux relies on a flat filesystem hierarchy (e.g., /usr/lib) 
+and shifting relative paths like $ORIGIN, this modified linker (ld.so) 
+introduces a macOS-style dynamic linking architecture (dyld behavior). 
 Applications can now be fully encapsulated, drag-and-drop movable, and manage 
-their own dependencies without polluting the global system state.
+complex, nested dependencies without polluting the global system state.
 
 Key modifications to the Dynamic Linker include:
 
-1. Bundle Awareness (struct link_map extensions)
-   The linker automatically detects if a binary is executing from within an 
-   application bundle (e.g., AppName.app/Contents/Linux/). It stores the 
-   bundle root and execution path directly in the linker map (l_is_bundle, 
-   l_bundle_root, l_executable_path) for all loaded shared objects.
+1. Pure Executable Path Resolution (struct link_map extensions)
+   The linker natively implements pure Apple-style path resolution. Instead 
+   of parsing bundle structures or guessing application boundaries, the linker 
+   deterministically anchors the exact directory of the main executable at 
+   startup and stores it in the linker map (`l_executable_path`). The linker 
+   remains agnostic to the filesystem layout, delegating bundle detection to 
+   higher-level frameworks (e.g., FBYO CoreFoundations).
 
 2. New Dynamic String Tokens (DSTs)
-   - $executable_path : Resolves to the directory of the main executable, 
-     regardless of which library is currently searching. This allows apps 
-     to reliably link against their own internal Frameworks.
+   - $executable_path : Resolves statically to the directory of the *main* executable that launched the process. Unlike $ORIGIN, which changes 
+     depending on which shared library is currently searching, 
+     $executable_path remains constant across the entire dependency tree. 
+     This allows deeply nested Frameworks to reliably link against other 
+     Frameworks relative to the application's root.
    - $loader_path : Resolves to the directory of the currently loading 
-     library (analogous to $ORIGIN, but mirroring macOS dyld nomenclature).
+     library (analogous to standard Linux $ORIGIN, but mirroring macOS dyld 
+     nomenclature for cross-compatibility).
 
 3. Framework Indirection ($rpath/ Prefix)
    A new routing logic in `_dl_map_new_object`. If a library requests a 

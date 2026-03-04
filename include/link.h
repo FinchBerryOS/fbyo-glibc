@@ -349,8 +349,6 @@ struct link_map
 
     /* FBOS Bundle Extensions */
     char *l_executable_path;    /* Der absolute Pfad zum Verzeichnis des Hauptprogramms */
-    char *l_bundle_root;        /* Pfad zum .app/Contents Ordner (falls vorhanden) */
-    int l_is_bundle;            /* 1, wenn das Programm in einer .app Struktur liegt */
   };
 
 #include <dl-relocate-ld.h>

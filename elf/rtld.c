@@ -1676,35 +1676,15 @@ dl_main (const ElfW(Phdr) *phdr,
 
   bool has_interp = rtld_setup_main_map (main_map);
 
-  /* --- FBOS BUNDLE DETECTION START --- */
+  /* --- FBOS PURE EXECUTABLE PATH RESOLUTION --- */
   if (main_map->l_origin != NULL)
-    {
-      /* 1. executable_path als Anker für das Bundle setzen */
-      /* Wir nutzen hier strdup, da wir uns in der Initialisierungsphase befinden */
+  {
+      /* * executable_path ist einfach nur der Ordner, in dem die Binary liegt.
+      * Keine Suche, keine Bedingungen, kein "/Contents/FBOS".
+      * Exakt wie @executable_path in macOS dyld.
+      */
       main_map->l_executable_path = strdup (main_map->l_origin);
-
-      /* 2. Prüfung auf .app Struktur (/Contents/Linux) */
-      char *marker = strstr (main_map->l_origin, "/Contents/FBOS");
-      if (marker != NULL)
-        {
-          main_map->l_is_bundle = 1;
-
-          /* Berechne den Pfad bis zum 'Contents' Ordner */
-          /* marker zeigt auf den Anfang von "/Contents/Linux" */
-          size_t root_len = (marker - main_map->l_origin) + 9; /* 9 = "/Contents" */
-          main_map->l_bundle_root = strndup (main_map->l_origin, root_len);
-
-          /* Debug-Ausgabe für den Testlauf auf dem Raspi */
-          if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES))
-            _dl_debug_printf ("FBOS: Bundle detected! Root: %s\n", main_map->l_bundle_root);
-        }
-      else
-        {
-          main_map->l_is_bundle = 0;
-          main_map->l_bundle_root = NULL;
-        }
-    }
-  /* --- FBOS BUNDLE DETECTION END --- */
+  }
 
   _dl_handle_execstack_tunable ();
 
