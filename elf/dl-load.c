@@ -243,11 +243,13 @@ _dl_dst_count (const char *input)
 	  if ((len = is_dst (input, "ORIGIN")) != 0
           || (len = is_dst (input, "PLATFORM")) != 0
           || (len = is_dst (input, "LIB")) != 0
-          /* FBOS Erweiterungen */
           || (len = is_dst (input, "executable_path")) != 0
           || (len = is_dst (input, "loader_path")) != 0
-          || (len = is_dst (input, "rpath")) != 0)
-	++cnt;
+          /* --- START FBOS ASPATH PATCH --- */
+          || (len = is_dst (input, "aspath")) != 0
+          /* --- ENDE FBOS ASPATH PATCH --- */
+         )
+        ++cnt;
 
       /* There may be more than one DST in the input.  */
       /* Falls len 0 war (unbekanntes Wort), müssen wir trotzdem weitersuchen */
@@ -344,6 +346,15 @@ _dl_dst_substitute (struct link_map *l, const char *input, char *result)
 			repl = l->l_origin;
 			}
 		/* --- ENDE FBOS BUNDLE PATCH --- */
+		
+		/* --- START FBOS ASPATH PATCH --- */
+        else if ((len = is_dst (input, "aspath")) != 0)
+			{
+				wp = __stpcpy (wp, "$aspath");
+				input += len;
+				continue;  /* ← direkt weiter, repl-Block überspringen */
+			}
+        /* --- ENDE FBOS ASPATH PATCH --- */
 
 		if (repl != NULL && repl != (const char *) -1)
 			{
@@ -1759,6 +1770,7 @@ open_verify (const char *name, int fd,
    replaced with (void *) -1, and the old value is free()d if SPS->MALLOCED is
    true.  */
 
+#if 0
 static int
 open_path (const char *name, size_t namelen, int mode,
 	   struct r_search_path_struct *sps, char **realname,
@@ -1784,6 +1796,229 @@ open_path (const char *name, size_t namelen, int mode,
       size_t cnt;
       char *edp;
       int here_any = 0;
+
+      /* If we are debugging the search for libraries print the path
+	 now if it hasn't happened now.  */
+      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS)
+	  && current_what != this_dir->what)
+	{
+	  current_what = this_dir->what;
+	  print_search_path (dirs, current_what, this_dir->where);
+	}
+
+      edp = (char *) __mempcpy (buf, this_dir->dirname, this_dir->dirnamelen);
+      for (cnt = 0; fd == -1 && cnt < ncapstr; ++cnt)
+	{
+	  /* Skip this directory if we know it does not exist.  */
+	  if (this_dir->status[cnt] == nonexisting)
+	    continue;
+
+#ifdef SHARED
+	  buflen =
+	    ((char *) __mempcpy (__mempcpy (edp, capstr[cnt].str,
+					    capstr[cnt].len),
+				 name, namelen)
+	     - buf);
+#else
+	  buflen = (char *) __mempcpy (edp, name, namelen) - buf;
+#endif
+
+	  /* Print name we try if this is wanted.  */
+	  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+	    _dl_debug_printf ("  trying file=%s\n", buf);
+
+	  fd = open_verify (buf, -1, fbp, loader, whatcode, mode,
+			    found_other_class, false);
+	  if (this_dir->status[cnt] == unknown)
+	    {
+	      if (fd != -1)
+		this_dir->status[cnt] = existing;
+	      /* Do not update the directory information when loading
+		 auditing code.  We must try to disturb the program as
+		 little as possible.  */
+	      else if (loader == NULL
+		       || GL(dl_ns)[loader->l_ns]._ns_loaded->l_auditing == 0)
+		{
+		  /* We failed to open machine dependent library.  Let's
+		     test whether there is any directory at all.  */
+		  struct __stat64_t64 st;
+
+		  buf[buflen - namelen] = '\0';
+
+		  if (__stat64_time64 (buf, &st) != 0
+		      || ! S_ISDIR (st.st_mode))
+		    /* The directory does not exist or it is no directory.  */
+		    this_dir->status[cnt] = nonexisting;
+		  else
+		    this_dir->status[cnt] = existing;
+		}
+	    }
+
+	  /* Remember whether we found any existing directory.  */
+	  here_any |= this_dir->status[cnt] != nonexisting;
+
+	  if (fd != -1 && __glibc_unlikely (mode & __RTLD_SECURE)
+	      && __libc_enable_secure)
+	    {
+	      /* This is an extra security effort to make sure nobody can
+		 preload broken shared objects which are in the trusted
+		 directories and so exploit the bugs.  */
+	      struct __stat64_t64 st;
+
+	      if (__fstat64_time64 (fd, &st) != 0
+		  || (st.st_mode & S_ISUID) == 0)
+		{
+		  /* The shared object cannot be tested for being SUID
+		     or this bit is not set.  In this case we must not
+		     use this object.  */
+		  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+		    _dl_debug_printf ("  refusing to load file=%s, the shared "
+				      "object cannot be tested for being "
+				      "SUID or the bit is not set\n",
+				      buf);
+		  __close_nocancel (fd);
+		  fd = -1;
+		  /* We simply ignore the file, signal this by setting
+		     the error value which would have been set by `open'.  */
+		  errno = ENOENT;
+		}
+	    }
+	}
+
+      if (fd != -1)
+	{
+	  *realname = (char *) malloc (buflen);
+	  if (*realname != NULL)
+	    {
+	      memcpy (*realname, buf, buflen);
+	      return fd;
+	    }
+	  else
+	    {
+	      /* No memory for the name, we certainly won't be able
+		 to load and link it.  */
+	      __close_nocancel (fd);
+	      return -1;
+	    }
+	}
+
+      /* Continue the search if the file does not exist (ENOENT), if it can
+	 not be accessed (EACCES), or if the a component in the path is not a
+	 directory (for instance, if the component is a existing file meaning
+	 essentially that the pathname is invalid - ENOTDIR).  */
+      if (here_any && errno != ENOENT && errno != EACCES && errno != ENOTDIR)
+	return -1;
+
+      /* Remember whether we found anything.  */
+      any |= here_any;
+    }
+  while (*++dirs != NULL);
+
+  /* Remove the whole path if none of the directories exists.  */
+  if (__glibc_unlikely (! any))
+    {
+      /* Paths which were allocated using the minimal malloc() in ld.so
+	 must not be freed using the general free() in libc.  */
+      if (sps->malloced)
+	free (sps->dirs);
+
+      /* __rtld_search_dirs and __rtld_env_path_list are
+	 attribute_relro, therefore avoid writing to them.  */
+      if (sps != &__rtld_search_dirs && sps != &__rtld_env_path_list)
+	sps->dirs = (void *) -1;
+    }
+
+  return -1;
+}
+#endif
+
+static int
+open_path (const char *name, size_t namelen, int mode,
+	   struct r_search_path_struct *sps, char **realname,
+	   struct filebuf *fbp, struct link_map *loader, int whatcode,
+	   bool *found_other_class)
+{
+  struct r_search_path_elem **dirs = sps->dirs;
+  char *buf;
+  int fd = -1;
+  const char *current_what = NULL;
+  int any = 0;
+
+  if (__glibc_unlikely (dirs == NULL))
+    /* We're called before _dl_init_paths when loading the main executable
+       given on the command line when rtld is run directly.  */
+    return -1;
+
+  buf = alloca (max_dirnamelen + max_capstrlen + namelen);
+  do
+    {
+      struct r_search_path_elem *this_dir = *dirs;
+      size_t buflen = 0;
+      size_t cnt;
+      char *edp;
+      int here_any = 0;
+
+      /* --- START FBOS DIRECT FILE PATCH ($aspath) --- */
+      if (this_dir->dirnamelen > 8
+	  && memcmp (this_dir->dirname, "$aspath/", 8) == 0)
+	{
+	  const char *real_file = this_dir->dirname + 8;
+	  size_t dlen = this_dir->dirnamelen - 8;
+
+	  memcpy (buf, real_file, dlen);
+	  buf[dlen] = '\0';
+
+	  if (dlen > 0 && buf[dlen - 1] == '/')
+	    {
+	      buf[dlen - 1] = '\0';
+	      buflen = dlen;
+	    }
+	  else
+	    buflen = dlen + 1;
+
+	  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+	    _dl_debug_printf ("  trying direct file=%s (via $aspath)\n", buf);
+
+	  fd = open_verify (buf, -1, fbp, loader, whatcode, mode,
+			    found_other_class, false);
+
+	  if (fd != -1 && __glibc_unlikely (mode & __RTLD_SECURE)
+	      && __libc_enable_secure)
+	    {
+	      struct __stat64_t64 st;
+
+	      if (__fstat64_time64 (fd, &st) != 0
+		  || (st.st_mode & S_ISUID) == 0)
+		{
+		  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+		    _dl_debug_printf ("  refusing to load file=%s, the shared "
+				      "object cannot be tested for being "
+				      "SUID or the bit is not set\n", buf);
+		  __close_nocancel (fd);
+		  fd = -1;
+		  errno = ENOENT;
+		}
+	    }
+
+	  if (fd != -1)
+	    {
+	      *realname = (char *) malloc (buflen);
+	      if (*realname != NULL)
+		{
+		  memcpy (*realname, buf, buflen);
+		  return fd;
+		}
+	      else
+		{
+		  __close_nocancel (fd);
+		  return -1;
+		}
+	    }
+
+	  any = 1;
+	  continue;
+	}
+      /* --- ENDE FBOS DIRECT FILE PATCH --- */
 
       /* If we are debugging the search for libraries print the path
 	 now if it hasn't happened now.  */
