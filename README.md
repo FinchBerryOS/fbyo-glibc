@@ -9,9 +9,8 @@ The FBYO C Library is the standard system C library for FBYO. It works with
 the Linux kernel to implement the operating system behavior, but fundamentally 
 changes how dynamic linking and application packaging are handled.
 
-=============================================================================
-FBYO EXCLUSIVE MODIFICATIONS: MACOS-STYLE APP BUNDLES & FRAMEWORKS
-=============================================================================
+
+# FBYO EXCLUSIVE MODIFICATIONS: MACOS-STYLE APP BUNDLES & FRAMEWORKS
 
 While standard Linux relies on a flat filesystem hierarchy (e.g., /usr/lib) 
 and shifting relative paths like $ORIGIN, this modified linker (ld.so) 
@@ -46,9 +45,8 @@ Key modifications to the Dynamic Linker include:
    paths of the main application. This eliminates "dependency hell" within 
    complex Framework ecosystems.
 
-=============================================================================
-SYSTEM REQUIREMENTS & ARCHITECTURES
-=============================================================================
+
+# SYSTEM REQUIREMENTS & ARCHITECTURES
 
 When working with Linux kernels, this version of the FBYO C Library
 requires Linux kernel version 5.4 or later (optimized for Raspberry Pi / ARM).
@@ -63,18 +61,15 @@ Upstream GNU configurations remain technically supported but are not the
 primary focus of FBYO development:
     i[4567]86-*-linux-gnu, x86_64-*-linux-gnu, etc.
 
-=============================================================================
-BUILDING & INSTALLATION
-=============================================================================
+
+# BUILDING & INSTALLATION
 
 See the file INSTALL to find out how to configure, build, and install
 the FBYO C Library. Due to the custom modifications, it is highly recommended 
 to build this library using a DESTDIR staging environment to extract the 
 compiled .so files and the modified ld-linux-aarch64.so.1 linker cleanly.
 
-=============================================================================
-UPSTREAM DOCUMENTATION & LICENSES
-=============================================================================
+# UPSTREAM DOCUMENTATION & LICENSES
 
 The base GNU C Library is (almost) completely documented by the Texinfo manual
 found in the `manual/' subdirectory. 
