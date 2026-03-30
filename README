@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/FinchBerryOS/.github/refs/heads/main/profile/assets/Glibc_github.png" alt="FinchBerryOS Logo" width="400">
+</p>
 This directory contains the sources of the FBYO C Library, a heavily modified 
 fork of the GNU C Library (glibc) designed specifically for FBYO.
 See the file "version.h" for what release version you have.
