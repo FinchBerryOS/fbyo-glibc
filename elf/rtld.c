@@ -1679,9 +1679,9 @@ dl_main (const ElfW(Phdr) *phdr,
   /* --- FBOS PURE EXECUTABLE PATH RESOLUTION --- */
   if (main_map->l_origin != NULL)
   {
-      /* * executable_path ist einfach nur der Ordner, in dem die Binary liegt.
+      /* * EXEC_PATH ist einfach nur der Ordner, in dem die Binary liegt.
       * Keine Suche, keine Bedingungen, kein "/Contents/FBOS".
-      * Exakt wie @executable_path in macOS dyld.
+      * Exakt wie @EXEC_PATH in macOS dyld.
       */
       main_map->l_executable_path = strdup (main_map->l_origin);
   }

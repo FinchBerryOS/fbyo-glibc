@@ -243,11 +243,7 @@ _dl_dst_count (const char *input)
 	  if ((len = is_dst (input, "ORIGIN")) != 0
           || (len = is_dst (input, "PLATFORM")) != 0
           || (len = is_dst (input, "LIB")) != 0
-          || (len = is_dst (input, "executable_path")) != 0
-          || (len = is_dst (input, "loader_path")) != 0
-          /* --- START FBOS ASPATH PATCH --- */
-          || (len = is_dst (input, "aspath")) != 0
-          /* --- ENDE FBOS ASPATH PATCH --- */
+          || (len = is_dst (input, "EXEC_PATH")) != 0
          )
         ++cnt;
 
@@ -326,7 +322,7 @@ _dl_dst_substitute (struct link_map *l, const char *input, char *result)
 		else if ((len = is_dst (input, "LIB")) != 0)
 			repl = DL_DST_LIB;
 		/* --- START FBOS BUNDLE PATCH --- */
-		else if ((len = is_dst (input, "executable_path")) != 0)
+		else if ((len = is_dst (input, "EXEC_PATH")) != 0)
 			{
 			/* Wir greifen auf das Hauptprogramm des aktuellen Namespaces zu.
 				l->l_ns gibt uns die Namespace-ID (normalerweise LM_ID_BASE). */
@@ -335,27 +331,13 @@ _dl_dst_substitute (struct link_map *l, const char *input, char *result)
 			/* Wir nutzen den Pfad, den wir in rtld.c gespeichert haben */
 			repl = main_map->l_executable_path;
 			
-			/* Sicherheits-Check: Falls executable_path aus irgendeinem Grund 
+			/* Sicherheits-Check: Falls EXEC_PATH aus irgendeinem Grund 
 				NULL ist (z.B. kein Bundle), nimm l_origin als Fallback */
 			if (repl == NULL)
 				repl = main_map->l_origin;
 			}
-		else if ((len = is_dst (input, "loader_path")) != 0)
-			{
-			/* loader_path verhält sich exakt wie $ORIGIN */
-			repl = l->l_origin;
-			}
 		/* --- ENDE FBOS BUNDLE PATCH --- */
 		
-		/* --- START FBOS ASPATH PATCH --- */
-        else if ((len = is_dst (input, "aspath")) != 0)
-			{
-				wp = __stpcpy (wp, "$aspath");
-				input += len;
-				continue;  /* ← direkt weiter, repl-Block überspringen */
-			}
-        /* --- ENDE FBOS ASPATH PATCH --- */
-
 		if (repl != NULL && repl != (const char *) -1)
 			{
 			wp = __stpcpy (wp, repl);
@@ -1957,68 +1939,6 @@ open_path (const char *name, size_t namelen, int mode,
       size_t cnt;
       char *edp;
       int here_any = 0;
-
-      /* --- START FBOS DIRECT FILE PATCH ($aspath) --- */
-      if (this_dir->dirnamelen > 8
-	  && memcmp (this_dir->dirname, "$aspath/", 8) == 0)
-	{
-	  const char *real_file = this_dir->dirname + 8;
-	  size_t dlen = this_dir->dirnamelen - 8;
-
-	  memcpy (buf, real_file, dlen);
-	  buf[dlen] = '\0';
-
-	  if (dlen > 0 && buf[dlen - 1] == '/')
-	    {
-	      buf[dlen - 1] = '\0';
-	      buflen = dlen;
-	    }
-	  else
-	    buflen = dlen + 1;
-
-	  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
-	    _dl_debug_printf ("  trying direct file=%s (via $aspath)\n", buf);
-
-	  fd = open_verify (buf, -1, fbp, loader, whatcode, mode,
-			    found_other_class, false);
-
-	  if (fd != -1 && __glibc_unlikely (mode & __RTLD_SECURE)
-	      && __libc_enable_secure)
-	    {
-	      struct __stat64_t64 st;
-
-	      if (__fstat64_time64 (fd, &st) != 0
-		  || (st.st_mode & S_ISUID) == 0)
-		{
-		  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
-		    _dl_debug_printf ("  refusing to load file=%s, the shared "
-				      "object cannot be tested for being "
-				      "SUID or the bit is not set\n", buf);
-		  __close_nocancel (fd);
-		  fd = -1;
-		  errno = ENOENT;
-		}
-	    }
-
-	  if (fd != -1)
-	    {
-	      *realname = (char *) malloc (buflen);
-	      if (*realname != NULL)
-		{
-		  memcpy (*realname, buf, buflen);
-		  return fd;
-		}
-	      else
-		{
-		  __close_nocancel (fd);
-		  return -1;
-		}
-	    }
-
-	  any = 1;
-	  continue;
-	}
-      /* --- ENDE FBOS DIRECT FILE PATCH --- */
 
       /* If we are debugging the search for libraries print the path
 	 now if it hasn't happened now.  */

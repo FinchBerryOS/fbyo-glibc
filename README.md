@@ -29,14 +29,11 @@ Key modifications to the Dynamic Linker include:
    higher-level frameworks (e.g., FBYO CoreFoundations).
 
 2. New Dynamic String Tokens (DSTs)
-   - $executable_path : Resolves statically to the directory of the *main* executable that launched the process. Unlike $ORIGIN, which changes 
+   - $EXEC_PATH : Resolves statically to the directory of the *main* executable that launched the process. Unlike $ORIGIN, which changes 
      depending on which shared library is currently searching, 
-     $executable_path remains constant across the entire dependency tree. 
+     $EXEC_PATH remains constant across the entire dependency tree. 
      This allows deeply nested Frameworks to reliably link against other 
      Frameworks relative to the application's root.
-   - $loader_path : Resolves to the directory of the currently loading 
-     library (analogous to standard Linux $ORIGIN, but mirroring macOS dyld 
-     nomenclature for cross-compatibility).
 
 3. Framework Indirection ($rpath/ Prefix)
    A new routing logic in `_dl_map_new_object`. If a library requests a 
