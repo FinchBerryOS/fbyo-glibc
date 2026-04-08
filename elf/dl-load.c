@@ -321,12 +321,18 @@ _dl_dst_substitute (struct link_map *l, const char *input, char *result)
 			repl = GLRO(dl_platform);
 		else if ((len = is_dst (input, "LIB")) != 0)
 			repl = DL_DST_LIB;
-		/* --- START FBOS BUNDLE PATCH --- */
+
 		else if ((len = is_dst (input, "EXEC_PATH")) != 0)
 			{
 			/* Wir greifen auf das Hauptprogramm des aktuellen Namespaces zu.
 				l->l_ns gibt uns die Namespace-ID (normalerweise LM_ID_BASE). */
 			struct link_map *main_map = GL(dl_ns)[l->l_ns]._ns_loaded;
+			if (main_map != NULL)
+			{
+				repl = main_map->l_executable_path;
+				if (repl == NULL)
+				repl = main_map->l_origin;
+			}
 			
 			/* Wir nutzen den Pfad, den wir in rtld.c gespeichert haben */
 			repl = main_map->l_executable_path;
@@ -336,7 +342,6 @@ _dl_dst_substitute (struct link_map *l, const char *input, char *result)
 			if (repl == NULL)
 				repl = main_map->l_origin;
 			}
-		/* --- ENDE FBOS BUNDLE PATCH --- */
 		
 		if (repl != NULL && repl != (const char *) -1)
 			{
@@ -2108,6 +2113,7 @@ _dl_lookup_map (Lmid_t nsid, const char *name)
 
 /* Map in the shared object file NAME.  */
 
+#if 0
 struct link_map *
 _dl_map_new_object (struct link_map *loader, const char *name,
 		    int type, int trace_mode, int mode, Lmid_t nsid)
@@ -2119,23 +2125,6 @@ _dl_map_new_object (struct link_map *loader, const char *name,
   struct link_map *l;
   struct filebuf fb;
 
-   /* --- FBOS $rpath REDIRECTION START --- */
-  if (strncmp (name, "$rpath/", 7) == 0)
-    {
-      /* 1. Wir schneiden den Präfix "$rpath/" ab, damit der Name 
-         keinen Slash mehr enthält und in die Suchlogik läuft. */
-      name += 7;
-
-      /* 2. Wir biegen den loader auf das Hauptprogramm um.
-         Dadurch erbt diese Suche die RUNPATH/RPATH-Liste der App. */
-      loader = GL(dl_ns)[nsid]._ns_loaded;
-
-      /* Debug-Hinweis für die Entwicklung auf dem Raspi */
-      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES))
-        _dl_debug_printf ("FBOS: $rpath detected. Switching search context to main executable.\n");
-    }
-  /* --- FBOS $rpath REDIRECTION END --- */
-  
   /* Display information if we are debugging.  */
   if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES)
       && loader != NULL)
@@ -2385,6 +2374,189 @@ _dl_map_new_object (struct link_map *loader, const char *name,
   return _dl_map_object_from_fd (name, origname, fd, &fb, realname, loader,
 				 type, mode, stack_end, nsid);
 }
+#endif
+
+struct link_map *
+_dl_map_new_object (struct link_map *loader, const char *name,
+		    int type, int trace_mode, int mode, Lmid_t nsid)
+{
+  int fd;
+  const char *origname = NULL;
+  char *realname;
+  char *name_copy;
+  struct link_map *l;
+  struct filebuf fb;
+
+  /* Display information if we are debugging.  */
+  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES)
+      && loader != NULL)
+    _dl_debug_printf ((mode & __RTLD_CALLMAP) == 0
+		      ? "\nfile=%s [%lu];  needed by %s [%lu]\n"
+		      : "\nfile=%s [%lu];  dynamically loaded by %s [%lu]\n",
+		      name, nsid, DSO_FILENAME (loader->l_name), loader->l_ns);
+
+  /* Will be true if we found a DSO which is of the other ELF class.  */
+  bool found_other_class = false;
+
+#ifdef SHARED
+  /* Give the auditing libraries a chance to change the name before we
+     try anything.  */
+  if (__glibc_unlikely (GLRO(dl_naudit) > 0))
+    {
+      const char *before = name;
+      name = _dl_audit_objsearch (name, loader, LA_SER_ORIG);
+      if (name == NULL)
+	{
+	  fd = -1;
+	  goto no_file;
+	}
+      if (before != name && strcmp (before, name) != 0)
+	origname = before;
+    }
+#endif
+
+  /* FBOS policy:
+     - explicit path (contains '/'): expand DSTs and load directly
+     - bare name (no '/'): search via ENV, RUNPATH, legacy RPATH, defaults
+   */
+  if (strchr (name, '/') == NULL)
+    {
+      size_t namelen = strlen (name) + 1;
+
+      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+	_dl_debug_printf ("find library=%s [%lu]; searching (FBOS policy)\n",
+			  name, nsid);
+
+      fd = -1;
+
+      /* 1. Try LD_LIBRARY_PATH.  */
+      if (fd == -1 && __rtld_env_path_list.dirs != (void *) -1)
+	fd = open_path (name, namelen, mode, &__rtld_env_path_list,
+			&realname, &fb,
+			loader ?: GL(dl_ns)[LM_ID_BASE]._ns_loaded,
+			LA_SER_LIBPATH, &found_other_class);
+
+      /* 2. Try DT_RUNPATH of the calling object.  */
+      if (fd == -1 && loader != NULL
+	  && cache_rpath (loader, &loader->l_runpath_dirs,
+			  DT_RUNPATH, "RUNPATH"))
+	fd = open_path (name, namelen, mode,
+			&loader->l_runpath_dirs, &realname, &fb, loader,
+			LA_SER_RUNPATH, &found_other_class);
+
+      /* 3. Legacy DT_RPATH fallback.  */
+      if (fd == -1 && loader != NULL && loader->l_info[DT_RUNPATH] == NULL)
+	{
+	  struct link_map *main_map = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
+	  bool did_main_map = false;
+
+	  for (l = loader; l; l = l->l_loader)
+	    if (cache_rpath (l, &l->l_rpath_dirs, DT_RPATH, "RPATH"))
+	      {
+		fd = open_path (name, namelen, mode,
+				&l->l_rpath_dirs,
+				&realname, &fb, loader,
+				LA_SER_RUNPATH, &found_other_class);
+		if (fd != -1)
+		  break;
+
+		did_main_map |= (l == main_map);
+	      }
+
+	  if (fd == -1 && !did_main_map
+	      && main_map != NULL && main_map->l_type != lt_loaded
+	      && cache_rpath (main_map, &main_map->l_rpath_dirs,
+			      DT_RPATH, "RPATH"))
+	    fd = open_path (name, namelen, mode,
+			    &main_map->l_rpath_dirs,
+			    &realname, &fb, loader ?: main_map,
+			    LA_SER_RUNPATH, &found_other_class);
+	}
+
+      /* 4. Finally, try the default path.  */
+      if (fd == -1
+	  && ((l = loader ?: GL(dl_ns)[nsid]._ns_loaded) == NULL
+	      || __glibc_likely (!(l->l_flags_1 & DF_1_NODEFLIB)))
+	  && __rtld_search_dirs.dirs != (void *) -1)
+	fd = open_path (name, namelen, mode, &__rtld_search_dirs,
+			&realname, &fb, l, LA_SER_DEFAULT, &found_other_class);
+
+      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+	_dl_debug_printf ("\n");
+    }
+  else
+    {
+      /* Explicit path: expand DSTs and load exactly this path.  */
+      realname = (loader
+		  ? expand_dynamic_string_token (loader, name)
+		  : __strdup (name));
+      if (realname == NULL)
+	fd = -1;
+      else
+	{
+	  fd = open_verify (realname, -1, &fb,
+			    loader ?: GL(dl_ns)[nsid]._ns_loaded, 0, mode,
+			    &found_other_class, true);
+	  if (__glibc_unlikely (fd == -1))
+	    free (realname);
+	}
+    }
+
+#ifdef SHARED
+ no_file:
+#endif
+  /* In case the LOADER information has only been provided to get to
+     the appropriate RUNPATH/RPATH information we do not need it
+     anymore.  */
+  if (mode & __RTLD_CALLMAP)
+    loader = NULL;
+
+  if (__glibc_unlikely (fd == -1))
+    {
+      if (trace_mode)
+	{
+	  /* We haven't found an appropriate library.  But since we
+	     are only interested in the list of libraries this isn't
+	     so severe.  Fake an entry with all the information we
+	     have.  */
+	  static const Elf_Symndx dummy_bucket = STN_UNDEF;
+
+	  /* Allocate a new object map.  */
+	  if ((name_copy = __strdup (name)) == NULL
+	      || (l = _dl_new_object (name_copy, name, type, loader,
+				      mode, nsid)) == NULL)
+	    {
+	      free (name_copy);
+	      _dl_signal_error (ENOMEM, name, NULL,
+				N_("cannot create shared object descriptor"));
+	    }
+
+	  /* Signal that this is a faked entry.  */
+	  l->l_faked = 1;
+	  l->l_buckets = &dummy_bucket;
+	  l->l_nbuckets = 1;
+	  l->l_relocated = 1;
+
+	  /* Enter the object in the object list.  */
+	  _dl_add_to_namespace_list (l, nsid);
+
+	  return l;
+	}
+      else if (found_other_class)
+	_dl_signal_error (0, name, NULL,
+			  ELFW(CLASS) == ELFCLASS32
+			  ? N_("wrong ELF class: ELFCLASS64")
+			  : N_("wrong ELF class: ELFCLASS32"));
+      else
+	_dl_signal_error (errno, name, NULL,
+			  N_("cannot open shared object file"));
+    }
+
+  void *stack_end = __libc_stack_end;
+  return _dl_map_object_from_fd (name, origname, fd, &fb, realname, loader,
+				 type, mode, stack_end, nsid);
+}
+
 
 struct link_map *
 _dl_map_object (struct link_map *loader, const char *name,

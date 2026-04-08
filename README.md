@@ -1,76 +1,153 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/FinchBerryOS/.github/refs/heads/main/profile/assets/Glibc_github.png" alt="FinchBerryOS Logo" width="400">
 </p>
-This directory contains the sources of the FBYO C Library, a heavily modified 
+
+This directory contains the sources of the FBYO C Library, a heavily modified
 fork of the GNU C Library (glibc) designed specifically for FBYO.
-See the file "version.h" for what release version you have.
+See the file `version.h` for the exact release version.
 
-The FBYO C Library is the standard system C library for FBYO. It works with 
-the Linux kernel to implement the operating system behavior, but fundamentally 
-changes how dynamic linking and application packaging are handled.
+The FBYO C Library is the standard system C library for FBYO. It works with
+the Linux kernel to implement the operating system behavior, but significantly
+modifies the runtime dynamic linker (`ld.so`) to support deterministic,
+bundle-friendly application layout and Apple-style executable-root-relative
+linking semantics.
 
+# FBYO EXCLUSIVE MODIFICATIONS: DETERMINISTIC DYLD-STYLE LINKING
 
-# FBYO EXCLUSIVE MODIFICATIONS: MACOS-STYLE APP BUNDLES & FRAMEWORKS
+While standard Linux systems typically rely on SONAME-oriented dependency
+resolution, global library search paths, `ld.so.cache`, and path conventions
+such as `/lib` and `/usr/lib`, the FBYO runtime linker is tuned for a more
+deterministic model:
 
-While standard Linux relies on a flat filesystem hierarchy (e.g., /usr/lib) 
-and shifting relative paths like $ORIGIN, this modified linker (ld.so) 
-introduces a macOS-style dynamic linking architecture (dyld behavior). 
-Applications can now be fully encapsulated, drag-and-drop movable, and manage 
-complex, nested dependencies without polluting the global system state.
+- direct path-based loading for explicit library references
+- stable executable-root-relative resolution
+- reduced reliance on global library lookup
+- support for movable application bundles and nested framework trees
+- strict separation between low-level path resolution and higher-level bundle semantics
 
-Key modifications to the Dynamic Linker include:
+The runtime linker itself remains **filesystem-agnostic**: it does not parse
+bundle manifests or detect application package structures. It only operates on
+explicit paths and dynamic string token expansion. Bundle and framework
+semantics are intentionally delegated to higher-level FBYO frameworks.
 
-1. Pure Executable Path Resolution (struct link_map extensions)
-   The linker natively implements pure Apple-style path resolution. Instead 
-   of parsing bundle structures or guessing application boundaries, the linker 
-   deterministically anchors the exact directory of the main executable at 
-   startup and stores it in the linker map (`l_executable_path`). The linker 
-   remains agnostic to the filesystem layout, delegating bundle detection to 
-   higher-level frameworks (e.g., FBYO CoreFoundations).
+## Key Modifications to the Dynamic Linker
 
-2. New Dynamic String Tokens (DSTs)
-   - $EXEC_PATH : Resolves statically to the directory of the *main* executable that launched the process. Unlike $ORIGIN, which changes 
-     depending on which shared library is currently searching, 
-     $EXEC_PATH remains constant across the entire dependency tree. 
-     This allows deeply nested Frameworks to reliably link against other 
-     Frameworks relative to the application's root.
+### 1. Main Executable Path Tracking (`struct link_map` extension)
 
-3. Framework Indirection ($rpath/ Prefix)
-   A new routing logic in `_dl_map_new_object`. If a library requests a 
-   dependency prefixed with "$rpath/" (e.g., $rpath/libCore.so), the linker 
-   ignores the local library's runpaths and instead inherits the search 
-   paths of the main application. This eliminates "dependency hell" within 
-   complex Framework ecosystems.
+The linker now stores the directory of the main executable explicitly in the
+linker map:
 
+- added field: `l_executable_path`
 
-# SYSTEM REQUIREMENTS & ARCHITECTURES
+This value is initialized during startup in `rtld.c` and remains stable for the
+entire process lifetime. Unlike `$ORIGIN`, which depends on the currently
+loading object, this path always refers to the directory of the original main
+executable.
 
-When working with Linux kernels, this version of the FBYO C Library
-requires Linux kernel version 5.4 or later (optimized for Raspberry Pi / ARM).
+This is the basis for executable-root-relative linking semantics comparable to
+Apple's `@executable_path`.
 
-Also note that the shared version of the libgcc_s library must be
-installed for the pthread library to work correctly.
+### 2. New Dynamic String Token: `$EXEC_PATH`
 
-The FBYO C Library is primarily maintained for the following architecture:
-    * aarch64*-*-linux-gnu (Primary target for FBYO hardware)
+A new Dynamic String Token (DST) was added to the loader:
 
-Upstream GNU configurations remain technically supported but are not the 
-primary focus of FBYO development:
-    i[4567]86-*-linux-gnu, x86_64-*-linux-gnu, etc.
+- **`$EXEC_PATH`**
+  - resolves to the directory of the main executable of the current namespace
+  - remains constant across the full dependency tree
+  - falls back to the main executable's `l_origin` if no dedicated executable path is available
 
+This token is supported by the same DST substitution pipeline already used for
+standard glibc tokens such as:
 
-# BUILDING & INSTALLATION
+- `$ORIGIN`
+- `$LIB`
+- `$PLATFORM`
 
-See the file INSTALL to find out how to configure, build, and install
-the FBYO C Library. Due to the custom modifications, it is highly recommended 
-to build this library using a DESTDIR staging environment to extract the 
-compiled .so files and the modified ld-linux-aarch64.so.1 linker cleanly.
+### 3. DST Expansion Extended in the Runtime Linker
 
-# UPSTREAM DOCUMENTATION & LICENSES
+The DST handling pipeline was modified so that `$EXEC_PATH` is recognized and
+expanded in the same places where glibc normally expands dynamic string tokens.
 
-The base GNU C Library is (almost) completely documented by the Texinfo manual
-found in the `manual/' subdirectory. 
+Modified internal functions include:
 
-The FBYO C Library remains free software. See the file COPYING.LIB for copying
-conditions, and LICENSES for notices about a few contributions that require
-these additional notices to be distributed.
+- `_dl_dst_count`
+- `_dl_dst_substitute`
+- `expand_dynamic_string_token`
+
+This means `$EXEC_PATH` can now be used in:
+
+- explicit runtime loading paths
+- `DT_RUNPATH`
+- `DT_RPATH`
+- other dynamic linker string expansion contexts that already support DSTs
+
+### 4. Startup Initialization of Executable Root
+
+During runtime linker startup, the main executable map is initialized with a
+persistent executable directory:
+
+- `main_map->l_executable_path = strdup(main_map->l_origin);`
+
+This produces a stable executable-root anchor independent of the currently
+loading dependency.
+
+### 5. Revised `dlopen()` Resolution Policy
+
+The runtime loading path in `_dl_map_new_object` was adjusted to follow a more
+deterministic FBYO policy.
+
+#### Explicit paths (`name` contains `/`)
+Examples:
+- `/System/Frameworks/CoreSystem.frameworkb/CoreSystem`
+- `$ORIGIN/libfoo.so`
+- `$EXEC_PATH/libbar.so`
+- `plugins/libbaz.so`
+
+Behavior:
+- dynamic string tokens are expanded
+- the resulting path is loaded directly
+- no search path resolution is performed
+
+This makes explicit `dlopen()` calls path-authoritative.
+
+#### Bare names (`name` contains no `/`)
+Example:
+- `dlopen("libfoo.so", ...)`
+
+Behavior:
+The object is searched in the following order:
+
+1. `LD_LIBRARY_PATH`
+2. `DT_RUNPATH` of the calling object
+3. legacy `DT_RPATH` fallback
+4. default runtime search directories
+
+Notably:
+
+- `ld.so.cache` lookup is intentionally not part of the FBYO `dlopen()` policy in this path
+- no implicit current-working-directory lookup is introduced
+- no framework-specific magic name resolution is added to glibc
+
+This keeps runtime loading deterministic while still supporting traditional
+search-based `dlopen("name.so")` usage when required.
+
+### 6. `RUNPATH` / `RPATH` Expansion Includes `$EXEC_PATH`
+
+The runtime linker's path decomposition flow now naturally supports
+`$EXEC_PATH` within `DT_RUNPATH` and `DT_RPATH` entries because those entries
+are processed through the same DST expansion path.
+
+Relevant internal flow:
+
+- `cache_rpath`
+- `decompose_rpath`
+- `fillin_rpath`
+- `expand_dynamic_string_token`
+- `_dl_dst_substitute`
+
+As a result, entries such as:
+
+```text
+$EXEC_PATH/Frameworks
+$ORIGIN
+$EXEC_PATH/../Libraries
