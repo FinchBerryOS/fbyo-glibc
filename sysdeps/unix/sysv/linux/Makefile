@@ -485,10 +485,19 @@ sysdep_headers += \
   net/ppp_defs.h \
   net/route.h \
   # sysdep_headers
-
 sysdep_routines += \
   cmsg_nxthdr \
   # sysdep_routines
+
+ifeq ($(enable-fbos),yes)
+sysdep_routines += \
+  fbos/fbsocket \
+  fbos/fbsocket_state \
+  fbos/fbsocket_table \
+  fbos/fbsocket_proto \
+  fbos/fbsocket_reader \
+  # sysdep_routines
+endif
 
 CFLAGS-recvmmsg.c = -fexceptions -fasynchronous-unwind-tables
 CFLAGS-sendmmsg.c = -fexceptions -fasynchronous-unwind-tables

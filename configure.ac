@@ -241,6 +241,13 @@ AC_ARG_ENABLE([hardcoded-path-in-tests],
 	      [hardcoded_path_in_tests=no])
 AC_SUBST(hardcoded_path_in_tests)
 
+AC_ARG_ENABLE([fbos],
+	      AS_HELP_STRING([--enable-fbos],
+			     [build glibc with FBOS features @<:@default=no@:>@]),
+	      [enable_fbos=$enableval],
+	      [enable_fbos=no])
+AC_SUBST(enable_fbos)
+
 AC_ARG_ENABLE([hidden-plt],
 	      AS_HELP_STRING([--disable-hidden-plt],
 			     [do not hide internal function calls to avoid PLT]),

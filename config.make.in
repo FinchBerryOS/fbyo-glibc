@@ -23,6 +23,7 @@ datarootdir = @datarootdir@
 localstatedir = @libc_cv_localstatedir@
 localedir = @localedir@
 multidir= @libc_cv_multidir@
+enable-fbos = @enable_fbos@
 
 # Should we use and build ldconfig?
 use-ldconfig = @use_ldconfig@
