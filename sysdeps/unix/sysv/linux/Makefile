@@ -491,11 +491,11 @@ sysdep_routines += \
 
 ifeq ($(enable-fbos),yes)
 sysdep_routines += \
-  fbos/fbsocket \
-  fbos/fbsocket_state \
-  fbos/fbsocket_table \
-  fbos/fbsocket_proto \
-  fbos/fbsocket_reader \
+  fbsocket \
+  fbsocket_state \
+  fbsocket_table \
+  fbsocket_proto \
+  fbsocket_reader \
   # sysdep_routines
 endif
 
