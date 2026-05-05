@@ -37,6 +37,17 @@ libc {
   GLIBC_2.17 {
     recvmmsg; sendmmsg;
   }
+  GLIBC_2.43 {
+    fbsocket_open;
+    fbsocket_upgrade;
+    fbsocket_connect;
+    fbsocket_close;
+    fbsocket_write;
+    fbsocket_set_reader;
+    fbsocket_set_reader_ack;
+    fbsocket_send_ack;
+    fbsocket_get_state;
+  }
   GLIBC_PRIVATE {
     __sendmmsg;
     __recv; __socket;

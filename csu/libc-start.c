@@ -357,6 +357,10 @@ LIBC_START_MAIN (int (*main) (int, char **, char ** MAIN_AUXVEC_DECL),
   _dl_debug_initialize (0, LM_ID_BASE);
 #endif
 
+    #ifdef __FBOS_BUILD__
+    //extern void __fbsessions_bootstrap_init (void);
+    #endif
+
   __libc_start_call_main (main, argc, argv MAIN_AUXVEC_PARAM);
 }
 

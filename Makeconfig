@@ -19,6 +19,7 @@
 #
 #	Makefile configuration options for the GNU C library.
 #
+
 ifneq (,)
 This makefile requires GNU Make.
 endif
@@ -65,6 +66,11 @@ export sysdep_dir := $(sysdep_dir)
 
 # Get the values defined by options to `configure'.
 include $(common-objpfx)config.make
+
+ifeq ($(enable-fbos),yes)
++cppflags += -D__FBOS_BUILD__
+endif
+
 
 # What flags to give to sources which call user provided callbacks
 uses-callbacks = -fexceptions

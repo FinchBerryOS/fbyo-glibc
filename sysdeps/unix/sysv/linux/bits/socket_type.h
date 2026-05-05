@@ -41,6 +41,7 @@ enum __socket_type
   SOCK_PACKET = 10,		/* Linux specific way of getting packets
 				   at the dev level.  For writing rarp and
 				   other similar things on the user level. */
+           
 #define SOCK_PACKET SOCK_PACKET
 
   /* Flags to be ORed into the type parameter of socket and socketpair and
