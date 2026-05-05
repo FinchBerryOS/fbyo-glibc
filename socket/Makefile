@@ -33,6 +33,12 @@ headers := \
   sys/un.h \
   # headers
 
+ifeq ($(enable-fbos),yes)
+headers += \
+  fbsocket.h \
+  # headers
+endif
+
 routines := \
   accept \
   accept4 \
