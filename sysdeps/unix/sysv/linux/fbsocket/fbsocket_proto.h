@@ -7,10 +7,14 @@
 #define __FBSOCKET_PROTO_MAGIC   0x4642534fU
 #define __FBSOCKET_PROTO_VERSION 1
 
+#define __FBSOCKET_PROTO_MAX_MESSAGE_SIZE (64ULL * 1024ULL * 1024ULL)
+#define __FBSOCKET_HELLO_TIMEOUT_MS 10000
+
 enum __fbsocket_frame_type
 {
-  __FBSOCKET_FRAME_DATA = 1,
-  __FBSOCKET_FRAME_ACK = 2
+  __FBSOCKET_FRAME_HELLO = 1,
+  __FBSOCKET_FRAME_DATA  = 2,
+  __FBSOCKET_FRAME_ACK   = 3
 };
 
 struct __attribute__ ((__packed__)) __fbsocket_frame_header
@@ -22,6 +26,11 @@ struct __attribute__ ((__packed__)) __fbsocket_frame_header
   uint64_t checksum;
   uint16_t fd_count;
   uint16_t reserved;
+};
+
+struct __attribute__ ((__packed__)) __fbsocket_hello_payload
+{
+  uint64_t max_payload;
 };
 
 uint64_t __fbsocket_checksum64 (const void *buf, size_t len);

@@ -48,6 +48,7 @@ __fbsocket_state_destroy (struct __fbsocket_state *st)
   pthread_mutex_destroy (&st->lock);
   pthread_cond_destroy (&st->ack_cv);
   pthread_cond_destroy (&st->slot_cv);
+  pthread_cond_destroy (&st->hello_cv);
 
   free (st);
 }
@@ -66,6 +67,9 @@ __fbsocket_state_create (int fd)
   st->refcnt = 1;
   st->ack_status = FBSOCKET_ACK_OK;
   st->reader_kind = __FBSOCKET_READER_NONE;
+  st->local_max_payload = __FBSOCKET_PROTO_MAX_MESSAGE_SIZE;
+  st->peer_max_payload = 0;
+  st->effective_max_payload = __FBSOCKET_PROTO_MAX_MESSAGE_SIZE;
 
   if (pthread_mutex_init (&st->lock, NULL) != 0)
     {
@@ -82,6 +86,15 @@ __fbsocket_state_create (int fd)
 
   if (pthread_cond_init (&st->slot_cv, NULL) != 0)
     {
+      pthread_cond_destroy (&st->ack_cv);
+      pthread_mutex_destroy (&st->lock);
+      free (st);
+      return NULL;
+    }
+
+  if (pthread_cond_init (&st->hello_cv, NULL) != 0)
+    {
+      pthread_cond_destroy (&st->slot_cv);
       pthread_cond_destroy (&st->ack_cv);
       pthread_mutex_destroy (&st->lock);
       free (st);

@@ -4,8 +4,10 @@
 #include <pthread.h>
 #include <stddef.h>
 #include <sys/types.h>
+#include <time.h>
 
 #include "fbsocket.h"
+#include "fbsocket_proto.h"
 
 enum __fbsocket_reader_kind
 {
@@ -46,12 +48,22 @@ struct __fbsocket_state
   int reader_running;
   int callback_running;
 
+  int hello_sent;
+  int hello_received;
+  uint64_t local_max_payload;
+  uint64_t peer_max_payload;
+  uint64_t effective_max_payload;
+
+  struct timespec connected_since;
+  int connected_since_valid;
+
   pthread_t reader_thread;
   pthread_t callback_thread;
 
   pthread_mutex_t lock;
   pthread_cond_t ack_cv;
   pthread_cond_t slot_cv;
+  pthread_cond_t hello_cv;
 
   struct __fbsocket_message_slot rx_slot;
 

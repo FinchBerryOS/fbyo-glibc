@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <sys/socket.h>
+#include <time.h>
 #include <unistd.h>
 
 static int
@@ -27,6 +28,13 @@ __fbsocket_validate_managed (int fd, struct __fbsocket_state **out)
     *out = st;
 
   return 0;
+}
+
+static void
+__fbsocket_mark_connected_now (struct __fbsocket_state *st)
+{
+  clock_gettime (CLOCK_MONOTONIC, &st->connected_since);
+  st->connected_since_valid = 1;
 }
 
 int
@@ -66,7 +74,9 @@ fbsocket_upgrade (int fd)
 {
   int type;
   struct sockaddr_storage ss;
+  struct sockaddr_storage peer;
   socklen_t slen;
+  struct __fbsocket_state *st;
 
   if (fd < 0)
     {
@@ -97,7 +107,27 @@ fbsocket_upgrade (int fd)
       return -1;
     }
 
-  return __fbsocket_register_fd (fd);
+  if (__fbsocket_register_fd (fd) < 0)
+    return -1;
+
+  st = __fbsocket_get_state (fd);
+  if (st == NULL)
+    return -1;
+
+  slen = sizeof (peer);
+  if (getpeername (fd, (struct sockaddr *) &peer, &slen) == 0)
+    {
+      pthread_mutex_lock (&st->lock);
+      st->connected = 1;
+      st->is_listener = 0;
+      __fbsocket_mark_connected_now (st);
+      pthread_mutex_unlock (&st->lock);
+
+      if (__fbsocket_start_threads (st) < 0)
+        return -1;
+    }
+
+  return 0;
 }
 
 int
@@ -114,6 +144,7 @@ fbsocket_connect (int fd, __CONST_SOCKADDR_ARG addr, socklen_t len)
   pthread_mutex_lock (&st->lock);
   st->connected = 1;
   st->is_listener = 0;
+  __fbsocket_mark_connected_now (st);
   pthread_mutex_unlock (&st->lock);
 
   if (__fbsocket_start_threads (st) < 0)
@@ -145,6 +176,9 @@ fbsocket_write (int fd, const void *buf, size_t len,
   struct __fbsocket_state *st;
 
   if (__fbsocket_validate_managed (fd, &st) < 0)
+    return -1;
+
+  if (__fbsocket_wait_hello (st) < 0)
     return -1;
 
   pthread_mutex_lock (&st->lock);

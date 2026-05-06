@@ -2,6 +2,7 @@
 #include "fbsocket_proto.h"
 
 #include <errno.h>
+#include <poll.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,11 +84,43 @@ __fbsocket_send_frame (int fd,
           iov[0].iov_len -= n;
         }
 
-      /* FDs only on first sendmsg call.  */
+      /* FDs nur beim ersten sendmsg mitsenden.  */
       msg.msg_control = NULL;
       msg.msg_controllen = 0;
 
       total_sent += (size_t) n;
+    }
+
+  return 0;
+}
+
+static int
+__fbsocket_wait_readable (int fd, int timeout_ms)
+{
+  struct pollfd pfd;
+  int rc;
+
+  pfd.fd = fd;
+  pfd.events = POLLIN;
+  pfd.revents = 0;
+
+  do
+    rc = poll (&pfd, 1, timeout_ms);
+  while (rc < 0 && errno == EINTR);
+
+  if (rc == 0)
+    {
+      __set_errno (ETIMEDOUT);
+      return -1;
+    }
+
+  if (rc < 0)
+    return -1;
+
+  if (pfd.revents & (POLLERR | POLLHUP | POLLNVAL))
+    {
+      __set_errno (ECONNRESET);
+      return -1;
     }
 
   return 0;
@@ -123,7 +156,8 @@ __fbsocket_recv_exact (int fd, void *buf, size_t len)
 static int
 __fbsocket_recv_header_and_fds (int fd,
                                 struct __fbsocket_frame_header *hdr,
-                                int **fds_out, size_t *fd_count_out)
+                                int **fds_out, size_t *fd_count_out,
+                                int timeout_ms)
 {
   struct msghdr msg;
   struct iovec iov;
@@ -132,6 +166,9 @@ __fbsocket_recv_header_and_fds (int fd,
   ssize_t n;
   int *fds = NULL;
   size_t fd_count = 0;
+
+  if (timeout_ms >= 0 && __fbsocket_wait_readable (fd, timeout_ms) < 0)
+    return -1;
 
   memset (&msg, 0, sizeof (msg));
   memset (&iov, 0, sizeof (iov));
@@ -220,6 +257,46 @@ __fbsocket_store_rx_message (struct __fbsocket_state *st,
   return 0;
 }
 
+static int
+__fbsocket_handle_hello (struct __fbsocket_state *st,
+                         const struct __fbsocket_frame_header *hdr)
+{
+  struct __fbsocket_hello_payload hello;
+
+  if (hdr->fd_count != 0 || hdr->payload_len != sizeof (hello))
+    {
+      __set_errno (EPROTO);
+      return -1;
+    }
+
+  if (__fbsocket_recv_exact (st->fd, &hello, sizeof (hello)) < 0)
+    return -1;
+
+  if (__fbsocket_checksum64 (&hello, sizeof (hello)) != hdr->checksum)
+    {
+      __set_errno (EBADMSG);
+      return -1;
+    }
+
+  if (hello.max_payload == 0
+      || hello.max_payload > __FBSOCKET_PROTO_MAX_MESSAGE_SIZE)
+    {
+      __set_errno (EMSGSIZE);
+      return -1;
+    }
+
+  pthread_mutex_lock (&st->lock);
+  st->peer_max_payload = hello.max_payload;
+  st->effective_max_payload =
+    (st->local_max_payload < st->peer_max_payload
+     ? st->local_max_payload : st->peer_max_payload);
+  st->hello_received = 1;
+  pthread_cond_broadcast (&st->hello_cv);
+  pthread_mutex_unlock (&st->lock);
+
+  return 0;
+}
+
 static void *
 __fbsocket_reader_main (void *arg)
 {
@@ -228,6 +305,7 @@ __fbsocket_reader_main (void *arg)
   unsigned char *data = NULL;
   int *fds = NULL;
   size_t fd_count = 0;
+  int timeout_ms = __FBSOCKET_HELLO_TIMEOUT_MS;
 
   for (;;)
     {
@@ -237,7 +315,8 @@ __fbsocket_reader_main (void *arg)
       fds = NULL;
       fd_count = 0;
 
-      if (__fbsocket_recv_header_and_fds (st->fd, &hdr, &fds, &fd_count) < 0)
+      if (__fbsocket_recv_header_and_fds (st->fd, &hdr, &fds, &fd_count,
+                                          timeout_ms) < 0)
         break;
 
       if (hdr.magic != __FBSOCKET_PROTO_MAGIC
@@ -247,8 +326,41 @@ __fbsocket_reader_main (void *arg)
           break;
         }
 
+      if (!st->hello_received)
+        {
+          if (hdr.type != __FBSOCKET_FRAME_HELLO)
+            {
+              __set_errno (EPROTO);
+              break;
+            }
+
+          if (fds != NULL || fd_count != 0)
+            {
+              __set_errno (EPROTO);
+              break;
+            }
+
+          if (__fbsocket_handle_hello (st, &hdr) < 0)
+            break;
+
+          timeout_ms = -1;
+          continue;
+        }
+
+      if (!(st->hello_sent && st->hello_received))
+        {
+          __set_errno (EPROTO);
+          break;
+        }
+
       if (hdr.type == __FBSOCKET_FRAME_ACK)
         {
+          if (hdr.payload_len != 0 || hdr.fd_count != 0)
+            {
+              __set_errno (EPROTO);
+              break;
+            }
+
           pthread_mutex_lock (&st->lock);
           st->ack_received = 1;
           st->ack_status = (unsigned char) (hdr.reserved & 0xff);
@@ -266,7 +378,8 @@ __fbsocket_reader_main (void *arg)
           break;
         }
 
-      if (hdr.payload_len > FBSOCKET_MAX_MESSAGE_SIZE
+      if (hdr.payload_len > st->effective_max_payload
+          || hdr.payload_len > __FBSOCKET_PROTO_MAX_MESSAGE_SIZE
           || hdr.fd_count > FBSOCKET_MAX_FD_COUNT
           || hdr.fd_count != fd_count)
         {
@@ -305,6 +418,7 @@ __fbsocket_reader_main (void *arg)
   st->reader_running = 0;
   pthread_cond_broadcast (&st->ack_cv);
   pthread_cond_broadcast (&st->slot_cv);
+  pthread_cond_broadcast (&st->hello_cv);
   pthread_mutex_unlock (&st->lock);
 
   return NULL;
@@ -388,12 +502,37 @@ __fbsocket_callback_main (void *arg)
       pthread_cond_broadcast (&st->slot_cv);
       pthread_mutex_unlock (&st->lock);
 
-      /* Ownership of received FDs transfers to the callback/user code.
-         The runtime only frees the array container afterwards.  */
       free (local.fds);
       free (local.data);
       memset (&local, 0, sizeof (local));
     }
+}
+
+int
+__fbsocket_send_hello_internal (struct __fbsocket_state *st)
+{
+  struct __fbsocket_frame_header hdr;
+  struct __fbsocket_hello_payload hello;
+
+  hello.max_payload = st->local_max_payload;
+
+  memset (&hdr, 0, sizeof (hdr));
+  hdr.magic = __FBSOCKET_PROTO_MAGIC;
+  hdr.version = __FBSOCKET_PROTO_VERSION;
+  hdr.type = __FBSOCKET_FRAME_HELLO;
+  hdr.payload_len = sizeof (hello);
+  hdr.checksum = __fbsocket_checksum64 (&hello, sizeof (hello));
+  hdr.fd_count = 0;
+
+  if (__fbsocket_send_frame (st->fd, &hdr, &hello, sizeof (hello), NULL, 0) < 0)
+    return -1;
+
+  pthread_mutex_lock (&st->lock);
+  st->hello_sent = 1;
+  pthread_cond_broadcast (&st->hello_cv);
+  pthread_mutex_unlock (&st->lock);
+
+  return 0;
 }
 
 int
@@ -433,8 +572,20 @@ __fbsocket_start_threads (struct __fbsocket_state *st)
       st->callback_running = 0;
       pthread_cond_broadcast (&st->ack_cv);
       pthread_cond_broadcast (&st->slot_cv);
+      pthread_cond_broadcast (&st->hello_cv);
       pthread_mutex_unlock (&st->lock);
       __set_errno (ret);
+      return -1;
+    }
+
+  if (__fbsocket_send_hello_internal (st) < 0)
+    {
+      pthread_mutex_lock (&st->lock);
+      st->closed = 1;
+      pthread_cond_broadcast (&st->ack_cv);
+      pthread_cond_broadcast (&st->slot_cv);
+      pthread_cond_broadcast (&st->hello_cv);
+      pthread_mutex_unlock (&st->lock);
       return -1;
     }
 
@@ -453,6 +604,7 @@ __fbsocket_stop_threads (struct __fbsocket_state *st)
   st->closed = 1;
   pthread_cond_broadcast (&st->ack_cv);
   pthread_cond_broadcast (&st->slot_cv);
+  pthread_cond_broadcast (&st->hello_cv);
 
   join_reader = st->reader_running;
   join_callback = st->callback_running;
@@ -466,6 +618,25 @@ __fbsocket_stop_threads (struct __fbsocket_state *st)
     pthread_join (reader, NULL);
   if (join_callback)
     pthread_join (callback, NULL);
+}
+
+int
+__fbsocket_wait_hello (struct __fbsocket_state *st)
+{
+  pthread_mutex_lock (&st->lock);
+
+  while (!(st->hello_sent && st->hello_received) && !st->closed)
+    pthread_cond_wait (&st->hello_cv, &st->lock);
+
+  if (st->closed)
+    {
+      pthread_mutex_unlock (&st->lock);
+      __set_errno (ECONNRESET);
+      return -1;
+    }
+
+  pthread_mutex_unlock (&st->lock);
+  return 0;
 }
 
 int
@@ -499,6 +670,13 @@ __fbsocket_send_ack_internal (struct __fbsocket_state *st,
   struct __fbsocket_frame_header hdr;
 
   pthread_mutex_lock (&st->lock);
+
+  if (!(st->hello_sent && st->hello_received))
+    {
+      pthread_mutex_unlock (&st->lock);
+      __set_errno (EPERM);
+      return -1;
+    }
 
   if (!st->callback_active || !st->ack_pending_send)
     {
@@ -536,8 +714,23 @@ __fbsocket_send_data_internal (struct __fbsocket_state *st,
                                const int *fds, size_t fd_count)
 {
   struct __fbsocket_frame_header hdr;
+  uint64_t max_payload;
 
-  if (len > FBSOCKET_MAX_MESSAGE_SIZE || fd_count > FBSOCKET_MAX_FD_COUNT)
+  pthread_mutex_lock (&st->lock);
+
+  if (!(st->hello_sent && st->hello_received))
+    {
+      pthread_mutex_unlock (&st->lock);
+      __set_errno (EPERM);
+      return -1;
+    }
+
+  max_payload = st->effective_max_payload;
+  pthread_mutex_unlock (&st->lock);
+
+  if (len > max_payload
+      || len > __FBSOCKET_PROTO_MAX_MESSAGE_SIZE
+      || fd_count > FBSOCKET_MAX_FD_COUNT)
     {
       __set_errno (EMSGSIZE);
       return -1;

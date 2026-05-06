@@ -6,9 +6,11 @@
 int __fbsocket_start_threads (struct __fbsocket_state *st);
 void __fbsocket_stop_threads (struct __fbsocket_state *st);
 
+int __fbsocket_wait_hello (struct __fbsocket_state *st);
 int __fbsocket_wait_ack (struct __fbsocket_state *st,
                          unsigned char *ack_status);
 
+int __fbsocket_send_hello_internal (struct __fbsocket_state *st);
 int __fbsocket_send_ack_internal (struct __fbsocket_state *st,
                                   unsigned char status);
 
