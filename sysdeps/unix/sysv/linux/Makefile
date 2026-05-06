@@ -497,6 +497,11 @@ sysdep_routines += \
   fbsocket/fbsocket_proto \
   fbsocket/fbsocket_reader \
   # sysdep_routines
+
+before-compile += $(objpfx)fbsocket/.dir
+$(objpfx)fbsocket/.dir:
+	mkdir -p $(objpfx)fbsocket
+	touch $@
 endif
 
 CFLAGS-recvmmsg.c = -fexceptions -fasynchronous-unwind-tables
