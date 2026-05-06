@@ -37,7 +37,7 @@ libc {
   GLIBC_2.17 {
     recvmmsg; sendmmsg;
   }
-  GLIBC_2.43 {
+  FINCHLIBC_1.0 {
     fbsocket_open;
     fbsocket_upgrade;
     fbsocket_connect;

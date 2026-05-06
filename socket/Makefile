@@ -35,7 +35,7 @@ headers := \
 
 ifeq ($(enable-fbos),yes)
 headers += \
-  fbsocket.h \
+  sys/fbsocket.h \
   # headers
 endif
 
