@@ -321,28 +321,18 @@ _dl_dst_substitute (struct link_map *l, const char *input, char *result)
 			repl = GLRO(dl_platform);
 		else if ((len = is_dst (input, "LIB")) != 0)
 			repl = DL_DST_LIB;
-
 		else if ((len = is_dst (input, "EXEC_PATH")) != 0)
 			{
-			/* Wir greifen auf das Hauptprogramm des aktuellen Namespaces zu.
-				l->l_ns gibt uns die Namespace-ID (normalerweise LM_ID_BASE). */
-			struct link_map *main_map = GL(dl_ns)[l->l_ns]._ns_loaded;
-			if (main_map != NULL)
-			{
-				repl = main_map->l_executable_path;
-				if (repl == NULL)
-				repl = main_map->l_origin;
-			}
-			
-			/* Wir nutzen den Pfad, den wir in rtld.c gespeichert haben */
-			repl = main_map->l_executable_path;
-			
-			/* Sicherheits-Check: Falls EXEC_PATH aus irgendeinem Grund 
-				NULL ist (z.B. kein Bundle), nimm l_origin als Fallback */
-			if (repl == NULL)
-				repl = main_map->l_origin;
-			}
-		
+				struct link_map *main_map = GL(dl_ns)[l->l_ns]._ns_loaded;
+
+				if (main_map != NULL)
+				{
+					repl = main_map->l_executable_path;
+					if (repl == NULL)
+					repl = main_map->l_origin;
+				}
+			}	
+
 		if (repl != NULL && repl != (const char *) -1)
 			{
 			wp = __stpcpy (wp, repl);
@@ -423,6 +413,53 @@ expand_dynamic_string_token (struct link_map *l, const char *input)
   return _dl_dst_substitute (l, input, result);
 }
 
+/* Return true if NAME must be treated as a full path name for DT_NEEDED
+   resolution under the FBOS lookup policy.
+
+   A name is considered a full path name if it is either:
+
+     * an absolute filesystem path starting with '/', or
+     * a tokenized path starting with a path-bearing dynamic string token
+       (DST), currently $ORIGIN or $EXEC_PATH (including ${...} forms).
+
+   DSTs such as $LIB and $PLATFORM may still appear inside a full path
+   name and will be expanded by _dl_dst_substitute, but they do not by
+   themselves make a name a full path name.
+
+   All other names are treated as bare names, even if they contain '/'
+   later in the string.  In particular, framework-style relative names
+   such as "Lib.frameworkb/Lib.so" are not full path names and must be
+   resolved via the bare-name search policy.  */
+static bool
+is_full_path_name (const char *name)
+{
+  const char *input;
+  size_t len;
+
+  if (name == NULL || name[0] == '\0')
+    return false;
+
+  /* Absolute filesystem path.  */
+  if (name[0] == '/')
+    return true;
+
+  /* Tokenized path which becomes concrete after DST expansion.
+     Only names starting with a recognized DST are treated as full paths.  */
+  if (name[0] != '$')
+    return false;
+
+  input = name + 1;
+
+  len = is_dst (input, "ORIGIN");
+  if (len != 0)
+    return true;
+
+  len = is_dst (input, "EXEC_PATH");
+  if (len != 0)
+    return true;
+
+  return false;
+}
 
 /* Add `name' to the list of names for a particular shared object.
    `name' is expected to have been allocated with malloc and will
@@ -571,7 +608,6 @@ fillin_rpath (char *rpath, struct r_search_path_elem **result, const char *sep,
   return result;
 }
 
-
 static bool
 decompose_rpath (struct r_search_path_struct *sps,
 		 const char *rpath, struct link_map *l, const char *what)
@@ -695,7 +731,6 @@ cache_rpath (struct link_map *l,
 					      + l->l_info[tag]->d_un.d_val),
 			  l, what);
 }
-
 
 void
 _dl_init_paths (const char *llp, const char *source,
@@ -853,7 +888,6 @@ _dl_init_paths (const char *llp, const char *source,
   else
     __rtld_env_path_list.dirs = (void *) -1;
 }
-
 
 /* Process PT_GNU_PROPERTY program header PH in module L after
    PT_LOAD segments are mapped.  Only one NT_GNU_PROPERTY_TYPE_0
@@ -1756,169 +1790,6 @@ open_verify (const char *name, int fd,
    it turns out that none of the directories in SPS exists, SPS->DIRS is
    replaced with (void *) -1, and the old value is free()d if SPS->MALLOCED is
    true.  */
-
-#if 0
-static int
-open_path (const char *name, size_t namelen, int mode,
-	   struct r_search_path_struct *sps, char **realname,
-	   struct filebuf *fbp, struct link_map *loader, int whatcode,
-	   bool *found_other_class)
-{
-  struct r_search_path_elem **dirs = sps->dirs;
-  char *buf;
-  int fd = -1;
-  const char *current_what = NULL;
-  int any = 0;
-
-  if (__glibc_unlikely (dirs == NULL))
-    /* We're called before _dl_init_paths when loading the main executable
-       given on the command line when rtld is run directly.  */
-    return -1;
-
-  buf = alloca (max_dirnamelen + max_capstrlen + namelen);
-  do
-    {
-      struct r_search_path_elem *this_dir = *dirs;
-      size_t buflen = 0;
-      size_t cnt;
-      char *edp;
-      int here_any = 0;
-
-      /* If we are debugging the search for libraries print the path
-	 now if it hasn't happened now.  */
-      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS)
-	  && current_what != this_dir->what)
-	{
-	  current_what = this_dir->what;
-	  print_search_path (dirs, current_what, this_dir->where);
-	}
-
-      edp = (char *) __mempcpy (buf, this_dir->dirname, this_dir->dirnamelen);
-      for (cnt = 0; fd == -1 && cnt < ncapstr; ++cnt)
-	{
-	  /* Skip this directory if we know it does not exist.  */
-	  if (this_dir->status[cnt] == nonexisting)
-	    continue;
-
-#ifdef SHARED
-	  buflen =
-	    ((char *) __mempcpy (__mempcpy (edp, capstr[cnt].str,
-					    capstr[cnt].len),
-				 name, namelen)
-	     - buf);
-#else
-	  buflen = (char *) __mempcpy (edp, name, namelen) - buf;
-#endif
-
-	  /* Print name we try if this is wanted.  */
-	  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
-	    _dl_debug_printf ("  trying file=%s\n", buf);
-
-	  fd = open_verify (buf, -1, fbp, loader, whatcode, mode,
-			    found_other_class, false);
-	  if (this_dir->status[cnt] == unknown)
-	    {
-	      if (fd != -1)
-		this_dir->status[cnt] = existing;
-	      /* Do not update the directory information when loading
-		 auditing code.  We must try to disturb the program as
-		 little as possible.  */
-	      else if (loader == NULL
-		       || GL(dl_ns)[loader->l_ns]._ns_loaded->l_auditing == 0)
-		{
-		  /* We failed to open machine dependent library.  Let's
-		     test whether there is any directory at all.  */
-		  struct __stat64_t64 st;
-
-		  buf[buflen - namelen] = '\0';
-
-		  if (__stat64_time64 (buf, &st) != 0
-		      || ! S_ISDIR (st.st_mode))
-		    /* The directory does not exist or it is no directory.  */
-		    this_dir->status[cnt] = nonexisting;
-		  else
-		    this_dir->status[cnt] = existing;
-		}
-	    }
-
-	  /* Remember whether we found any existing directory.  */
-	  here_any |= this_dir->status[cnt] != nonexisting;
-
-	  if (fd != -1 && __glibc_unlikely (mode & __RTLD_SECURE)
-	      && __libc_enable_secure)
-	    {
-	      /* This is an extra security effort to make sure nobody can
-		 preload broken shared objects which are in the trusted
-		 directories and so exploit the bugs.  */
-	      struct __stat64_t64 st;
-
-	      if (__fstat64_time64 (fd, &st) != 0
-		  || (st.st_mode & S_ISUID) == 0)
-		{
-		  /* The shared object cannot be tested for being SUID
-		     or this bit is not set.  In this case we must not
-		     use this object.  */
-		  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
-		    _dl_debug_printf ("  refusing to load file=%s, the shared "
-				      "object cannot be tested for being "
-				      "SUID or the bit is not set\n",
-				      buf);
-		  __close_nocancel (fd);
-		  fd = -1;
-		  /* We simply ignore the file, signal this by setting
-		     the error value which would have been set by `open'.  */
-		  errno = ENOENT;
-		}
-	    }
-	}
-
-      if (fd != -1)
-	{
-	  *realname = (char *) malloc (buflen);
-	  if (*realname != NULL)
-	    {
-	      memcpy (*realname, buf, buflen);
-	      return fd;
-	    }
-	  else
-	    {
-	      /* No memory for the name, we certainly won't be able
-		 to load and link it.  */
-	      __close_nocancel (fd);
-	      return -1;
-	    }
-	}
-
-      /* Continue the search if the file does not exist (ENOENT), if it can
-	 not be accessed (EACCES), or if the a component in the path is not a
-	 directory (for instance, if the component is a existing file meaning
-	 essentially that the pathname is invalid - ENOTDIR).  */
-      if (here_any && errno != ENOENT && errno != EACCES && errno != ENOTDIR)
-	return -1;
-
-      /* Remember whether we found anything.  */
-      any |= here_any;
-    }
-  while (*++dirs != NULL);
-
-  /* Remove the whole path if none of the directories exists.  */
-  if (__glibc_unlikely (! any))
-    {
-      /* Paths which were allocated using the minimal malloc() in ld.so
-	 must not be freed using the general free() in libc.  */
-      if (sps->malloced)
-	free (sps->dirs);
-
-      /* __rtld_search_dirs and __rtld_env_path_list are
-	 attribute_relro, therefore avoid writing to them.  */
-      if (sps != &__rtld_search_dirs && sps != &__rtld_env_path_list)
-	sps->dirs = (void *) -1;
-    }
-
-  return -1;
-}
-#endif
-
 static int
 open_path (const char *name, size_t namelen, int mode,
 	   struct r_search_path_struct *sps, char **realname,
@@ -2112,8 +1983,6 @@ _dl_lookup_map (Lmid_t nsid, const char *name)
 }
 
 /* Map in the shared object file NAME.  */
-
-#if 0
 struct link_map *
 _dl_map_new_object (struct link_map *loader, const char *name,
 		    int type, int trace_mode, int mode, Lmid_t nsid)
@@ -2153,273 +2022,14 @@ _dl_map_new_object (struct link_map *loader, const char *name,
     }
 #endif
 
-  if (strchr (name, '/') == NULL)
-    {
-      /* Search for NAME in several places.  */
-
-      size_t namelen = strlen (name) + 1;
-
-      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
-	_dl_debug_printf ("find library=%s [%lu]; searching\n", name, nsid);
-
-      fd = -1;
-
-      /* When the object has the RUNPATH information we don't use any
-	 RPATHs.  */
-      if (loader == NULL || loader->l_info[DT_RUNPATH] == NULL)
-	{
-	  /* This is the executable's map (if there is one).  Make sure that
-	     we do not look at it twice.  */
-	  struct link_map *main_map = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
-	  bool did_main_map = false;
-
-	  /* First try the DT_RPATH of the dependent object that caused NAME
-	     to be loaded.  Then that object's dependent, and on up.  */
-	  for (l = loader; l; l = l->l_loader)
-	    if (cache_rpath (l, &l->l_rpath_dirs, DT_RPATH, "RPATH"))
-	      {
-		fd = open_path (name, namelen, mode,
-				&l->l_rpath_dirs,
-				&realname, &fb, loader, LA_SER_RUNPATH,
-				&found_other_class);
-		if (fd != -1)
-		  break;
-
-		did_main_map |= l == main_map;
-	      }
-
-	  /* If dynamically linked, try the DT_RPATH of the executable
-	     itself.  NB: we do this for lookups in any namespace.  */
-	  if (fd == -1 && !did_main_map
-	      && main_map != NULL && main_map->l_type != lt_loaded
-	      && cache_rpath (main_map, &main_map->l_rpath_dirs, DT_RPATH,
-			      "RPATH"))
-	    fd = open_path (name, namelen, mode,
-			    &main_map->l_rpath_dirs,
-			    &realname, &fb, loader ?: main_map, LA_SER_RUNPATH,
-			    &found_other_class);
-
-	  /* Also try DT_RUNPATH in the executable for LD_AUDIT dlopen
-	     call.  */
-	  if (__glibc_unlikely (mode & __RTLD_AUDIT)
-	      && fd == -1 && !did_main_map
-	      && main_map != NULL && main_map->l_type != lt_loaded)
-	    {
-	      struct r_search_path_struct l_rpath_dirs;
-	      l_rpath_dirs.dirs = NULL;
-	      if (cache_rpath (main_map, &l_rpath_dirs,
-			       DT_RUNPATH, "RUNPATH"))
-		fd = open_path (name, namelen, mode, &l_rpath_dirs,
-				&realname, &fb, loader ?: main_map,
-				LA_SER_RUNPATH, &found_other_class);
-	    }
-	}
-
-      /* Try the LD_LIBRARY_PATH environment variable.  */
-      if (fd == -1 && __rtld_env_path_list.dirs != (void *) -1)
-	fd = open_path (name, namelen, mode, &__rtld_env_path_list,
-			&realname, &fb,
-			loader ?: GL(dl_ns)[LM_ID_BASE]._ns_loaded,
-			LA_SER_LIBPATH, &found_other_class);
-
-      /* Look at the RUNPATH information for this binary.  */
-      if (fd == -1 && loader != NULL
-	  && cache_rpath (loader, &loader->l_runpath_dirs,
-			  DT_RUNPATH, "RUNPATH"))
-	fd = open_path (name, namelen, mode,
-			&loader->l_runpath_dirs, &realname, &fb, loader,
-			LA_SER_RUNPATH, &found_other_class);
-
-#ifdef USE_LDCONFIG
-      if (fd == -1
-	  && (__glibc_likely ((mode & __RTLD_SECURE) == 0)
-	      || ! __libc_enable_secure)
-	  && __glibc_likely (GLRO(dl_inhibit_cache) == 0))
-	{
-	  /* Check the list of libraries in the file /etc/ld.so.cache,
-	     for compatibility with Linux's ldconfig program.  */
-	  char *cached = _dl_load_cache_lookup (name);
-
-	  if (cached != NULL)
-	    {
-	      // XXX Correct to unconditionally default to namespace 0?
-	      l = (loader
-		   ?: GL(dl_ns)[LM_ID_BASE]._ns_loaded
-# ifdef SHARED
-		   ?: &_dl_rtld_map
-# endif
-		  );
-
-	      /* If the loader has the DF_1_NODEFLIB flag set we must not
-		 use a cache entry from any of these directories.  */
-	      if (__glibc_unlikely (l->l_flags_1 & DF_1_NODEFLIB))
-		{
-		  const char *dirp = system_dirs;
-		  unsigned int cnt = 0;
-
-		  do
-		    {
-		      if (memcmp (cached, dirp, system_dirs_len[cnt]) == 0)
-			{
-			  /* The prefix matches.  Don't use the entry.  */
-			  free (cached);
-			  cached = NULL;
-			  break;
-			}
-
-		      dirp += system_dirs_len[cnt] + 1;
-		      ++cnt;
-		    }
-		  while (cnt < nsystem_dirs_len);
-		}
-
-	      if (cached != NULL)
-		{
-		  fd = open_verify (cached, -1,
-				    &fb, loader ?: GL(dl_ns)[nsid]._ns_loaded,
-				    LA_SER_CONFIG, mode, &found_other_class,
-				    false);
-		  if (__glibc_likely (fd != -1))
-		    realname = cached;
-		  else
-		    free (cached);
-		}
-	    }
-	}
-#endif
-
-      /* Finally, try the default path.  */
-      if (fd == -1
-	  && ((l = loader ?: GL(dl_ns)[nsid]._ns_loaded) == NULL
-	      || __glibc_likely (!(l->l_flags_1 & DF_1_NODEFLIB)))
-	  && __rtld_search_dirs.dirs != (void *) -1)
-	fd = open_path (name, namelen, mode, &__rtld_search_dirs,
-			&realname, &fb, l, LA_SER_DEFAULT, &found_other_class);
-
-      /* Add another newline when we are tracing the library loading.  */
-      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
-	_dl_debug_printf ("\n");
-    }
-  else
-    {
-      /* The path may contain dynamic string tokens.  */
-      realname = (loader
-		  ? expand_dynamic_string_token (loader, name)
-		  : __strdup (name));
-      if (realname == NULL)
-	fd = -1;
-      else
-	{
-	  fd = open_verify (realname, -1, &fb,
-			    loader ?: GL(dl_ns)[nsid]._ns_loaded, 0, mode,
-			    &found_other_class, true);
-	  if (__glibc_unlikely (fd == -1))
-	    free (realname);
-	}
-    }
-
-#ifdef SHARED
- no_file:
-#endif
-  /* In case the LOADER information has only been provided to get to
-     the appropriate RUNPATH/RPATH information we do not need it
-     anymore.  */
-  if (mode & __RTLD_CALLMAP)
-    loader = NULL;
-
-  if (__glibc_unlikely (fd == -1))
-    {
-      if (trace_mode)
-	{
-	  /* We haven't found an appropriate library.  But since we
-	     are only interested in the list of libraries this isn't
-	     so severe.  Fake an entry with all the information we
-	     have.  */
-	  static const Elf_Symndx dummy_bucket = STN_UNDEF;
-
-	  /* Allocate a new object map.  */
-	  if ((name_copy = __strdup (name)) == NULL
-	      || (l = _dl_new_object (name_copy, name, type, loader,
-				      mode, nsid)) == NULL)
-	    {
-	      free (name_copy);
-	      _dl_signal_error (ENOMEM, name, NULL,
-				N_("cannot create shared object descriptor"));
-	    }
-	  /* Signal that this is a faked entry.  */
-	  l->l_faked = 1;
-	  /* Since the descriptor is initialized with zero we do not
-	     have do this here.
-	  l->l_reserved = 0; */
-	  l->l_buckets = &dummy_bucket;
-	  l->l_nbuckets = 1;
-	  l->l_relocated = 1;
-
-	  /* Enter the object in the object list.  */
-	  _dl_add_to_namespace_list (l, nsid);
-
-	  return l;
-	}
-      else if (found_other_class)
-	_dl_signal_error (0, name, NULL,
-			  ELFW(CLASS) == ELFCLASS32
-			  ? N_("wrong ELF class: ELFCLASS64")
-			  : N_("wrong ELF class: ELFCLASS32"));
-      else
-	_dl_signal_error (errno, name, NULL,
-			  N_("cannot open shared object file"));
-    }
-
-  void *stack_end = __libc_stack_end;
-  return _dl_map_object_from_fd (name, origname, fd, &fb, realname, loader,
-				 type, mode, stack_end, nsid);
-}
-#endif
-
-struct link_map *
-_dl_map_new_object (struct link_map *loader, const char *name,
-		    int type, int trace_mode, int mode, Lmid_t nsid)
-{
-  int fd;
-  const char *origname = NULL;
-  char *realname;
-  char *name_copy;
-  struct link_map *l;
-  struct filebuf fb;
-
-  /* Display information if we are debugging.  */
-  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES)
-      && loader != NULL)
-    _dl_debug_printf ((mode & __RTLD_CALLMAP) == 0
-		      ? "\nfile=%s [%lu];  needed by %s [%lu]\n"
-		      : "\nfile=%s [%lu];  dynamically loaded by %s [%lu]\n",
-		      name, nsid, DSO_FILENAME (loader->l_name), loader->l_ns);
-
-  /* Will be true if we found a DSO which is of the other ELF class.  */
-  bool found_other_class = false;
-
-#ifdef SHARED
-  /* Give the auditing libraries a chance to change the name before we
-     try anything.  */
-  if (__glibc_unlikely (GLRO(dl_naudit) > 0))
-    {
-      const char *before = name;
-      name = _dl_audit_objsearch (name, loader, LA_SER_ORIG);
-      if (name == NULL)
-	{
-	  fd = -1;
-	  goto no_file;
-	}
-      if (before != name && strcmp (before, name) != 0)
-	origname = before;
-    }
-#endif
-
-  /* FBOS policy:
-     - explicit path (contains '/'): expand DSTs and load directly
-     - bare name (no '/'): search via ENV, RUNPATH, legacy RPATH, defaults
-   */
-  if (strchr (name, '/') == NULL)
+	/* FBOS policy:
+		- full path name: starts with '/' or with a path-bearing DST
+		  ($ORIGIN or $EXEC_PATH); expand DSTs and load exactly this path
+		- bare name: everything else, including names containing '/' later
+		  in the string (for example "Lib.frameworkb/Lib.so"); search via
+		  ENV, RUNPATH, legacy RPATH, and defaults
+	*/
+  if (!is_full_path_name (name))
     {
       size_t namelen = strlen (name) + 1;
 
@@ -2486,7 +2096,7 @@ _dl_map_new_object (struct link_map *loader, const char *name,
     }
   else
     {
-      /* Explicit path: expand DSTs and load exactly this path.  */
+      /* Full path name: expand DSTs and load exactly this path.  */
       realname = (loader
 		  ? expand_dynamic_string_token (loader, name)
 		  : __strdup (name));
@@ -2557,7 +2167,6 @@ _dl_map_new_object (struct link_map *loader, const char *name,
 				 type, mode, stack_end, nsid);
 }
 
-
 struct link_map *
 _dl_map_object (struct link_map *loader, const char *name,
 		int type, int trace_mode, int mode, Lmid_t nsid)
@@ -2567,7 +2176,6 @@ _dl_map_object (struct link_map *loader, const char *name,
     return l;
   return _dl_map_new_object (loader, name, type, trace_mode, mode, nsid);
 }
-
 
 struct add_path_state
 {
